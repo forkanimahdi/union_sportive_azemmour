@@ -5,7 +5,7 @@ export default function HighlightVideo() {
     const videos = [
         {
             id: 1,
-            title: "Highlights: Union Sportive Azemmour vs Raja Casablanca",
+            title: "Résumé: Union Sportive Azemmour vs Raja Casablanca",
             duration: "7:45",
             date: "05 Janvier, 2025",
             thumbnail: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1000&auto=format&fit=crop",
@@ -63,8 +63,8 @@ export default function HighlightVideo() {
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 sm:mb-12 gap-4">
                          <div>
-                            <h4 className="text-alpha font-bold text-xs sm:text-sm uppercase mb-2">Highlights</h4>
-                            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic">Today Highlight Video</h2>
+                            <h4 className="text-alpha font-bold text-xs sm:text-sm uppercase mb-2">Résumés</h4>
+                            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic">Vidéo du Jour</h2>
                         </div>
                          <div className="flex gap-2">
                             <button 

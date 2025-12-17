@@ -3,12 +3,12 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function Champions() {
     const players = [
-        { name: "Ahmed Benali", position: "Goalkeeper", number: "01", image: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?q=80&w=1000&auto=format&fit=crop" },
-        { name: "Youssef Amrani", position: "Defender", number: "22", image: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=1000&auto=format&fit=crop" },
-        { name: "Karim Alami", position: "Midfielder", number: "16", image: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&w=1000&auto=format&fit=crop" },
-        { name: "Mehdi Bensaid", position: "Forward", number: "88", image: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=1000&auto=format&fit=crop" },
-        { name: "Hassan Idrissi", position: "Defender", number: "05", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1000&auto=format&fit=crop" },
-        { name: "Omar Tazi", position: "Midfielder", number: "10", image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1000&auto=format&fit=crop" },
+        { name: "Ahmed Benali", position: "Gardien de but", number: "01", image: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?q=80&w=1000&auto=format&fit=crop" },
+        { name: "Youssef Amrani", position: "Défenseur", number: "22", image: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=1000&auto=format&fit=crop" },
+        { name: "Karim Alami", position: "Milieu de terrain", number: "16", image: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&w=1000&auto=format&fit=crop" },
+        { name: "Mehdi Bensaid", position: "Attaquant", number: "88", image: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=1000&auto=format&fit=crop" },
+        { name: "Hassan Idrissi", position: "Défenseur", number: "05", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1000&auto=format&fit=crop" },
+        { name: "Omar Tazi", position: "Milieu de terrain", number: "10", image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1000&auto=format&fit=crop" },
     ];
 
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -27,8 +27,8 @@ export default function Champions() {
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 sm:mb-12 gap-4">
                      <div>
-                        <h4 className="text-alpha font-bold text-xs sm:text-sm uppercase mb-2">Our Team</h4>
-                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic">Our Soccer Club Champions</h2>
+                        <h4 className="text-alpha font-bold text-xs sm:text-sm uppercase mb-2">Notre Équipe</h4>
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic">Nos Champions</h2>
                     </div>
                      <div className="flex gap-2">
                         <button 

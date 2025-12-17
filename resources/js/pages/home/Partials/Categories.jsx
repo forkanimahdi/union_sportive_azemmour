@@ -8,7 +8,7 @@ export default function Categories() {
         { id: 'u17', name: 'U17', image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1000&auto=format&fit=crop' },
         { id: 'u15', name: 'U15', image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1000&auto=format&fit=crop' },
         { id: 'u13', name: 'U13', image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1000&auto=format&fit=crop' },
-        { id: 'women', name: 'Women', image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1000&auto=format&fit=crop' },
+        { id: 'women', name: 'Féminines', image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1000&auto=format&fit=crop' },
     ];
 
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -27,8 +27,8 @@ export default function Categories() {
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 sm:mb-12 gap-4">
                     <div>
-                        <h4 className="text-alpha font-bold text-xs sm:text-sm uppercase mb-2">Teams</h4>
-                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic">Our Categories</h2>
+                        <h4 className="text-alpha font-bold text-xs sm:text-sm uppercase mb-2">Équipes</h4>
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic">Nos Catégories</h2>
                     </div>
                     <div className="flex gap-2">
                         <button 
@@ -68,7 +68,7 @@ export default function Categories() {
                                     <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
                                         <h3 className="text-xl sm:text-2xl font-black uppercase italic">{category.name}</h3>
                                         <div className="mt-2 flex items-center gap-2 text-xs sm:text-sm text-gray-400">
-                                            <span>View Team</span>
+                                            <span>Voir l'équipe</span>
                                             <span className="text-alpha">→</span>
                                         </div>
                                     </div>

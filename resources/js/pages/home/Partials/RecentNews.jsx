@@ -11,7 +11,7 @@ export default function RecentNews() {
             views: 245,
             image: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=1000&auto=format&fit=crop",
             date: "05 Janvier 2025",
-            category: "Match Report"
+            category: "Rapport de match"
         },
         {
             id: 2,
@@ -21,7 +21,7 @@ export default function RecentNews() {
             views: 189,
             image: "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?q=80&w=1000&auto=format&fit=crop",
             date: "06 Janvier 2025",
-            category: "Club News"
+            category: "Actualités du club"
         },
         {
             id: 3,
@@ -31,7 +31,7 @@ export default function RecentNews() {
             views: 312,
             image: "https://images.unsplash.com/photo-1560272564-c83b66b1ad12?q=80&w=1000&auto=format&fit=crop",
             date: "07 Janvier 2025",
-            category: "Academy"
+            category: "Académie"
         },
         {
             id: 4,
@@ -51,7 +51,7 @@ export default function RecentNews() {
             views: 178,
             image: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=1000&auto=format&fit=crop",
             date: "09 Janvier 2025",
-            category: "Training"
+            category: "Entraînement"
         }
     ];
 
@@ -71,8 +71,8 @@ export default function RecentNews() {
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 sm:mb-12 gap-4">
                      <div>
-                        <h4 className="text-alpha font-bold text-xs sm:text-sm uppercase mb-2">Our Blog</h4>
-                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic">Our Recent News</h2>
+                        <h4 className="text-alpha font-bold text-xs sm:text-sm uppercase mb-2">Notre Blog</h4>
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic">Nos Actualités Récentes</h2>
                     </div>
                      <div className="flex gap-2">
                         <button 
@@ -113,7 +113,7 @@ export default function RecentNews() {
                                     <div className="flex flex-wrap items-center text-xs text-gray-500 gap-3 sm:gap-4 border-t border-gray-100 pt-3 sm:pt-4 mb-3 sm:mb-4">
                                         <div className="flex items-center gap-1">
                                             <User className="w-3 h-3 text-alpha" />
-                                            <span>By {item.author}</span>
+                                            <span>Par {item.author}</span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <MessageCircle className="w-3 h-3 text-alpha" />
@@ -125,7 +125,7 @@ export default function RecentNews() {
                                         </div>
                                     </div>
                                     <button className="w-full bg-dark text-white text-xs font-bold px-4 sm:px-6 py-2 sm:py-3 uppercase tracking-wider group-hover:bg-alpha transition-colors">
-                                        Read More
+                                        Lire la suite
                                     </button>
                                 </div>
                             </div>

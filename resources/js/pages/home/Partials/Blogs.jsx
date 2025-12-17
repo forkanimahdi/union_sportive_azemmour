@@ -56,7 +56,7 @@ export default function Blogs() {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 sm:mb-12 gap-4">
                     <div>
                         <h4 className="text-alpha font-bold text-xs sm:text-sm uppercase mb-2">Blog</h4>
-                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic">Barça Stories</h2>
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic">Nos Histoires</h2>
                     </div>
                     <Link href="#" className="text-alpha font-bold uppercase text-xs sm:text-sm hover:underline flex items-center gap-2">
                         Voir tout <ArrowRight className="w-4 h-4" />

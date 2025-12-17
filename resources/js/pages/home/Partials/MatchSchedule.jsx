@@ -26,8 +26,8 @@ export default function MatchSchedule() {
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 sm:mb-12 border-b-2 border-gray-100 pb-4 gap-4">
                     <div>
-                        <h4 className="text-alpha font-bold text-xs sm:text-sm uppercase mb-2">Schedule</h4>
-                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic">Botola Pro Schedule</h2>
+                        <h4 className="text-alpha font-bold text-xs sm:text-sm uppercase mb-2">Calendrier</h4>
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic">Calendrier Botola Pro</h2>
                     </div>
                     <div className="flex gap-2">
                         <button 
@@ -71,7 +71,7 @@ export default function MatchSchedule() {
                                 <p className="text-xs text-gray-500 uppercase tracking-wide text-center">{match.date}</p>
                                 <p className="text-xs text-alpha font-bold mt-1">{match.timeDetail}</p>
                                 <button className="mt-4 bg-alpha text-white text-xs font-bold px-4 sm:px-6 py-2 uppercase hover:bg-red-700 transition-colors w-full sm:w-auto">
-                                    Buy Tickets
+                                    Acheter des billets
                                 </button>
                             </div>
                         ))}
