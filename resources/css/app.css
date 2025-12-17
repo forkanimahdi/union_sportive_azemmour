@@ -8,6 +8,19 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+
+
+
+    --color-alpha: #571123;
+    --color-beta: #ffffff;
+    --color-dark: #171717;
+    --color-light: #ffffff;
+
+
+
+
+
+
     --font-sans:
         'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
