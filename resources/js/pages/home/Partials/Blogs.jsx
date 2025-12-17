@@ -51,19 +51,19 @@ export default function Blogs() {
     ];
 
     return (
-        <div className="py-20 bg-white">
-            <div className="container mx-auto px-4">
-                <div className="flex justify-between items-end mb-12">
+        <div className="py-16 sm:py-20 lg:py-24 bg-white">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 sm:mb-12 gap-4">
                     <div>
-                        <h4 className="text-alpha font-bold text-sm uppercase mb-2">Blog</h4>
-                        <h2 className="text-3xl font-black uppercase italic">Barça Stories</h2>
+                        <h4 className="text-alpha font-bold text-xs sm:text-sm uppercase mb-2">Blog</h4>
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic">Barça Stories</h2>
                     </div>
-                    <Link href="#" className="text-alpha font-bold uppercase text-sm hover:underline flex items-center gap-2">
+                    <Link href="#" className="text-alpha font-bold uppercase text-xs sm:text-sm hover:underline flex items-center gap-2">
                         Voir tout <ArrowRight className="w-4 h-4" />
                     </Link>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
                     {blogs.map((blog) => (
                         <article key={blog.id} className="group cursor-pointer">
                             <div className="relative overflow-hidden h-48 mb-4 rounded-lg">

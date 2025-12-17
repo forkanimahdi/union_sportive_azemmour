@@ -3,19 +3,19 @@ import { Facebook, Twitter, Instagram, Linkedin, Send } from 'lucide-react';
 
 export default function Footer() {
     return (
-        <footer className="bg-dark text-white pt-20 border-t-4 border-alpha">
+        <footer className="bg-dark text-white pt-12 sm:pt-16 lg:pt-20 border-t-4 border-alpha">
             {/* Newsletter Section */}
-            <div className="container mx-auto px-4 mb-20">
-                <div className="bg-[url('https://images.unsplash.com/photo-1551958219-acbc608c6377?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center rounded-2xl p-10 md:p-16 relative overflow-hidden">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12 sm:mb-16 lg:mb-20">
+                <div className="bg-[url('https://images.unsplash.com/photo-1551958219-acbc608c6377?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center rounded-2xl p-6 sm:p-10 md:p-16 relative overflow-hidden">
                     <div className="absolute inset-0 bg-dark/80"></div>
-                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
-                        <div>
-                            <h2 className="text-3xl md:text-4xl font-black uppercase italic mb-2">Subscribe to our newsletter</h2>
-                            <p className="text-gray-400">Stay updated with the latest news and special offers.</p>
+                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-8">
+                        <div className="text-center md:text-left">
+                            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black uppercase italic mb-2">Subscribe to our newsletter</h2>
+                            <p className="text-gray-400 text-sm sm:text-base">Stay updated with the latest news and special offers.</p>
                         </div>
-                        <div className="flex w-full md:w-auto gap-2">
-                            <input type="email" placeholder="Your Email Address" className="bg-white/10 border border-white/20 px-6 py-4 rounded-full w-full md:w-80 text-white placeholder:text-gray-400 focus:outline-none focus:border-alpha" />
-                            <button className="bg-alpha hover:bg-red-700 text-white px-8 py-4 rounded-full font-bold uppercase transition-colors flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row w-full md:w-auto gap-2">
+                            <input type="email" placeholder="Your Email Address" className="bg-white/10 border border-white/20 px-4 sm:px-6 py-3 sm:py-4 rounded-full w-full md:w-80 text-white placeholder:text-gray-400 focus:outline-none focus:border-alpha text-sm sm:text-base" />
+                            <button className="bg-alpha hover:bg-red-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-bold uppercase transition-colors flex items-center justify-center gap-2 text-sm sm:text-base">
                                 Subscribe <Send className="w-4 h-4" />
                             </button>
                         </div>
@@ -24,8 +24,8 @@ export default function Footer() {
             </div>
 
             {/* Main Footer Links */}
-            <div className="container mx-auto px-4 pb-12">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12">
                     {/* Brand */}
                     <div>
                         <div className="flex items-center space-x-2 mb-6">

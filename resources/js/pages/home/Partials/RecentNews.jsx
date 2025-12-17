@@ -67,23 +67,25 @@ export default function RecentNews() {
     };
 
     return (
-        <div className="py-20 bg-gray-50">
-            <div className="container mx-auto px-4">
-                <div className="flex justify-between items-end mb-12">
+        <div className="py-16 sm:py-20 lg:py-24 bg-gray-50">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 sm:mb-12 gap-4">
                      <div>
-                        <h4 className="text-alpha font-bold text-sm uppercase mb-2">Our Blog</h4>
-                        <h2 className="text-3xl font-black uppercase italic">Our Recent News</h2>
+                        <h4 className="text-alpha font-bold text-xs sm:text-sm uppercase mb-2">Our Blog</h4>
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic">Our Recent News</h2>
                     </div>
                      <div className="flex gap-2">
                         <button 
                             onClick={prev}
                             className="w-10 h-10 bg-gray-200 hover:bg-alpha hover:text-white flex items-center justify-center transition-colors"
+                            aria-label="Previous"
                         >
                             <ChevronLeft className="w-5 h-5" />
                         </button>
                         <button 
                             onClick={next}
                             className="w-10 h-10 bg-alpha text-white flex items-center justify-center transition-colors"
+                            aria-label="Next"
                         >
                             <ChevronRight className="w-5 h-5" />
                         </button>
@@ -92,23 +94,23 @@ export default function RecentNews() {
 
                 <div className="relative overflow-hidden">
                     <div 
-                        className="flex transition-transform duration-500 ease-in-out gap-8"
+                        className="flex transition-transform duration-500 ease-in-out gap-4 sm:gap-6 lg:gap-8"
                         style={{ transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)` }}
                     >
                         {news.map((item) => (
-                            <div key={item.id} className="min-w-[calc(33.333%-21.33px)] bg-white group hover:shadow-2xl transition-all duration-300">
-                                <div className="relative overflow-hidden h-60">
+                            <div key={item.id} className="min-w-[calc(100%-16px)] sm:min-w-[calc(50%-12px)] lg:min-w-[calc(33.333%-21.33px)] bg-white group hover:shadow-2xl transition-all duration-300">
+                                <div className="relative overflow-hidden h-48 sm:h-56 lg:h-60">
                                     <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                                    <div className="absolute top-4 left-4 bg-alpha text-white text-xs font-bold px-3 py-1 uppercase">
+                                    <div className="absolute top-3 sm:top-4 left-3 sm:left-4 bg-alpha text-white text-xs font-bold px-2 sm:px-3 py-1 uppercase">
                                         {item.category}
                                     </div>
                                 </div>
-                                <div className="p-6">
+                                <div className="p-4 sm:p-6">
                                     <div className="text-xs text-gray-500 mb-2">{item.date}</div>
-                                    <h3 className="text-xl font-bold uppercase italic leading-tight mb-4 hover:text-alpha transition-colors cursor-pointer">
+                                    <h3 className="text-lg sm:text-xl font-bold uppercase italic leading-tight mb-3 sm:mb-4 hover:text-alpha transition-colors cursor-pointer">
                                         {item.title}
                                     </h3>
-                                    <div className="flex items-center text-xs text-gray-500 space-x-4 border-t border-gray-100 pt-4 mb-4">
+                                    <div className="flex flex-wrap items-center text-xs text-gray-500 gap-3 sm:gap-4 border-t border-gray-100 pt-3 sm:pt-4 mb-3 sm:mb-4">
                                         <div className="flex items-center gap-1">
                                             <User className="w-3 h-3 text-alpha" />
                                             <span>By {item.author}</span>
@@ -122,7 +124,7 @@ export default function RecentNews() {
                                             <span>{item.views}</span>
                                         </div>
                                     </div>
-                                    <button className="w-full bg-dark text-white text-xs font-bold px-6 py-3 uppercase tracking-wider group-hover:bg-alpha transition-colors">
+                                    <button className="w-full bg-dark text-white text-xs font-bold px-4 sm:px-6 py-2 sm:py-3 uppercase tracking-wider group-hover:bg-alpha transition-colors">
                                         Read More
                                     </button>
                                 </div>

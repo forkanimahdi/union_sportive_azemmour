@@ -1,16 +1,16 @@
 import React from 'react';
-import Navbar from './Partials/Navbar';
-import Hero from './Partials/Hero';
-import MatchSchedule from './Partials/MatchSchedule';
-import Categories from './Partials/Categories';
-import RecentNews from './Partials/RecentNews';
-import Blogs from './Partials/Blogs';
-import LeagueTable from './Partials/LeagueTable';
-import HighlightVideo from './Partials/HighlightVideo';
-import TicketCTA from './Partials/TicketCTA';
-import Champions from './Partials/Champions';
-import Merchandise from './Partials/Merchandise';
-import Footer from './Partials/Footer';
+import Navbar from './partials/navbar';
+import Hero from './partials/hero';
+import MatchSchedule from './partials/matchschedule';
+import Categories from './partials/categories';
+import RecentNews from './partials/recentnews';
+import Blogs from './partials/blogs';
+import LeagueTable from './partials/leaguetable';
+import HighlightVideo from './partials/highlightvideo';
+import TicketCTA from './partials/ticketcta';
+import Champions from './partials/champions';
+import Merchandise from './partials/merchandise';
+import Footer from './partials/footer';
 
 export default function Index() {
     return (

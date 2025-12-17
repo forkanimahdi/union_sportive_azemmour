@@ -23,23 +23,25 @@ export default function Merchandise() {
     };
 
     return (
-        <div className="py-20 bg-gray-50">
-            <div className="container mx-auto px-4">
-                <div className="flex justify-between items-end mb-12">
+        <div className="py-16 sm:py-20 lg:py-24 bg-gray-50">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 sm:mb-12 gap-4">
                      <div>
-                        <h4 className="text-alpha font-bold text-sm uppercase mb-2">Fan Shop</h4>
-                        <h2 className="text-3xl font-black uppercase italic">Exclusive Merchandise</h2>
+                        <h4 className="text-alpha font-bold text-xs sm:text-sm uppercase mb-2">Fan Shop</h4>
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic">Exclusive Merchandise</h2>
                     </div>
                      <div className="flex gap-2">
                         <button 
                             onClick={prev}
                             className="w-10 h-10 bg-gray-200 hover:bg-alpha hover:text-white flex items-center justify-center transition-colors"
+                            aria-label="Previous"
                         >
                             <ChevronLeft className="w-5 h-5" />
                         </button>
                         <button 
                             onClick={next}
                             className="w-10 h-10 bg-alpha text-white flex items-center justify-center transition-colors"
+                            aria-label="Next"
                         >
                             <ChevronRight className="w-5 h-5" />
                         </button>
@@ -48,24 +50,24 @@ export default function Merchandise() {
 
                 <div className="relative overflow-hidden">
                     <div 
-                        className="flex transition-transform duration-500 ease-in-out gap-8"
+                        className="flex transition-transform duration-500 ease-in-out gap-4 sm:gap-6 lg:gap-8"
                         style={{ transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)` }}
                     >
                         {products.map((product, idx) => (
-                            <div key={idx} className="min-w-[calc(25%-18px)] bg-white p-4 group text-center hover:shadow-xl transition-all">
-                                <div className="relative h-60 bg-gray-100 mb-4 overflow-hidden flex items-center justify-center">
+                            <div key={idx} className="min-w-[calc(50%-8px)] sm:min-w-[calc(33.333%-16px)] lg:min-w-[calc(25%-18px)] bg-white p-3 sm:p-4 group text-center hover:shadow-xl transition-all">
+                                <div className="relative h-48 sm:h-56 lg:h-60 bg-gray-100 mb-3 sm:mb-4 overflow-hidden flex items-center justify-center">
                                     <img src={product.image} alt={product.name} className="h-full object-contain mix-blend-multiply transition-transform group-hover:scale-110" />
-                                    <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="absolute top-3 sm:top-4 right-3 sm:right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button className="w-8 h-8 bg-white rounded-full flex items-center justify-center hover:text-alpha shadow"><Heart className="w-4 h-4" /></button>
                                         <button className="w-8 h-8 bg-white rounded-full flex items-center justify-center hover:text-alpha shadow"><ShoppingBag className="w-4 h-4" /></button>
                                     </div>
                                 </div>
-                                <h3 className="font-bold uppercase text-lg mb-1">{product.name}</h3>
-                                <div className="flex justify-center gap-2 items-center">
+                                <h3 className="font-bold uppercase text-base sm:text-lg mb-1">{product.name}</h3>
+                                <div className="flex justify-center gap-2 items-center mb-3 sm:mb-4">
                                     <span className="text-gray-400 line-through text-xs">{product.oldPrice}</span>
-                                    <span className="text-alpha font-bold">{product.price}</span>
+                                    <span className="text-alpha font-bold text-sm sm:text-base">{product.price}</span>
                                 </div>
-                                <button className="mt-4 w-full bg-dark text-white text-xs font-bold py-2 uppercase hover:bg-alpha transition-colors opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                                <button className="w-full bg-dark text-white text-xs font-bold py-2 uppercase hover:bg-alpha transition-colors opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
                                     Ajouter au Panier
                                 </button>
                             </div>

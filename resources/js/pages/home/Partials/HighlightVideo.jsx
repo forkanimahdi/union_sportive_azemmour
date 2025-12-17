@@ -59,23 +59,25 @@ export default function HighlightVideo() {
 
     return (
         <>
-            <div className="py-20 bg-gray-50">
-                <div className="container mx-auto px-4">
-                    <div className="flex justify-between items-end mb-12">
+            <div className="py-16 sm:py-20 lg:py-24 bg-gray-50">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 sm:mb-12 gap-4">
                          <div>
-                            <h4 className="text-alpha font-bold text-sm uppercase mb-2">Highlights</h4>
-                            <h2 className="text-3xl font-black uppercase italic">Today Highlight Video</h2>
+                            <h4 className="text-alpha font-bold text-xs sm:text-sm uppercase mb-2">Highlights</h4>
+                            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic">Today Highlight Video</h2>
                         </div>
                          <div className="flex gap-2">
                             <button 
                                 onClick={prev}
                                 className="w-10 h-10 bg-gray-200 hover:bg-alpha hover:text-white flex items-center justify-center transition-colors"
+                                aria-label="Previous"
                             >
                                 <ChevronLeft className="w-5 h-5" />
                             </button>
                             <button 
                                 onClick={next}
                                 className="w-10 h-10 bg-alpha text-white flex items-center justify-center transition-colors"
+                                aria-label="Next"
                             >
                                 <ChevronRight className="w-5 h-5" />
                             </button>
@@ -84,25 +86,25 @@ export default function HighlightVideo() {
 
                     <div className="relative overflow-hidden">
                         <div 
-                            className="flex transition-transform duration-500 ease-in-out gap-8"
+                            className="flex transition-transform duration-500 ease-in-out gap-4 sm:gap-6 lg:gap-8"
                             style={{ transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)` }}
                         >
                             {videos.map((video) => (
-                                <div key={video.id} className="min-w-[calc(33.333%-21.33px)] relative group">
-                                    <div className="relative h-64 bg-black overflow-hidden rounded-lg cursor-pointer" onClick={() => openVideo(video)}>
+                                <div key={video.id} className="min-w-[calc(100%-16px)] sm:min-w-[calc(50%-12px)] lg:min-w-[calc(33.333%-21.33px)] relative group">
+                                    <div className="relative h-48 sm:h-56 lg:h-64 bg-black overflow-hidden rounded-lg cursor-pointer" onClick={() => openVideo(video)}>
                                         <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover opacity-70 group-hover:opacity-50 transition-opacity" />
                                         <div className="absolute inset-0 flex items-center justify-center">
-                                            <div className="w-16 h-16 bg-white/20 backdrop-blur rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                <Play className="w-6 h-6 text-white fill-white ml-1" />
+                                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 backdrop-blur rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <Play className="w-4 h-4 sm:w-6 sm:h-6 text-white fill-white ml-1" />
                                             </div>
                                         </div>
-                                        <div className="absolute bottom-4 right-4 bg-black/80 text-white text-xs px-2 py-1 rounded">
+                                        <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 bg-black/80 text-white text-xs px-2 py-1 rounded">
                                             {video.duration}
                                         </div>
                                     </div>
-                                    <div className="mt-4">
+                                    <div className="mt-3 sm:mt-4">
                                         <p className="text-xs text-gray-500 mb-1">{video.date}</p>
-                                        <h3 className="text-lg font-bold uppercase leading-tight hover:text-alpha transition-colors cursor-pointer">
+                                        <h3 className="text-base sm:text-lg font-bold uppercase leading-tight hover:text-alpha transition-colors cursor-pointer">
                                             {video.title}
                                         </h3>
                                     </div>

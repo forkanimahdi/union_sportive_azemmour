@@ -23,23 +23,25 @@ export default function Categories() {
     };
 
     return (
-        <div className="py-20 bg-dark text-white">
-            <div className="container mx-auto px-4">
-                <div className="flex justify-between items-end mb-12">
+        <div className="py-16 sm:py-20 lg:py-24 bg-dark text-white">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 sm:mb-12 gap-4">
                     <div>
-                        <h4 className="text-alpha font-bold text-sm uppercase mb-2">Teams</h4>
-                        <h2 className="text-3xl font-black uppercase italic">Our Categories</h2>
+                        <h4 className="text-alpha font-bold text-xs sm:text-sm uppercase mb-2">Teams</h4>
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic">Our Categories</h2>
                     </div>
                     <div className="flex gap-2">
                         <button 
                             onClick={prev}
                             className="w-10 h-10 bg-white/10 hover:bg-alpha flex items-center justify-center transition-colors"
+                            aria-label="Previous"
                         >
                             <ChevronLeft className="w-5 h-5" />
                         </button>
                         <button 
                             onClick={next}
                             className="w-10 h-10 bg-alpha text-white flex items-center justify-center transition-colors"
+                            aria-label="Next"
                         >
                             <ChevronRight className="w-5 h-5" />
                         </button>
@@ -48,24 +50,24 @@ export default function Categories() {
 
                 <div className="relative overflow-hidden">
                     <div 
-                        className="flex transition-transform duration-500 ease-in-out"
+                        className="flex transition-transform duration-500 ease-in-out gap-4 sm:gap-6"
                         style={{ transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)` }}
                     >
                         {categories.map((category) => (
                             <div 
                                 key={category.id} 
-                                className="min-w-[calc(25%-12px)] md:min-w-[calc(25%-12px)] px-3 cursor-pointer group"
+                                className="min-w-[calc(50%-8px)] sm:min-w-[calc(33.333%-16px)] lg:min-w-[calc(25%-18px)] cursor-pointer group"
                             >
-                                <div className="relative h-64 bg-gray-800 rounded-lg overflow-hidden hover:shadow-2xl transition-all">
+                                <div className="relative h-48 sm:h-56 lg:h-64 bg-gray-800 rounded-lg overflow-hidden hover:shadow-2xl transition-all">
                                     <img 
                                         src={category.image} 
                                         alt={category.name}
                                         className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-dark via-dark/50 to-transparent"></div>
-                                    <div className="absolute bottom-0 left-0 right-0 p-6">
-                                        <h3 className="text-2xl font-black uppercase italic">{category.name}</h3>
-                                        <div className="mt-2 flex items-center gap-2 text-sm text-gray-400">
+                                    <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
+                                        <h3 className="text-xl sm:text-2xl font-black uppercase italic">{category.name}</h3>
+                                        <div className="mt-2 flex items-center gap-2 text-xs sm:text-sm text-gray-400">
                                             <span>View Team</span>
                                             <span className="text-alpha">→</span>
                                         </div>
