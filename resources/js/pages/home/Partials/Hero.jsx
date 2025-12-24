@@ -7,7 +7,7 @@ export default function Hero() {
             <div className="absolute inset-0 bg-gradient-to-r from-dark/80 to-alpha/40 z-10"></div>
             
             {/* Placeholder for actual background image */}
-            <div className="absolute inset-0 bg-[url('https://f2.hespress.com/wp-content/uploads/2022/11/AS-FAR-feminine.jpg')] bg-cover bg-center"></div>
+            <div className="absolute inset-0 bg-[url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRsfkquJfGIVrIgyCm_ptnf3GIafjB-d7WtyQ&s')] bg-cover bg-center"></div>
 
             <div className="relative z-20 h-full container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-center text-center text-white">
                 <h2 className="text-base sm:text-lg md:text-xl uppercase tracking-[0.2em] mb-4 sm:mb-6 text-alpha font-bold">Bienvenue dans notre club de football</h2>
