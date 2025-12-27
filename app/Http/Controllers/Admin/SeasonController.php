@@ -58,8 +58,86 @@ class SeasonController extends Controller
 
     public function show(Season $season)
     {
-        $season->load(['teams', 'competitions']);
+        $season->load([
+            'teams.players.matchEvents' => function ($query) {
+                $query->where('type', 'goal');
+            },
+            'teams.matches',
+            'teams.trainings',
+            'competitions.matches',
+        ]);
+
+        // Get all matches for calendar
+        $allMatches = $season->teams->flatMap->matches->sortBy('scheduled_at');
         
+        // Get all trainings for calendar
+        $allTrainings = $season->teams->flatMap->trainings->sortBy('scheduled_at');
+
+        // Calculate standings/rankings
+        $standings = $season->teams->map(function ($team) {
+            $matches = $team->matches()->where('status', 'finished')->get();
+            $wins = $matches->filter(function($m) {
+                if ($m->type === 'domicile') {
+                    return $m->home_score > $m->away_score;
+                }
+                return $m->away_score > $m->home_score;
+            })->count();
+            
+            $draws = $matches->filter(function($m) {
+                return $m->home_score === $m->away_score;
+            })->count();
+            $losses = $matches->count() - $wins - $draws;
+            $goalsFor = $matches->sum(function($m) {
+                return $m->type === 'domicile' ? $m->home_score : $m->away_score;
+            });
+            $goalsAgainst = $matches->sum(function($m) {
+                return $m->type === 'domicile' ? $m->away_score : $m->home_score;
+            });
+            
+            return [
+                'id' => $team->id,
+                'name' => $team->name,
+                'category' => $team->category,
+                'played' => $matches->count(),
+                'wins' => $wins,
+                'draws' => $draws,
+                'losses' => $losses,
+                'goals_for' => $goalsFor,
+                'goals_against' => $goalsAgainst,
+                'goal_difference' => $goalsFor - $goalsAgainst,
+                'points' => ($wins * 3) + $draws,
+            ];
+        })->sortByDesc('points')->sortByDesc(function($t) {
+            return $t['goal_difference'];
+        })->values();
+
+        // Calculate statistics - top scorers
+        $topScorers = $season->teams->flatMap->players->map(function ($player) {
+            $goals = $player->matchEvents()->where('type', 'goal')->count();
+            return [
+                'id' => $player->id,
+                'name' => $player->first_name . ' ' . $player->last_name,
+                'team' => $player->team->name,
+                'category' => $player->team->category,
+                'goals' => $goals,
+            ];
+        })->filter(function($p) {
+            return $p['goals'] > 0;
+        })->sortByDesc('goals')->take(10)->values();
+
+        // Get categories
+        $categories = $season->teams->pluck('category')->unique()->sort()->values();
+
+        // Financial summary (mock/placeholder data - to be implemented)
+        $financialSummary = [
+            'total_registered' => $season->teams->sum(function($t) {
+                return $t->players()->count();
+            }),
+            'fees_collected' => 0, // Placeholder
+            'fees_pending' => 0, // Placeholder
+            'total_expected' => 0, // Placeholder
+        ];
+
         return Inertia::render('admin/seasons/show', [
             'season' => [
                 'id' => $season->id,
@@ -68,16 +146,49 @@ class SeasonController extends Controller
                 'end_date' => $season->end_date->format('Y-m-d'),
                 'is_active' => $season->is_active,
                 'description' => $season->description,
-                'teams' => $season->teams->map(fn($team) => [
-                    'id' => $team->id,
-                    'name' => $team->name,
-                    'category' => $team->category,
-                ]),
-                'competitions' => $season->competitions->map(fn($comp) => [
-                    'id' => $comp->id,
-                    'name' => $comp->name,
-                    'type' => $comp->type,
-                ]),
+                'teams' => $season->teams->map(function($team) {
+                    return [
+                        'id' => $team->id,
+                        'name' => $team->name,
+                        'category' => $team->category,
+                    ];
+                }),
+                'competitions' => $season->competitions->map(function($comp) {
+                    return [
+                        'id' => $comp->id,
+                        'name' => $comp->name,
+                        'type' => $comp->type,
+                    ];
+                }),
+                'categories' => $categories,
+                'matches' => $allMatches->map(function($match) {
+                    return [
+                        'id' => $match->id,
+                        'team_name' => $match->team->name,
+                        'category' => $match->team->category,
+                        'opponent' => $match->opponent,
+                        'scheduled_at' => $match->scheduled_at->format('Y-m-d H:i'),
+                        'venue' => $match->venue,
+                        'type' => $match->type,
+                        'status' => $match->status,
+                        'home_score' => $match->home_score,
+                        'away_score' => $match->away_score,
+                        'competition' => $match->competition ? $match->competition->name : null,
+                    ];
+                })->values(),
+                'trainings' => $allTrainings->map(function($training) {
+                    return [
+                        'id' => $training->id,
+                        'team_name' => $training->team->name,
+                        'category' => $training->team->category,
+                        'scheduled_at' => $training->scheduled_at->format('Y-m-d H:i'),
+                        'location' => $training->location,
+                        'status' => $training->status,
+                    ];
+                })->values(),
+                'standings' => $standings,
+                'top_scorers' => $topScorers,
+                'financial_summary' => $financialSummary,
             ],
         ]);
     }
@@ -125,5 +236,46 @@ class SeasonController extends Controller
 
         return redirect()->route('admin.seasons.index')
             ->with('success', 'Saison supprimée avec succès');
+    }
+
+    public function duplicate(Season $season)
+    {
+        $newSeason = $season->replicate();
+        $newSeason->name = $season->name . ' (Copie)';
+        $newSeason->is_active = false;
+        $newSeason->save();
+
+        // Duplicate teams (optional - can be removed if not needed)
+        foreach ($season->teams as $team) {
+            $newTeam = $team->replicate();
+            $newTeam->season_id = $newSeason->id;
+            $newTeam->save();
+        }
+
+        return redirect()->route('admin.seasons.show', $newSeason)
+            ->with('success', 'Saison dupliquée avec succès');
+    }
+
+    public function export(Season $season)
+    {
+        // Placeholder for export functionality
+        // This would typically generate an Excel or PDF file
+        return response()->json([
+            'message' => 'Export functionality will be implemented soon',
+            'season_id' => $season->id,
+        ]);
+    }
+
+    public function bulkMessage(Season $season)
+    {
+        // Placeholder for bulk messaging
+        // This would typically render a page to compose and send messages
+        return Inertia::render('admin/seasons/bulk-message', [
+            'season' => [
+                'id' => $season->id,
+                'name' => $season->name,
+                'teams_count' => $season->teams()->count(),
+            ],
+        ]);
     }
 }
