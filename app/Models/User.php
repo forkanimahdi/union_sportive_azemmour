@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -44,5 +45,51 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    // Role helpers
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isTechnicalDirector(): bool
+    {
+        return $this->role === 'technical_director';
+    }
+
+    public function isCoach(): bool
+    {
+        return $this->role === 'coach';
+    }
+
+    public function isPhysiotherapist(): bool
+    {
+        return $this->role === 'physiotherapist';
+    }
+
+    public function isCommunication(): bool
+    {
+        return $this->role === 'communication';
+    }
+
+    public function isPresident(): bool
+    {
+        return $this->role === 'president';
+    }
+
+    public function canManageClub(): bool
+    {
+        return in_array($this->role, ['admin', 'technical_director']);
+    }
+
+    public function canManagePlayers(): bool
+    {
+        return in_array($this->role, ['admin', 'technical_director', 'coach']);
+    }
+
+    public function canManageMedia(): bool
+    {
+        return in_array($this->role, ['admin', 'communication', 'technical_director']);
     }
 }
