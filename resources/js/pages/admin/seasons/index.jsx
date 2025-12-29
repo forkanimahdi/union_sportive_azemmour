@@ -178,140 +178,129 @@ export default function SeasonsIndex({ seasons }) {
                     {/* Stats */}
                     {filteredSeasons.length > 0 && (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <Card className="border-0 shadow-lg bg-primary text-white">
+                            <Card className="border-0 shadow-lg bg-primary/10 text-alpha border-alpha">
                                 <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                            <p className="text-white/80 text-sm mb-2">Total Saisons</p>
+                                            <p className="text-alpha text-sm mb-2">Total Saisons</p>
                                             <p className="text-4xl font-black">{seasons.data?.length || 0}</p>
                                     </div>
-                                        <Calendar className="w-10 h-10 opacity-50" />
+                                        <Calendar className="w-10 h-10 opacity-70" />
                                 </div>
                             </CardContent>
                         </Card>
-                            <Card className="border-0 shadow-lg bg-primary text-white">
+                            <Card className="border-0 shadow-lg bg-primary/10 text-alpha border-alpha">
                                 <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                            <p className="text-white/80 text-sm mb-2">Saisons Actives</p>
+                                            <p className="text-alpha text-sm mb-2">Saisons Actives</p>
                                             <p className="text-4xl font-black">
                                                 {filteredSeasons.filter(s => s.is_active).length}
                                         </p>
                                     </div>
-                                        <Trophy className="w-10 h-10 opacity-50" />
+                                        <Trophy className="w-10 h-10 opacity-70" />
                                 </div>
                             </CardContent>
                         </Card>
-                            <Card className="border-0 shadow-lg bg-primary text-white">
+                            <Card className="border-0 shadow-lg bg-primary/10 text-alpha border-alpha">
                                 <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                            <p className="text-white/80 text-sm mb-2">Total Équipes</p>
+                                            <p className="text-alpha text-sm mb-2">Total Équipes</p>
                                             <p className="text-4xl font-black">
                                                 {filteredSeasons.reduce((sum, s) => sum + (s.teams_count || 0), 0)}
                                         </p>
                                     </div>
-                                        <Users className="w-10 h-10 opacity-50" />
+                                        <Users className="w-10 h-10 opacity-70" />
                                 </div>
                             </CardContent>
                         </Card>
                     </div>
                 )}
 
-                    {/* Seasons Cards - Improved UI */}
+                    {/* Seasons Cards - Compact Design */}
                     {filteredSeasons.length > 0 ? (
-                        <div className="grid gap-6 md:grid-cols-2">
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {filteredSeasons.map((season) => (
-                        <Card 
-                            key={season.id}
-                                    className="group relative overflow-hidden border-0 shadow-xl bg-white hover:shadow-2xl transition-all duration-300 cursor-pointer"
+                                <Card 
+                                    key={season.id}
+                                    className="group relative overflow-hidden border-0 shadow-lg bg-primary transition-all duration-300 cursor-pointer"
                                     onClick={() => router.visit(`/admin/seasons/${season.id}`)}
                                 >
                                     {/* Top accent bar */}
-                                    <div className={`h-3 ${season.is_active ? 'bg-primary' : 'bg-primary/80'}`}></div>
+                                    <div className={`h-1.5 ${season.is_active ? 'bg-white' : 'bg-white/60'}`}></div>
                                     
-                                    <CardContent className="p-8">
-                                        {/* Header */}
-                                        <div className="flex items-start justify-between mb-6">
-                                            <div className="flex items-center gap-4 flex-1">
-                                                <div className={`p-4 rounded-2xl ${season.is_active ? 'bg-primary/80' : 'bg-primary/80'}`}>
-                                                    <Trophy className={`w-8 h-8 ${season.is_active ? 'text-white' : 'text-white'}`} />
+                                    <CardContent className="p-5">
+                                        {/* Header - Compact */}
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                <div className="p-2.5 rounded-lg bg-white/20 backdrop-blur-sm shrink-0">
+                                                    <Trophy className="w-5 h-5 text-white" />
                                                 </div>
-                                                <div className="flex-1">
-                                                    <h3 className="text-2xl font-black text-foreground group-hover:text-primary transition-colors mb-2">
+                                                <div className="flex-1 min-w-0">
+                                                    <h3 className="text-lg font-black text-white truncate group-hover:text-white/90 transition-colors">
                                                         {season.name}
                                                     </h3>
-                            {season.is_active && (
-                                                        <Badge className="bg-primary text-white border-0">
-                                                            Saison Active
+                                                    {season.is_active && (
+                                                        <Badge className="mt-1 bg-white/20 text-white border-0 text-xs">
+                                                            Active
                                                         </Badge>
                                                     )}
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Dates */}
-                                        <div className="mb-6 p-5 bg-primary/80 rounded-xl text-white">
-                                            <div className="flex items-center gap-4">
-                                                <Calendar className="w-6 h-6 text-white" />
-                                                <div className="flex items-center gap-3 flex-1">
-                                                    <span className="text-sm font-bold">
-                                                        {formatDate(season.start_date)}
-                                                    </span>
-                                                    <ArrowRight className="w-4 h-4" />
-                                                    <span className="text-sm font-bold">
-                                                        {formatDate(season.end_date)}
-                                            </span>
-                                                </div>
-                                    </div>
-                                </div>
-                            
-                                        {/* Description */}
-                                    {season.description && (
-                                            <p className="text-sm text-muted-foreground line-clamp-2 mb-6 leading-relaxed">
-                                                {season.description}
-                                        </p>
-                                )}
-                                
-                                        {/* Footer */}
-                                        <div className="flex items-center justify-between pt-6 border-t border-primary/20">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-primary/80 rounded-lg">
-                                                    <Users className="w-5 h-5 text-white" />
-                                    </div>
-                                                <span className="text-base font-black text-foreground">
+                                        {/* Dates - Compact */}
+                                        <div className="mb-4 p-3 bg-white/10 rounded-lg backdrop-blur-sm">
+                                            <div className="flex items-center gap-2 text-white/90 text-xs">
+                                                <Calendar className="w-4 h-4 shrink-0" />
+                                                <span className="font-semibold truncate">
+                                                    {formatDate(season.start_date)}
+                                                </span>
+                                                <ArrowRight className="w-3 h-3 shrink-0" />
+                                                <span className="font-semibold truncate">
+                                                    {formatDate(season.end_date)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Footer - Compact */}
+                                        <div className="flex items-center justify-between pt-3 border-t border-white/20">
+                                            <div className="flex items-center gap-2">
+                                                <Users className="w-4 h-4 text-white/80" />
+                                                <span className="text-sm font-bold text-white">
                                                     {season.teams_count || 0} équipe{season.teams_count !== 1 ? 's' : ''}
                                                 </span>
-                                </div>
-                                            <div className="flex items-center gap-2">
-                                        <Button 
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <Button 
                                                     variant="ghost" 
-                                            size="sm" 
+                                                    size="sm" 
                                                     onClick={(e) => { 
                                                         e.stopPropagation(); 
                                                         handleEdit(season); 
                                                     }}
-                                                    className="h-10 w-10 p-0 hover:bg-primary/80 hover:text-white"
-                                        >
-                                                    <Edit className="w-4 h-4" />
-                                            </Button>
-                                        <Button 
+                                                    className="h-8 w-8 p-0 hover:bg-white/20 text-white"
+                                                >
+                                                    <Edit className="w-3.5 h-3.5" />
+                                                </Button>
+                                                <Button 
                                                     variant="ghost" 
-                                            size="sm" 
+                                                    size="sm" 
                                                     onClick={(e) => { 
                                                         e.stopPropagation(); 
                                                         handleDelete(season.id); 
                                                     }}
-                                                    className="h-10 w-10 p-0 hover:bg-destructive/80 hover:text-white text-destructive"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </Button>
+                                                    className="h-8 w-8 p-0 hover:bg-white/20 text-white/80"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </Button>
                                             </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
                     ) : (
                         <Card className="border-2 border-dashed border-primary/20 bg-white">
                             <CardContent className="py-20 text-center">
