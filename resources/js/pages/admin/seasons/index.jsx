@@ -118,7 +118,7 @@ export default function SeasonsIndex({ seasons }) {
     return (
         <AdminLayout>
             <Head title="Saisons" />
-            <div className="min-h-screen bg-primary/80">
+            <div className="min-h-screen ">
                 <div className="space-y-6 p-6">
                     {/* Header */}
                     <div className="bg-primary rounded-xl p-8 text-white shadow-xl">
@@ -220,7 +220,7 @@ export default function SeasonsIndex({ seasons }) {
 
                     {/* Seasons Cards - Improved UI */}
                     {filteredSeasons.length > 0 ? (
-                        <div className="grid gap-6 md:grid-cols-3">
+                        <div className="grid gap-6 md:grid-cols-2">
                             {filteredSeasons.map((season) => (
                         <Card 
                             key={season.id}

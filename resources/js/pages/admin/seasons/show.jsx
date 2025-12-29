@@ -83,7 +83,7 @@ export default function SeasonsShow({ season }) {
     return (
         <AdminLayout>
             <Head title={season.name} />
-            <div className="min-h-screen bg-primary/80">
+            <div className="min-h-screen ">
                 <div className="space-y-6 p-6">
                     {/* Hero Header - FPL Style */}
                     <div className="bg-primary rounded-xl p-8 text-white shadow-xl">
@@ -157,7 +157,7 @@ export default function SeasonsShow({ season }) {
                 </div>
 
                     {/* Category Filter - Alpha Background */}
-                    <Card className="bg-primary/80 border-primary/20">
+                    <Card className="bg-primary/90 border-primary/20">
                         <CardContent className="p-6">
                         <div className="flex items-center gap-4 flex-wrap">
                                 <label className="text-sm font-semibold text-white">Filtrer par catégorie:</label>
@@ -204,7 +204,7 @@ export default function SeasonsShow({ season }) {
 
                     {/* Calendar Tab */}
                     <TabsContent value="calendar" className="space-y-4">
-                            <Card className="bg-primary/80 border-primary/20">
+                            <Card className="bg-primary border-primary/20">
                                 <CardHeader className="bg-primary text-white">
                                     <CardTitle className="text-white flex items-center gap-2">
                                     <CalendarIcon className="w-5 h-5" />
@@ -285,7 +285,7 @@ export default function SeasonsShow({ season }) {
 
                     {/* Standings Tab */}
                     <TabsContent value="standings" className="space-y-4">
-                            <Card className="bg-primary/80 border-primary/20">
+                            <Card className="bg-primary border-primary/20">
                                 <CardHeader className="bg-primary text-white">
                                     <CardTitle className="text-white flex items-center gap-2">
                                     <TrendingUp className="w-5 h-5" />
@@ -352,7 +352,7 @@ export default function SeasonsShow({ season }) {
 
                         {/* Statistics Tab */}
                         <TabsContent value="statistics" className="space-y-4">
-                            <Card className="bg-primary/80 border-primary/20">
+                            <Card className="bg-primary border-primary/20">
                                 <CardHeader className="bg-primary text-white">
                                     <CardTitle className="text-white flex items-center gap-2">
                                         <Award className="w-5 h-5" />
