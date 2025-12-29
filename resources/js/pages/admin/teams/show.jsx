@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import AdminLayout from '../../../layouts/AdminLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { 
@@ -13,7 +13,6 @@ import {
     Baby, UserCircle2, TrendingUp, Search, Plus, X, UserPlus
 } from 'lucide-react';
 
-// Category icons mapping
 const categoryIcons = {
     'U13': Baby,
     'U15': UserCircle2,
@@ -21,19 +20,12 @@ const categoryIcons = {
     'Senior': Trophy,
 };
 
-const categoryColors = {
-    'U13': 'bg-blue-100 text-blue-600 border-blue-200',
-    'U15': 'bg-purple-100 text-purple-600 border-purple-200',
-    'U17': 'bg-green-100 text-green-600 border-green-200',
-    'Senior': 'bg-primary/10 text-primary border-primary/20',
-};
-
 export default function TeamsShow({ team, availablePlayers = [] }) {
     const [assignDialogOpen, setAssignDialogOpen] = useState(false);
     const [selectedPlayerId, setSelectedPlayerId] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
 
-    const { post, processing } = useForm({
+    const { data, setData, post, processing } = useForm({
         player_id: '',
     });
 
@@ -63,18 +55,17 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
     );
 
     const IconComponent = categoryIcons[team.category] || categoryIcons['Senior'];
-    const categoryColor = categoryColors[team.category] || categoryColors['Senior'];
 
     return (
         <AdminLayout>
             <Head title={team.name} />
             <div className="space-y-6">
-                {/* Header */}
-                <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 backdrop-blur-sm">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent"></div>
+                {/* Header with Alpha Background */}
+                <div className="relative overflow-hidden rounded-xl bg-primary text-white p-6">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/90 to-primary"></div>
                     <div className="relative">
                         <Link href="/admin/teams">
-                            <Button variant="ghost" size="sm" className="mb-4">
+                            <Button variant="ghost" size="sm" className="mb-4 text-white hover:bg-white/20">
                                 <ArrowLeft className="w-4 h-4 mr-2" />
                                 Retour
                             </Button>
@@ -82,17 +73,17 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
                         <div className="flex items-center justify-between flex-wrap gap-4">
                             <div className="flex-1">
                                 <div className="flex items-center gap-3 mb-2">
-                                    <div className={`p-2 rounded-lg ${categoryColor}`}>
-                                        <IconComponent className="w-6 h-6" />
+                                    <div className="p-3 rounded-lg bg-white/20">
+                                        <IconComponent className="w-8 h-8 text-white" />
                                     </div>
                                     <div>
-                                        <h1 className="text-3xl font-black uppercase italic text-dark">{team.name}</h1>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <Badge variant="outline" className={categoryColor}>
+                                        <h1 className="text-3xl font-black uppercase italic text-white">{team.name}</h1>
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <Badge className="bg-white/20 text-white border-white/30">
                                                 {team.category}
                                             </Badge>
                                             {team.is_active && (
-                                                <Badge variant="default" className="bg-green-500/90 text-white">
+                                                <Badge className="bg-green-500 text-white">
                                                     Active
                                                 </Badge>
                                             )}
@@ -100,14 +91,14 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
                                     </div>
                                 </div>
                                 {team.season && (
-                                    <p className="text-muted-foreground flex items-center gap-2 mt-2">
+                                    <p className="text-white/90 flex items-center gap-2 mt-2">
                                         <Calendar className="w-4 h-4" />
                                         {team.season.name}
                                     </p>
                                 )}
                             </div>
                             <Link href={`/admin/teams/${team.id}/edit`}>
-                                <Button>
+                                <Button className="bg-white text-primary hover:bg-white/90">
                                     <Edit className="w-4 h-4 mr-2" />
                                     Modifier
                                 </Button>
@@ -116,13 +107,13 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
                     </div>
                 </div>
 
-                {/* Description */}
+                {/* Description with Alpha Background */}
                 {team.description && (
-                    <Card className="bg-card/60 backdrop-blur-sm border-border/50">
+                    <Card className="bg-primary/10 border-primary/20">
                         <CardHeader>
-                            <CardTitle>Description</CardTitle>
+                            <CardTitle className="text-white">Description</CardTitle>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="bg-white">
                             <p className="text-muted-foreground leading-relaxed">{team.description}</p>
                         </CardContent>
                     </Card>
@@ -130,12 +121,12 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
 
                 {/* Tabs */}
                 <Tabs defaultValue="players" className="space-y-4">
-                    <TabsList className="bg-muted/50 backdrop-blur-sm">
-                        <TabsTrigger value="players" className="flex items-center gap-2">
+                    <TabsList className="bg-primary/10 border-primary/20">
+                        <TabsTrigger value="players" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
                             <Users className="w-4 h-4" />
                             Joueuses ({team.players?.length || 0})
                         </TabsTrigger>
-                        <TabsTrigger value="info" className="flex items-center gap-2">
+                        <TabsTrigger value="info" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
                             <Trophy className="w-4 h-4" />
                             Informations
                         </TabsTrigger>
@@ -143,16 +134,16 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
 
                     {/* Players Tab */}
                     <TabsContent value="players" className="space-y-4">
-                        <Card className="bg-card/60 backdrop-blur-sm border-border/50">
-                            <CardHeader>
+                        <Card className="bg-primary/10 border-primary/20">
+                            <CardHeader className="bg-primary text-white">
                                 <div className="flex items-center justify-between">
-                                    <CardTitle className="flex items-center gap-2">
+                                    <CardTitle className="text-white flex items-center gap-2">
                                         <Users className="w-5 h-5" />
                                         Joueuses de l'équipe
                                     </CardTitle>
                                     <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
                                         <DialogTrigger asChild>
-                                            <Button className="bg-primary hover:bg-primary/90">
+                                            <Button className="bg-white text-primary hover:bg-white/90">
                                                 <UserPlus className="w-4 h-4 mr-2" />
                                                 Assigner une joueuse
                                             </Button>
@@ -160,9 +151,6 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
                                         <DialogContent className="max-w-md">
                                             <DialogHeader>
                                                 <DialogTitle>Assigner une joueuse</DialogTitle>
-                                                <DialogDescription>
-                                                    Sélectionnez une joueuse à ajouter à cette équipe
-                                                </DialogDescription>
                                             </DialogHeader>
                                             <div className="space-y-4 mt-4">
                                                 <div className="relative">
@@ -223,7 +211,7 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
                                                     <Button
                                                         onClick={handleAssignPlayer}
                                                         disabled={!selectedPlayerId || processing}
-                                                        className="bg-primary hover:bg-primary/90"
+                                                        className="bg-primary hover:bg-primary/90 text-white"
                                                     >
                                                         {processing ? 'Assignation...' : 'Assigner'}
                                                     </Button>
@@ -233,13 +221,13 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
                                     </Dialog>
                                 </div>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="bg-white">
                                 {team.players && team.players.length > 0 ? (
                                     <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                                         {team.players.map((player) => (
                                             <div
                                                 key={player.id}
-                                                className="p-4 rounded-lg border border-border/50 bg-white/50 backdrop-blur-sm hover:shadow-md transition-all"
+                                                className="p-4 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all"
                                             >
                                                 <div className="flex items-start justify-between gap-3">
                                                     <div className="flex-1 min-w-0">
@@ -249,7 +237,7 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
                                                             </h4>
                                                         </div>
                                                         {player.position && (
-                                                            <Badge variant="outline" className="text-xs">
+                                                            <Badge variant="outline" className="text-xs bg-white">
                                                                 {player.position}
                                                             </Badge>
                                                         )}
@@ -263,7 +251,7 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
                                                         <X className="w-4 h-4" />
                                                     </Button>
                                                 </div>
-                                                <div className="mt-3 pt-3 border-t border-border/30">
+                                                <div className="mt-3 pt-3 border-t border-primary/20">
                                                     <Link href={`/admin/players/${player.id}`}>
                                                         <Button variant="outline" size="sm" className="w-full">
                                                             Voir le profil
@@ -279,7 +267,7 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
                                         <p className="text-muted-foreground mb-4">Aucune joueuse assignée</p>
                                         <Button
                                             onClick={() => setAssignDialogOpen(true)}
-                                            className="bg-primary hover:bg-primary/90"
+                                            className="bg-primary hover:bg-primary/90 text-white"
                                         >
                                             <UserPlus className="w-4 h-4 mr-2" />
                                             Assigner une joueuse
@@ -293,14 +281,14 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
                     {/* Info Tab */}
                     <TabsContent value="info" className="space-y-4">
                         <div className="grid gap-4 md:grid-cols-2">
-                            <Card className="bg-card/60 backdrop-blur-sm border-border/50">
-                                <CardHeader>
-                                    <CardTitle>Informations Générales</CardTitle>
+                            <Card className="bg-primary/10 border-primary/20">
+                                <CardHeader className="bg-primary text-white">
+                                    <CardTitle className="text-white">Informations Générales</CardTitle>
                                 </CardHeader>
-                                <CardContent className="space-y-3">
+                                <CardContent className="bg-white space-y-3 pt-6">
                                     <div>
                                         <p className="text-sm text-muted-foreground">Catégorie</p>
-                                        <Badge variant="outline" className={categoryColor}>
+                                        <Badge className="mt-1 bg-primary/20 text-primary border-primary/30">
                                             <IconComponent className="w-3 h-3 mr-1" />
                                             {team.category}
                                         </Badge>
@@ -313,7 +301,7 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
                                     )}
                                     <div>
                                         <p className="text-sm text-muted-foreground">Statut</p>
-                                        <Badge variant={team.is_active ? 'default' : 'secondary'}>
+                                        <Badge className={team.is_active ? 'bg-green-500 text-white' : 'bg-gray-500 text-white'}>
                                             {team.is_active ? 'Active' : 'Inactive'}
                                         </Badge>
                                     </div>
@@ -327,16 +315,16 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
                             </Card>
 
                             {team.staff && team.staff.length > 0 && (
-                                <Card className="bg-card/60 backdrop-blur-sm border-border/50">
-                                    <CardHeader>
-                                        <CardTitle>Staff</CardTitle>
+                                <Card className="bg-primary/10 border-primary/20">
+                                    <CardHeader className="bg-primary text-white">
+                                        <CardTitle className="text-white">Staff</CardTitle>
                                     </CardHeader>
-                                    <CardContent>
+                                    <CardContent className="bg-white">
                                         <div className="space-y-2">
                                             {team.staff.map((member) => (
                                                 <div
                                                     key={member.id}
-                                                    className="p-2 rounded-lg border border-border/30"
+                                                    className="p-3 rounded-lg border border-primary/20 bg-primary/5"
                                                 >
                                                     <p className="font-medium">
                                                         {member.first_name} {member.last_name}

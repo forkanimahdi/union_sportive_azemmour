@@ -16,7 +16,7 @@ class TeamController extends Controller
         $teams = Team::with(['season', 'players'])
             ->orderBy('category')
             ->orderBy('name')
-            ->paginate(15)
+            ->paginate(50)
             ->through(function ($team) {
                 return [
                     'id' => $team->id,
