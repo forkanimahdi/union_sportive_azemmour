@@ -12,6 +12,7 @@ class TeamController extends Controller
 {
     public function index(Request $request)
     {
+        // Load all teams for frontend filtering
         $teams = Team::with(['season', 'players'])
             ->orderBy('category')
             ->orderBy('name')
@@ -27,11 +28,18 @@ class TeamController extends Controller
                     ] : null,
                     'is_active' => $team->is_active,
                     'players_count' => $team->players()->count(),
+                    'description' => $team->description,
                 ];
             });
 
+        $seasons = Season::orderBy('start_date', 'desc')->get()->map(function($s) {
+            return ['id' => $s->id, 'name' => $s->name];
+        });
+
         return Inertia::render('admin/teams/index', [
             'teams' => $teams,
+            'seasons' => $seasons,
+            'filters' => $request->only(['search', 'category', 'season_id', 'is_active']),
         ]);
     }
 
@@ -71,6 +79,23 @@ class TeamController extends Controller
     {
         $team->load(['season', 'players', 'staff', 'trainings', 'matches']);
         
+        // Get available players (not assigned to any team or assigned to this team)
+        $availablePlayers = \App\Models\Player::where(function($query) use ($team) {
+            $query->whereNull('team_id')
+                  ->orWhere('team_id', $team->id);
+        })
+        ->where('is_active', true)
+        ->orderBy('last_name')
+        ->get()
+        ->map(function($p) {
+            return [
+                'id' => $p->id,
+                'first_name' => $p->first_name,
+                'last_name' => $p->last_name,
+                'position' => $p->position,
+            ];
+        });
+        
         return Inertia::render('admin/teams/show', [
             'team' => [
                 'id' => $team->id,
@@ -82,20 +107,52 @@ class TeamController extends Controller
                     'id' => $team->season->id,
                     'name' => $team->season->name,
                 ] : null,
-                'players' => $team->players->map(fn($p) => [
-                    'id' => $p->id,
-                    'first_name' => $p->first_name,
-                    'last_name' => $p->last_name,
-                    'position' => $p->position,
-                ]),
-                'staff' => $team->staff->map(fn($s) => [
-                    'id' => $s->id,
-                    'first_name' => $s->first_name,
-                    'last_name' => $s->last_name,
-                    'role' => $s->pivot->role,
-                ]),
+                'players' => $team->players->map(function($p) {
+                    return [
+                        'id' => $p->id,
+                        'first_name' => $p->first_name,
+                        'last_name' => $p->last_name,
+                        'position' => $p->position,
+                    ];
+                }),
+                'staff' => $team->staff->map(function($s) {
+                    return [
+                        'id' => $s->id,
+                        'first_name' => $s->first_name,
+                        'last_name' => $s->last_name,
+                        'role' => $s->pivot->role,
+                    ];
+                }),
             ],
+            'availablePlayers' => $availablePlayers,
         ]);
+    }
+
+    public function assignPlayer(Request $request, Team $team)
+    {
+        $validated = $request->validate([
+            'player_id' => 'required|exists:players,id',
+        ]);
+
+        $player = \App\Models\Player::findOrFail($validated['player_id']);
+        $player->team_id = $team->id;
+        $player->save();
+
+        return redirect()->back()->with('success', 'Joueuse assignée avec succès');
+    }
+
+    public function removePlayer(Team $team, $playerId)
+    {
+        $player = \App\Models\Player::findOrFail($playerId);
+        
+        if ($player->team_id !== $team->id) {
+            return redirect()->back()->with('error', 'Cette joueuse n\'appartient pas à cette équipe');
+        }
+
+        $player->team_id = null;
+        $player->save();
+
+        return redirect()->back()->with('success', 'Joueuse retirée de l\'équipe avec succès');
     }
 
     public function edit(Team $team)

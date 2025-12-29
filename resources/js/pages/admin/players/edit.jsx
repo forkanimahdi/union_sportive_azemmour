@@ -92,12 +92,12 @@ export default function PlayersEdit({ player, teams }) {
 
                                 <div className="space-y-2">
                                     <Label htmlFor="position">Poste</Label>
-                                    <Select value={data.position} onValueChange={(value) => setData('position', value)}>
+                                    <Select value={data.position || 'none'} onValueChange={(value) => setData('position', value === 'none' ? '' : value)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Sélectionner" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="">Aucun</SelectItem>
+                                            <SelectItem value="none">Aucun</SelectItem>
                                             <SelectItem value="gardien">Gardien</SelectItem>
                                             <SelectItem value="defenseur">Défenseur</SelectItem>
                                             <SelectItem value="milieu">Milieu</SelectItem>
@@ -120,12 +120,12 @@ export default function PlayersEdit({ player, teams }) {
 
                             <div className="space-y-2">
                                 <Label htmlFor="team_id">Équipe</Label>
-                                <Select value={data.team_id} onValueChange={(value) => setData('team_id', value)}>
+                                <Select value={data.team_id || 'none'} onValueChange={(value) => setData('team_id', value === 'none' ? '' : value)}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Sélectionner une équipe" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">Aucune équipe</SelectItem>
+                                        <SelectItem value="none">Aucune équipe</SelectItem>
                                         {teams.map((team) => (
                                             <SelectItem key={team.id} value={team.id}>
                                                 {team.name}

@@ -118,12 +118,12 @@ export default function PlayersCreate({ teams }) {
 
                             <div className="space-y-2">
                                 <Label htmlFor="team_id">Équipe</Label>
-                                <Select value={data.team_id} onValueChange={(value) => setData('team_id', value)}>
+                                <Select value={data.team_id || 'none'} onValueChange={(value) => setData('team_id', value === 'none' ? '' : value)}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Sélectionner une équipe" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">Aucune équipe</SelectItem>
+                                        <SelectItem value="none">Aucune équipe</SelectItem>
                                         {teams.map((team) => (
                                             <SelectItem key={team.id} value={team.id}>
                                                 {team.name}

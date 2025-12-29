@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\ImageRightController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\EquipmentController;
+use App\Http\Controllers\Admin\OpponentTeamController;
 
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard - accessible to all authenticated users
@@ -31,6 +32,14 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     // Teams - Admin & Technical Director
     Route::middleware('role:admin,technical_director')->group(function () {
         Route::resource('teams', TeamController::class);
+        Route::post('teams/{team}/assign-player', [TeamController::class, 'assignPlayer'])->name('teams.assign-player');
+        Route::delete('teams/{team}/players/{player}', [TeamController::class, 'removePlayer'])->name('teams.remove-player');
+    });
+    
+    // Opponent Teams & Leaderboard - Admin & Technical Director
+    Route::middleware('role:admin,technical_director')->group(function () {
+        Route::resource('opponent-teams', OpponentTeamController::class);
+        Route::post('opponent-teams/{opponentTeam}/update-rank', [OpponentTeamController::class, 'updateRank'])->name('opponent-teams.update-rank');
     });
     
     // Staff - Admin & Technical Director

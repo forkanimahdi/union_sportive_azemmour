@@ -15,7 +15,8 @@ import {
     Package,
     UserCog,
     BookOpen,
-    Folder
+    Folder,
+    Award
 } from 'lucide-react';
 import AppLogo from './app-logo';
 
@@ -42,6 +43,12 @@ export function AppSidebar() {
             href: '/admin/teams',
             icon: Users,
             roles: ['admin', 'technical_director', 'coach'],
+        },
+        {
+            title: 'Équipes Adverses & Classement',
+            href: '/admin/opponent-teams',
+            icon: Award,
+            roles: ['admin', 'technical_director'],
         },
         {
             title: 'Joueuses',

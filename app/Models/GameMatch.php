@@ -19,6 +19,8 @@ class GameMatch extends Model
         'competition_id',
         'team_id',
         'opponent',
+        'opponent_team_id',
+        'category',
         'scheduled_at',
         'venue',
         'type',
@@ -44,6 +46,11 @@ class GameMatch extends Model
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
+    }
+
+    public function opponentTeam(): BelongsTo
+    {
+        return $this->belongsTo(OpponentTeam::class, 'opponent_team_id');
     }
 
     public function events(): HasMany

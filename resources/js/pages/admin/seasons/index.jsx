@@ -1,12 +1,67 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import AdminLayout from '../../../layouts/AdminLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Edit, Trash2, Eye, Calendar, Users, Trophy, TrendingUp, Sparkles } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Edit, Trash2, Eye, Calendar, Users, Trophy, TrendingUp, Sparkles, Search, Filter, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
-export default function SeasonsIndex({ seasons }) {
+export default function SeasonsIndex({ seasons, filters }) {
+    const { data, setData, get } = useForm({
+        search: filters?.search || '',
+        is_active: filters?.is_active ?? '',
+    });
+
+    const timeoutRef = useRef(null);
+
+    // Real-time filtering with debounce
+    useEffect(() => {
+        // Clear previous timeout
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+
+        // Set new timeout for search (debounced)
+        if (data.search !== (filters?.search || '')) {
+            timeoutRef.current = setTimeout(() => {
+                get('/admin/seasons', {
+                    preserveState: true,
+                    preserveScroll: true,
+                    only: ['seasons', 'filters'],
+                });
+            }, 300);
+        } else {
+            // For non-search filters, apply immediately
+            if (data.is_active !== (filters?.is_active ?? '')) {
+                get('/admin/seasons', {
+                    preserveState: true,
+                    preserveScroll: true,
+                    only: ['seasons', 'filters'],
+                });
+            }
+        }
+
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, [data.search, data.is_active]);
+
+    const handleReset = () => {
+        setData({
+            search: '',
+            is_active: '',
+        });
+        get('/admin/seasons', {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const hasActiveFilters = data.search || data.is_active !== '';
     const handleDelete = (id) => {
         if (confirm('Êtes-vous sûr de vouloir supprimer cette saison ?')) {
             router.delete(`/admin/seasons/${id}`);
@@ -35,23 +90,106 @@ export default function SeasonsIndex({ seasons }) {
                 <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 backdrop-blur-sm">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent"></div>
                     <div className="relative flex items-center justify-between flex-wrap gap-4">
-                        <div>
+                    <div>
                             <div className="flex items-center gap-3 mb-2">
                                 <div className="p-2 rounded-lg bg-primary/10 backdrop-blur-sm">
                                     <Trophy className="w-6 h-6 text-primary" />
                                 </div>
-                                <h1 className="text-3xl font-black uppercase italic text-dark">Saisons</h1>
+                        <h1 className="text-3xl font-black uppercase italic text-dark">Saisons</h1>
                             </div>
                             <p className="text-muted-foreground">Gestion des saisons sportives de votre club</p>
-                        </div>
-                        <Link href="/admin/seasons/create">
+                    </div>
+                    <Link href="/admin/seasons/create">
                             <Button className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
-                                <Plus className="w-4 h-4 mr-2" />
-                                Nouvelle Saison
-                            </Button>
-                        </Link>
+                            <Plus className="w-4 h-4 mr-2" />
+                            Nouvelle Saison
+                        </Button>
+                    </Link>
                     </div>
                 </div>
+
+                {/* Search and Filters */}
+                <Card className="bg-card/60 backdrop-blur-sm border-border/50">
+                            <CardHeader>
+                        <div className="flex items-center justify-between flex-wrap gap-3">
+                            <CardTitle className="flex items-center gap-2">
+                                <Filter className="w-5 h-5 text-primary" />
+                                Recherche et Filtres
+                            </CardTitle>
+                            {hasActiveFilters && (
+                                <div className="flex items-center gap-2">
+                                    {/* Active Filters Badges */}
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        {data.search && (
+                                            <Badge variant="secondary" className="gap-1">
+                                                <Search className="w-3 h-3" />
+                                                {data.search}
+                                                <X 
+                                                    className="w-3 h-3 cursor-pointer hover:text-destructive" 
+                                                    onClick={() => {
+                                                        setData('search', '');
+                                                    }}
+                                                />
+                                            </Badge>
+                                        )}
+                                        {data.is_active !== '' && (
+                                            <Badge variant="secondary" className="gap-1">
+                                                {data.is_active === '1' ? 'Active' : 'Inactive'}
+                                                <X 
+                                                    className="w-3 h-3 cursor-pointer hover:text-destructive" 
+                                                    onClick={() => {
+                                                        setData('is_active', '');
+                                                    }}
+                                                />
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    <Button variant="ghost" size="sm" onClick={handleReset}>
+                                        <X className="w-4 h-4 mr-2" />
+                                        Réinitialiser
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-muted-foreground">Recherche</label>
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Nom de la saison..."
+                                        value={data.search}
+                                        onChange={(e) => setData('search', e.target.value)}
+                                        className="pl-10 bg-white/50 backdrop-blur-sm"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-muted-foreground">Statut</label>
+                                <Select value={data.is_active === '' ? 'all' : data.is_active} onValueChange={(value) => setData('is_active', value === 'all' ? '' : value)}>
+                                    <SelectTrigger className="bg-white/50 backdrop-blur-sm">
+                                        <SelectValue placeholder="Tous les statuts" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Tous les statuts</SelectItem>
+                                        <SelectItem value="1">Active</SelectItem>
+                                        <SelectItem value="0">Inactive</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="flex items-end">
+                                {hasActiveFilters && (
+                                    <Button onClick={handleReset} variant="outline" className="w-full">
+                                        <X className="w-4 h-4 mr-2" />
+                                        Réinitialiser
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
 
                 {/* Stats Overview */}
                 {seasons.data.length > 0 && (
@@ -102,12 +240,28 @@ export default function SeasonsIndex({ seasons }) {
                     </div>
                 )}
 
+                {/* Results Count */}
+                {seasons.data.length > 0 && (
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <p>
+                            <span className="font-semibold text-foreground">{seasons.data.length}</span> saison{seasons.data.length > 1 ? 's' : ''} trouvée{seasons.data.length > 1 ? 's' : ''}
+                        </p>
+                        {hasActiveFilters && (
+                            <div className="flex items-center gap-2">
+                                <Filter className="w-4 h-4" />
+                                <span>Filtres actifs</span>
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {/* Seasons Grid */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {seasons.data.map((season) => (
+                    {seasons.data.map((season, index) => (
                         <Card 
                             key={season.id}
-                            className="group relative overflow-hidden bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border-border/50 hover:border-primary/40 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1"
+                            className="group relative overflow-hidden bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border-border/50 hover:border-primary/40 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1 animate-in fade-in slide-in-from-bottom-4"
+                            style={{ animationDelay: `${index * 50}ms` }}
                         >
                             {/* Active Badge Glow Effect */}
                             {season.is_active && (
@@ -149,7 +303,7 @@ export default function SeasonsIndex({ seasons }) {
                             </CardHeader>
                             
                             <CardContent className="pt-0 space-y-4 relative">
-                                {season.description && (
+                                    {season.description && (
                                     <div className="relative">
                                         <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
                                             {truncateDescription(season.description)}
@@ -168,34 +322,34 @@ export default function SeasonsIndex({ seasons }) {
 
                                 {/* Action Buttons */}
                                 <div className="flex gap-2 pt-2 border-t border-border/50">
-                                    <Link href={`/admin/seasons/${season.id}`} className="flex-1">
+                                        <Link href={`/admin/seasons/${season.id}`} className="flex-1">
                                         <Button 
                                             variant="outline" 
                                             size="sm" 
                                             className="w-full bg-primary/5 hover:bg-primary/10 border-primary/20 hover:border-primary/30 text-primary hover:text-primary font-medium transition-all"
                                         >
-                                            <Eye className="w-4 h-4 mr-2" />
-                                            Voir
-                                        </Button>
-                                    </Link>
-                                    <Link href={`/admin/seasons/${season.id}/edit`} className="flex-1">
+                                                <Eye className="w-4 h-4 mr-2" />
+                                                Voir
+                                            </Button>
+                                        </Link>
+                                        <Link href={`/admin/seasons/${season.id}/edit`} className="flex-1">
                                         <Button 
                                             variant="outline" 
                                             size="sm" 
                                             className="w-full hover:bg-muted/50"
                                         >
-                                            <Edit className="w-4 h-4 mr-2" />
-                                            Modifier
-                                        </Button>
-                                    </Link>
-                                    <Button 
-                                        variant="destructive" 
-                                        size="sm"
-                                        onClick={() => handleDelete(season.id)}
+                                                <Edit className="w-4 h-4 mr-2" />
+                                                Modifier
+                                            </Button>
+                                        </Link>
+                                        <Button 
+                                            variant="destructive" 
+                                            size="sm"
+                                            onClick={() => handleDelete(season.id)}
                                         className="shrink-0 hover:shadow-lg hover:shadow-destructive/20 transition-all"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </Button>
                                 </div>
                             </CardContent>
                         </Card>
@@ -211,16 +365,28 @@ export default function SeasonsIndex({ seasons }) {
                                     <Trophy className="w-12 h-12 text-muted-foreground/50" />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-semibold text-foreground mb-1">Aucune saison créée</h3>
+                                    <h3 className="text-lg font-semibold text-foreground mb-1">
+                                        {hasActiveFilters ? 'Aucune saison trouvée' : 'Aucune saison créée'}
+                                    </h3>
                                     <p className="text-sm text-muted-foreground mb-6">
-                                        Commencez par créer votre première saison sportive
+                                        {hasActiveFilters 
+                                            ? 'Aucun résultat ne correspond à vos critères de recherche'
+                                            : 'Commencez par créer votre première saison sportive'}
                                     </p>
-                                    <Link href="/admin/seasons/create">
-                                        <Button className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
-                                            <Plus className="w-4 h-4 mr-2" />
-                                            Créer la première saison
+                                    {!hasActiveFilters && (
+                                        <Link href="/admin/seasons/create">
+                                            <Button className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
+                                                <Plus className="w-4 h-4 mr-2" />
+                                                Créer la première saison
+                                            </Button>
+                            </Link>
+                                    )}
+                                    {hasActiveFilters && (
+                                        <Button onClick={handleReset} variant="outline">
+                                            <X className="w-4 h-4 mr-2" />
+                                            Réinitialiser les filtres
                                         </Button>
-                                    </Link>
+                                    )}
                                 </div>
                             </div>
                         </CardContent>

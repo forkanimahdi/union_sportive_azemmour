@@ -11,7 +11,9 @@ class SeasonController extends Controller
 {
     public function index(Request $request)
     {
-        $seasons = Season::orderBy('start_date', 'desc')
+        // Load all seasons for frontend filtering
+        $seasons = Season::query()
+            ->orderBy('start_date', 'desc')
             ->paginate(15)
             ->through(function ($season) {
                 return [
@@ -27,6 +29,7 @@ class SeasonController extends Controller
 
         return Inertia::render('admin/seasons/index', [
             'seasons' => $seasons,
+            'filters' => $request->only(['search', 'is_active']),
         ]);
     }
 
