@@ -60,6 +60,7 @@ class OpponentTeamController extends Controller
                 return [
                     'id' => $team->id,
                     'name' => $team->name,
+                    'category' => $team->category,
                     'logo' => $team->logo,
                     'rank' => $team->rank,
                     'matches_played' => $matchesPlayed ?: ($team->matches_played ?? 0),
@@ -155,6 +156,7 @@ class OpponentTeamController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'category' => 'required|in:U13,U15,U17,Senior',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 

@@ -5,11 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trophy, Upload } from 'lucide-react';
 
 export default function OpponentTeamCreate() {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
+        category: '',
         logo: null,
     });
 
@@ -66,6 +68,22 @@ export default function OpponentTeamCreate() {
                                     placeholder="Nom de l'équipe adverse"
                                 />
                                 {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="category">Catégorie *</Label>
+                                <Select value={data.category} onValueChange={(value) => setData('category', value)}>
+                                    <SelectTrigger className="bg-white/50 backdrop-blur-sm">
+                                        <SelectValue placeholder="Sélectionner une catégorie" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="U13">U13</SelectItem>
+                                        <SelectItem value="U15">U15</SelectItem>
+                                        <SelectItem value="U17">U17</SelectItem>
+                                        <SelectItem value="Senior">Senior</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {errors.category && <p className="text-sm text-destructive">{errors.category}</p>}
                             </div>
 
                             <div className="space-y-2">

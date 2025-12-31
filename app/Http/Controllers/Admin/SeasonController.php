@@ -140,7 +140,7 @@ class SeasonController extends Controller
             'fees_pending' => 0, // Placeholder
             'total_expected' => 0, // Placeholder
         ];
-
+        
         return Inertia::render('admin/seasons/show', [
             'season' => [
                 'id' => $season->id,
@@ -151,16 +151,16 @@ class SeasonController extends Controller
                 'description' => $season->description,
                 'teams' => $season->teams->map(function($team) {
                     return [
-                        'id' => $team->id,
-                        'name' => $team->name,
-                        'category' => $team->category,
+                    'id' => $team->id,
+                    'name' => $team->name,
+                    'category' => $team->category,
                     ];
                 }),
                 'competitions' => $season->competitions->map(function($comp) {
                     return [
-                        'id' => $comp->id,
-                        'name' => $comp->name,
-                        'type' => $comp->type,
+                    'id' => $comp->id,
+                    'name' => $comp->name,
+                    'type' => $comp->type,
                     ];
                 }),
                 'categories' => $categories,

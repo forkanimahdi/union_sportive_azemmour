@@ -218,59 +218,70 @@ export default function SeasonsIndex({ seasons }) {
                     </div>
                 )}
 
-                    {/* Seasons Cards - Compact Design */}
+                    {/* Seasons Cards - Season Theme Design */}
                     {filteredSeasons.length > 0 ? (
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {filteredSeasons.map((season) => (
                                 <Card 
                                     key={season.id}
-                                    className="group relative overflow-hidden border-0 shadow-lg bg-primary transition-all duration-300 cursor-pointer"
+                                    className="group relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-primary via-primary/95 to-primary transition-all duration-300 cursor-pointer hover:shadow-2xl hover:scale-[1.02]"
                                     onClick={() => router.visit(`/admin/seasons/${season.id}`)}
                                 >
-                                    {/* Top accent bar */}
-                                    <div className={`h-1.5 ${season.is_active ? 'bg-white' : 'bg-white/60'}`}></div>
+                                    {/* Seasonal Pattern Overlay */}
+                                    <div className="absolute inset-0 opacity-10">
+                                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_white_1px,_transparent_1px)] bg-[length:20px_20px]"></div>
+                                    </div>
                                     
-                                    <CardContent className="p-5">
-                                        {/* Header - Compact */}
-                                        <div className="flex items-start justify-between mb-4">
-                                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                <div className="p-2.5 rounded-lg bg-white/20 backdrop-blur-sm shrink-0">
-                                                    <Trophy className="w-5 h-5 text-white" />
+                                    {/* Top gradient accent bar */}
+                                    <div className={`h-2 bg-gradient-to-r ${season.is_active ? 'from-white via-white/80 to-white/60' : 'from-white/60 via-white/40 to-white/20'}`}></div>
+                                    
+                                    <CardContent className="p-6 relative z-10">
+                                        {/* Header with Trophy */}
+                                        <div className="flex items-start justify-between mb-5">
+                                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                                                <div className={`p-3 rounded-xl ${season.is_active ? 'bg-white/30 backdrop-blur-md shadow-lg' : 'bg-white/20 backdrop-blur-sm'} shrink-0 transform group-hover:scale-110 transition-transform`}>
+                                                    <Trophy className={`w-6 h-6 ${season.is_active ? 'text-white drop-shadow-lg' : 'text-white/80'}`} />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <h3 className="text-lg font-black text-white truncate group-hover:text-white/90 transition-colors">
+                                                    <h3 className="text-xl font-black text-white mb-2 truncate group-hover:text-white/90 transition-colors drop-shadow-md">
                                                         {season.name}
                                                     </h3>
                                                     {season.is_active && (
-                                                        <Badge className="mt-1 bg-white/20 text-white border-0 text-xs">
-                                                            Active
+                                                        <Badge className="bg-white/30 text-white border-white/40 backdrop-blur-sm text-xs shadow-md">
+                                                            Saison Active
                                                         </Badge>
                                                     )}
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Dates - Compact */}
-                                        <div className="mb-4 p-3 bg-white/10 rounded-lg backdrop-blur-sm">
-                                            <div className="flex items-center gap-2 text-white/90 text-xs">
-                                                <Calendar className="w-4 h-4 shrink-0" />
-                                                <span className="font-semibold truncate">
-                                                    {formatDate(season.start_date)}
-                                                </span>
-                                                <ArrowRight className="w-3 h-3 shrink-0" />
-                                                <span className="font-semibold truncate">
-                                                    {formatDate(season.end_date)}
-                                                </span>
+                                        {/* Calendar Timeline - Season Style */}
+                                        <div className="mb-5 p-4 bg-white/15 backdrop-blur-md rounded-xl border border-white/20 shadow-inner">
+                                            <div className="flex items-center gap-3 text-white">
+                                                <Calendar className="w-5 h-5 shrink-0 drop-shadow-md" />
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-xs font-semibold opacity-90 mb-1">Période</div>
+                                                    <div className="flex items-center gap-2 text-sm font-bold">
+                                                        <span className="truncate">{formatDate(season.start_date)}</span>
+                                                        <ArrowRight className="w-3 h-3 shrink-0" />
+                                                        <span className="truncate">{formatDate(season.end_date)}</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                         
-                                        {/* Footer - Compact */}
-                                        <div className="flex items-center justify-between pt-3 border-t border-white/20">
-                                            <div className="flex items-center gap-2">
-                                                <Users className="w-4 h-4 text-white/80" />
-                                                <span className="text-sm font-bold text-white">
-                                                    {season.teams_count || 0} équipe{season.teams_count !== 1 ? 's' : ''}
-                                                </span>
+                                        {/* Stats Footer */}
+                                        <div className="flex items-center justify-between pt-4 border-t border-white/30">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 rounded-lg bg-white/20 backdrop-blur-sm">
+                                                    <Users className="w-4 h-4 text-white" />
+                                                </div>
+                                                <div>
+                                                    <div className="text-xs text-white/70 font-medium">Équipes</div>
+                                                    <div className="text-lg font-black text-white">
+                                                        {season.teams_count || 0}
+                                                    </div>
+                                                </div>
                                             </div>
                                             <div className="flex items-center gap-1">
                                                 <Button 
@@ -280,9 +291,9 @@ export default function SeasonsIndex({ seasons }) {
                                                         e.stopPropagation(); 
                                                         handleEdit(season); 
                                                     }}
-                                                    className="h-8 w-8 p-0 hover:bg-white/20 text-white"
+                                                    className="h-9 w-9 p-0 hover:bg-white/30 text-white backdrop-blur-sm"
                                                 >
-                                                    <Edit className="w-3.5 h-3.5" />
+                                                    <Edit className="w-4 h-4" />
                                                 </Button>
                                                 <Button 
                                                     variant="ghost" 
@@ -291,13 +302,16 @@ export default function SeasonsIndex({ seasons }) {
                                                         e.stopPropagation(); 
                                                         handleDelete(season.id); 
                                                     }}
-                                                    className="h-8 w-8 p-0 hover:bg-white/20 text-white/80"
+                                                    className="h-9 w-9 p-0 hover:bg-white/30 text-white/90 backdrop-blur-sm"
                                                 >
-                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                    <Trash2 className="w-4 h-4" />
                                                 </Button>
                                             </div>
                                         </div>
                                     </CardContent>
+                                    
+                                    {/* Hover glow effect */}
+                                    <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/0 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                                 </Card>
                             ))}
                         </div>

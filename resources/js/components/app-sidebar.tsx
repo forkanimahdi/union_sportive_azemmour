@@ -51,12 +51,6 @@ export function AppSidebar() {
             roles: ['admin', 'technical_director'],
         },
         {
-            title: 'Joueuses',
-            href: '/admin/players',
-            icon: UserCog,
-            roles: ['admin', 'technical_director', 'coach'],
-        },
-        {
             title: 'Entraînements',
             href: '/admin/trainings',
             icon: Calendar,

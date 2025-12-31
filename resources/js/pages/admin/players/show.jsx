@@ -519,3 +519,4 @@ export default function PlayersShow({ player }) {
         </AdminLayout>
     );
 }
+

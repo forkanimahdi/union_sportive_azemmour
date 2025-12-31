@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Team;
 use App\Models\Season;
+use App\Models\OpponentTeam;
+use App\Models\GameMatch;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -32,14 +34,206 @@ class TeamController extends Controller
                 ];
             });
 
+        // Load all players for frontend filtering (same as PlayerController)
+        $players = \App\Models\Player::with(['team'])
+            ->orderBy('last_name')
+            ->paginate(100)
+            ->through(function ($player) {
+                // Calculate statistics
+                $appearances = $player->matchLineups()->whereHas('match', function($q) {
+                    $q->where('status', 'finished');
+                })->count();
+                
+                $goals = $player->matchEvents()->where('type', 'goal')->count();
+                
+                // Assists - count passes that led to goals (simplified)
+                $assists = 0;
+                
+                // Current season stats (simplified)
+                $currentSeasonAppearances = $appearances;
+                $currentSeasonGoals = $goals;
+                $currentSeasonAssists = $assists;
+                
+                $dateOfBirth = $player->date_of_birth ? $player->date_of_birth->format('Y-m-d') : null;
+                
+                return [
+                    'id' => $player->id,
+                    'first_name' => $player->first_name,
+                    'last_name' => $player->last_name,
+                    'photo' => $player->photo,
+                    'jersey_number' => $player->jersey_number,
+                    'position' => $player->position,
+                    'date_of_birth' => $dateOfBirth,
+                    'team' => $player->team ? [
+                        'id' => $player->team->id,
+                        'name' => $player->team->name,
+                        'category' => $player->team->category,
+                    ] : null,
+                    'is_active' => $player->is_active,
+                    'can_play' => $player->canPlay(),
+                    'stats' => [
+                        'appearances' => [
+                            'total' => $appearances,
+                            'season' => $currentSeasonAppearances,
+                        ],
+                        'goals' => [
+                            'total' => $goals,
+                            'season' => $currentSeasonGoals,
+                        ],
+                        'assists' => [
+                            'total' => $assists,
+                            'season' => $currentSeasonAssists,
+                        ],
+                    ],
+                ];
+            });
+
         $seasons = Season::orderBy('start_date', 'desc')->get()->map(function($s) {
             return ['id' => $s->id, 'name' => $s->name];
         });
 
+        // Get unique categories from teams
+        $categories = Team::distinct()->pluck('category')->filter()->values()->toArray();
+
+        // Get standings by category for Club tab
+        $activeSeason = Season::where('is_active', true)->first();
+        $standingsByCategory = [];
+        
+        if ($activeSeason) {
+            // Get our teams with stats
+            $ourTeamsWithStats = Team::where('season_id', $activeSeason->id)
+                ->where('is_active', true)
+                ->get()
+                ->map(function($team) {
+                    $matches = GameMatch::where('team_id', $team->id)
+                        ->where('status', 'finished')
+                        ->get();
+                    
+                    $wins = 0;
+                    $draws = 0;
+                    $losses = 0;
+                    $goalsFor = 0;
+                    $goalsAgainst = 0;
+                    
+                    foreach ($matches as $match) {
+                        if ($match->type === 'domicile') {
+                            $ourScore = $match->home_score ?? 0;
+                            $opponentScore = $match->away_score ?? 0;
+                        } else {
+                            $ourScore = $match->away_score ?? 0;
+                            $opponentScore = $match->home_score ?? 0;
+                        }
+                        
+                        $goalsFor += $ourScore;
+                        $goalsAgainst += $opponentScore;
+                        
+                        if ($ourScore > $opponentScore) {
+                            $wins++;
+                        } elseif ($ourScore === $opponentScore) {
+                            $draws++;
+                        } else {
+                            $losses++;
+                        }
+                    }
+                    
+                    $points = ($wins * 3) + $draws;
+                    
+                    return [
+                        'id' => $team->id,
+                        'name' => $team->name,
+                        'category' => $team->category,
+                        'is_opponent' => false,
+                        'matches_played' => $matches->count(),
+                        'wins' => $wins,
+                        'draws' => $draws,
+                        'losses' => $losses,
+                        'goals_for' => $goalsFor,
+                        'goals_against' => $goalsAgainst,
+                        'goal_difference' => $goalsFor - $goalsAgainst,
+                        'points' => $points,
+                    ];
+                });
+            
+            // Get opponent teams with stats by category
+            $opponentTeamsByCategory = OpponentTeam::get()
+                ->map(function($opponentTeam) use ($activeSeason) {
+                    $matches = GameMatch::where('opponent_team_id', $opponentTeam->id)
+                        ->where('status', 'finished')
+                        ->whereHas('team', function($q) use ($activeSeason) {
+                            $q->where('season_id', $activeSeason->id);
+                        })
+                        ->get();
+                    
+                    $wins = 0;
+                    $draws = 0;
+                    $losses = 0;
+                    $goalsFor = 0;
+                    $goalsAgainst = 0;
+                    
+                    foreach ($matches as $match) {
+                        $opponentScore = $match->away_score ?? 0;
+                        $ourScore = $match->home_score ?? 0;
+                        
+                        $goalsFor += $opponentScore;
+                        $goalsAgainst += $ourScore;
+                        
+                        if ($opponentScore > $ourScore) {
+                            $wins++;
+                        } elseif ($opponentScore === $ourScore) {
+                            $draws++;
+                        } else {
+                            $losses++;
+                        }
+                    }
+                    
+                    $points = ($wins * 3) + $draws;
+                    
+                    return [
+                        'id' => $opponentTeam->id,
+                        'name' => $opponentTeam->name,
+                        'category' => $opponentTeam->category,
+                        'is_opponent' => true,
+                        'matches_played' => $matches->count(),
+                        'wins' => $wins,
+                        'draws' => $draws,
+                        'losses' => $losses,
+                        'goals_for' => $goalsFor,
+                        'goals_against' => $goalsAgainst,
+                        'goal_difference' => $goalsFor - $goalsAgainst,
+                        'points' => $points,
+                    ];
+                })
+                ->filter(function($team) {
+                    return $team['category'] !== null;
+                });
+            
+            // Combine and group by category
+            $allTeamsForStandings = $ourTeamsWithStats->concat($opponentTeamsByCategory);
+            
+            foreach ($categories as $category) {
+                $categoryTeams = $allTeamsForStandings
+                    ->where('category', $category)
+                    ->sortByDesc('points')
+                    ->sortByDesc(function($t) {
+                        return $t['goal_difference'];
+                    })
+                    ->sortByDesc(function($t) {
+                        return $t['goals_for'];
+                    })
+                    ->values();
+                
+                if ($categoryTeams->count() > 0) {
+                    $standingsByCategory[$category] = $categoryTeams;
+                }
+            }
+        }
+
         return Inertia::render('admin/teams/index', [
             'teams' => $teams,
+            'players' => $players,
             'seasons' => $seasons,
-            'filters' => $request->only(['search', 'category', 'season_id', 'is_active']),
+            'categories' => $categories,
+            'standingsByCategory' => $standingsByCategory,
         ]);
     }
 

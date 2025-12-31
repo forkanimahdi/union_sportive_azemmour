@@ -14,6 +14,7 @@ class OpponentTeam extends Model
 
     protected $fillable = [
         'name',
+        'category',
         'logo',
         'rank',
         'matches_played',

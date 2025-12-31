@@ -235,15 +235,15 @@ class PlayerController extends Controller
                 'recent_matches' => $recentMatches,
                 'injuries' => $player->injuries->map(function($i) {
                     return [
-                        'id' => $i->id,
-                        'type' => $i->type,
-                        'status' => $i->status,
-                        'fit_to_play' => $i->fit_to_play,
+                    'id' => $i->id,
+                    'type' => $i->type,
+                    'status' => $i->status,
+                    'fit_to_play' => $i->fit_to_play,
                     ];
                 }),
                 'suspensions' => $player->disciplinaryActions()->where('is_active', true)->get()->map(function($d) {
                     return [
-                        'id' => $d->id,
+                    'id' => $d->id,
                         'suspension_end_date' => $d->suspension_end_date ? $d->suspension_end_date->format('Y-m-d') : null,
                     ];
                 }),
