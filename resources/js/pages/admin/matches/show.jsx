@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
     ArrowLeft, Trophy, Home, Plane, Clock, Users, Target, 
-    Card as CardIcon, AlertTriangle, CheckCircle2, Edit, Save
+
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
