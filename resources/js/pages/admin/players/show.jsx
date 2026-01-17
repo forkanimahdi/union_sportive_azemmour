@@ -520,3 +520,10 @@ export default function PlayersShow({ player }) {
     );
 }
 
+
+
+
+
+
+
+

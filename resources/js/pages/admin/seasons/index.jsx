@@ -178,62 +178,59 @@ export default function SeasonsIndex({ seasons }) {
                     {/* Stats */}
                     {filteredSeasons.length > 0 && (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <Card className="border-0 shadow-lg bg-primary/10 text-alpha border-alpha">
+                            <Card className="border-0 shadow-lg bg-alpha text-white">
                                 <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                            <p className="text-alpha text-sm mb-2">Total Saisons</p>
+                                            <p className="text-white/80 text-sm mb-2">Total Saisons</p>
                                             <p className="text-4xl font-black">{seasons.data?.length || 0}</p>
                                     </div>
-                                        <Calendar className="w-10 h-10 opacity-70" />
+                                        <Calendar className="w-10 h-10 opacity-50" />
                                 </div>
                             </CardContent>
                         </Card>
-                            <Card className="border-0 shadow-lg bg-primary/10 text-alpha border-alpha">
+                            <Card className="border-0 shadow-lg bg-beta text-white">
                                 <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                            <p className="text-alpha text-sm mb-2">Saisons Actives</p>
+                                            <p className="text-white/80 text-sm mb-2">Saisons Actives</p>
                                             <p className="text-4xl font-black">
                                                 {filteredSeasons.filter(s => s.is_active).length}
                                         </p>
                                     </div>
-                                        <Trophy className="w-10 h-10 opacity-70" />
+                                        <Trophy className="w-10 h-10 opacity-50" />
                                 </div>
                             </CardContent>
                         </Card>
-                            <Card className="border-0 shadow-lg bg-primary/10 text-alpha border-alpha">
+                            <Card className="border-0 shadow-lg bg-alpha text-white">
                                 <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                            <p className="text-alpha text-sm mb-2">Total Équipes</p>
+                                            <p className="text-white/80 text-sm mb-2">Total Équipes</p>
                                             <p className="text-4xl font-black">
                                                 {filteredSeasons.reduce((sum, s) => sum + (s.teams_count || 0), 0)}
                                         </p>
                                     </div>
-                                        <Users className="w-10 h-10 opacity-70" />
+                                        <Users className="w-10 h-10 opacity-50" />
                                 </div>
                             </CardContent>
                         </Card>
                     </div>
                 )}
 
-                    {/* Seasons Cards - Season Theme Design */}
+                    {/* Seasons Cards */}
                     {filteredSeasons.length > 0 ? (
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {filteredSeasons.map((season) => (
                                 <Card 
                                     key={season.id}
-                                    className="group relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-primary via-primary/95 to-primary transition-all duration-300 cursor-pointer hover:shadow-2xl hover:scale-[1.02]"
+                                    className={`group relative overflow-hidden border-0 shadow-xl transition-all duration-300 cursor-pointer hover:shadow-2xl hover:scale-[1.02] ${
+                                        season.is_active ? 'bg-alpha' : 'bg-beta'
+                                    }`}
                                     onClick={() => router.visit(`/admin/seasons/${season.id}`)}
                                 >
-                                    {/* Seasonal Pattern Overlay */}
-                                    <div className="absolute inset-0 opacity-10">
-                                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_white_1px,_transparent_1px)] bg-[length:20px_20px]"></div>
-                                    </div>
-                                    
-                                    {/* Top gradient accent bar */}
-                                    <div className={`h-2 bg-gradient-to-r ${season.is_active ? 'from-white via-white/80 to-white/60' : 'from-white/60 via-white/40 to-white/20'}`}></div>
+                                    {/* Top accent bar */}
+                                    <div className={`h-2 ${season.is_active ? 'bg-white' : 'bg-white/60'}`}></div>
                                     
                                     <CardContent className="p-6 relative z-10">
                                         {/* Header with Trophy */}
@@ -255,7 +252,7 @@ export default function SeasonsIndex({ seasons }) {
                                             </div>
                                         </div>
 
-                                        {/* Calendar Timeline - Season Style */}
+                                        {/* Calendar Timeline */}
                                         <div className="mb-5 p-4 bg-white/15 backdrop-blur-md rounded-xl border border-white/20 shadow-inner">
                                             <div className="flex items-center gap-3 text-white">
                                                 <Calendar className="w-5 h-5 shrink-0 drop-shadow-md" />
@@ -309,9 +306,6 @@ export default function SeasonsIndex({ seasons }) {
                                             </div>
                                         </div>
                                     </CardContent>
-                                    
-                                    {/* Hover glow effect */}
-                                    <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/0 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                                 </Card>
                             ))}
                         </div>

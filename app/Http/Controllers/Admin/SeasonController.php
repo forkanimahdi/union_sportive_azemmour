@@ -63,9 +63,9 @@ class SeasonController extends Controller
     {
         $season->load([
             'teams.players.matchEvents' => function ($query) {
-                $query->where('type', 'goal');
+                $query->whereIn('type', ['goal', 'penalty']);
             },
-            'teams.matches',
+            'teams.matches.events',
             'teams.trainings',
             'competitions.matches',
         ]);
@@ -114,9 +114,14 @@ class SeasonController extends Controller
             return $t['goal_difference'];
         })->values();
 
-        // Calculate statistics - top scorers
+        // Calculate statistics - top scorers (include penalty goals, exclude own goals)
         $topScorers = $season->teams->flatMap->players->map(function ($player) {
-            $goals = $player->matchEvents()->where('type', 'goal')->count();
+            $goals = $player->matchEvents()
+                ->whereIn('type', ['goal', 'penalty'])
+                ->whereHas('match', function($q) {
+                    $q->where('status', 'finished');
+                })
+                ->count();
             return [
                 'id' => $player->id,
                 'name' => $player->first_name . ' ' . $player->last_name,

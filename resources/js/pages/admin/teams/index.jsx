@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Edit, Trash2, Search, Users, Trophy, Baby, UserCircle2, TrendingUp, X, UserCog, Building2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Users, Trophy, Baby, UserCircle2, TrendingUp, X, UserCog, Building2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import DeleteModal from '@/components/DeleteModal';
 import InputError from '@/components/input-error';
@@ -40,6 +40,10 @@ export default function TeamsIndex({ teams, players, seasons, categories = [], s
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [teamToDelete, setTeamToDelete] = useState(null);
+    const [createPlayerModalOpen, setCreatePlayerModalOpen] = useState(false);
+    
+    // Expanded tables state
+    const [expandedCategories, setExpandedCategories] = useState({});
 
     const createForm = useForm({
         season_id: '',
@@ -385,19 +389,11 @@ export default function TeamsIndex({ teams, players, seasons, categories = [], s
                                                 </div>
                                                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                                     {categoryPlayers.map((player) => (
-                                                        <div key={player.id} className="relative">
-                                                            <PlayerCard
-                                                                player={player}
-                                                                onClick={() => router.visit(`/admin/players/${player.id}`)}
-                                                            />
-                                                            {!player.can_play && (
-                                                                <div className="absolute top-3 right-3 z-10">
-                                                                    <Badge variant="destructive" className="text-xs animate-pulse shadow-lg">
-                                                                        Indisponible
-                                                                    </Badge>
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                                        <PlayerCard
+                                                            key={player.id}
+                                                            player={player}
+                                                            onClick={() => router.visit(`/admin/players/${player.id}`)}
+                                                        />
                                                     ))}
                                                 </div>
                                             </div>
@@ -485,7 +481,7 @@ export default function TeamsIndex({ teams, players, seasons, categories = [], s
                             {/* Teams Stats */}
                             {filteredTeams.length > 0 && (
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                    <Card className="border-0 shadow-lg bg-primary text-white">
+                                    <Card className="border-0 shadow-lg bg-alpha text-white">
                                         <CardContent className="p-6">
                                             <div className="flex items-center justify-between">
                                                 <div>
@@ -509,7 +505,7 @@ export default function TeamsIndex({ teams, players, seasons, categories = [], s
                                             </div>
                                         </CardContent>
                                     </Card>
-                                    <Card className="border-0 shadow-lg bg-alpha/90 text-white">
+                                    <Card className="border-0 shadow-lg bg-alpha text-white">
                                         <CardContent className="p-6">
                                             <div className="flex items-center justify-between">
                                                 <div>
@@ -522,7 +518,7 @@ export default function TeamsIndex({ teams, players, seasons, categories = [], s
                                             </div>
                                         </CardContent>
                                     </Card>
-                                    <Card className="border-0 shadow-lg bg-alpha/90 text-white">
+                                    <Card className="border-0 shadow-lg bg-alpha text-white">
                                         <CardContent className="p-6">
                                             <div className="flex items-center justify-between">
                                                 <div>
@@ -655,17 +651,45 @@ export default function TeamsIndex({ teams, players, seasons, categories = [], s
                                         })
                                         .map(([category, categoryTeams]) => {
                                             const Icon = categoryIcons[category] || CategoryIcon;
+                                            const isExpanded = expandedCategories[category] || false;
+                                            
+                                            const toggleExpand = () => {
+                                                setExpandedCategories(prev => ({
+                                                    ...prev,
+                                                    [category]: !prev[category]
+                                                }));
+                                            };
                                             
                                             return (
                                                 <Card key={category} className="bg-alpha border-2 border-alpha shadow-xl">
                                                     <CardHeader className="bg-white/10 backdrop-blur-sm">
-                                                        <CardTitle className="text-white text-2xl font-black flex items-center gap-3">
-                                                            <Icon className="w-6 h-6" />
-                                                            Classement - {category}
-                                                            <Badge className="bg-white/30 text-white border-0 ml-auto">
-                                                                {categoryTeams.length} équipe{categoryTeams.length !== 1 ? 's' : ''}
-                                                            </Badge>
-                                                        </CardTitle>
+                                                        <div className="flex items-center justify-between flex-wrap gap-3">
+                                                            <CardTitle className="text-white text-xl sm:text-2xl font-black flex items-center gap-2 sm:gap-3 flex-wrap">
+                                                                <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                                                                <span>Classement - {category}</span>
+                                                                <Badge className="bg-white/30 text-white border-0 text-xs">
+                                                                    {categoryTeams.length} équipe{categoryTeams.length !== 1 ? 's' : ''}
+                                                                </Badge>
+                                                            </CardTitle>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={toggleExpand}
+                                                                className="text-white hover:bg-white/20 flex-shrink-0"
+                                                            >
+                                                                {isExpanded ? (
+                                                                    <>
+                                                                        <ChevronUp className="w-4 h-4 sm:mr-2" />
+                                                                        <span className="hidden sm:inline">Réduire</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <ChevronDown className="w-4 h-4 sm:mr-2" />
+                                                                        <span className="hidden sm:inline">Voir tout</span>
+                                                                    </>
+                                                                )}
+                                                            </Button>
+                                                        </div>
                                                     </CardHeader>
                                                     <CardContent className="bg-white/5 p-0">
                                                         <div className="overflow-x-auto">
@@ -674,13 +698,17 @@ export default function TeamsIndex({ teams, players, seasons, categories = [], s
                                                                     <tr className="bg-white/20 text-white border-b-2 border-white/30">
                                                                         <th className="text-left p-4 text-sm font-black text-white uppercase">Pos</th>
                                                                         <th className="text-left p-4 text-sm font-black text-white uppercase">Équipe</th>
-                                                                        <th className="text-center p-4 text-sm font-black text-white uppercase">J</th>
-                                                                        <th className="text-center p-4 text-sm font-black text-white uppercase">V</th>
-                                                                        <th className="text-center p-4 text-sm font-black text-white uppercase">N</th>
-                                                                        <th className="text-center p-4 text-sm font-black text-white uppercase">P</th>
-                                                                        <th className="text-center p-4 text-sm font-black text-white uppercase">BP</th>
-                                                                        <th className="text-center p-4 text-sm font-black text-white uppercase">BC</th>
-                                                                        <th className="text-center p-4 text-sm font-black text-white uppercase">DB</th>
+                                                                        {isExpanded && (
+                                                                            <>
+                                                                                <th className="text-center p-4 text-sm font-black text-white uppercase">J</th>
+                                                                                <th className="text-center p-4 text-sm font-black text-white uppercase">V</th>
+                                                                                <th className="text-center p-4 text-sm font-black text-white uppercase">N</th>
+                                                                                <th className="text-center p-4 text-sm font-black text-white uppercase">P</th>
+                                                                                <th className="text-center p-4 text-sm font-black text-white uppercase">BP</th>
+                                                                                <th className="text-center p-4 text-sm font-black text-white uppercase">BC</th>
+                                                                                <th className="text-center p-4 text-sm font-black text-white uppercase">DB</th>
+                                                                            </>
+                                                                        )}
                                                                         <th className="text-center p-4 text-sm font-black text-white uppercase">Pts</th>
                                                                     </tr>
                                                                 </thead>
@@ -701,18 +729,19 @@ export default function TeamsIndex({ teams, players, seasons, categories = [], s
                                                                                     )}
                                                                                 </div>
                                                                             </td>
-                                                                            <td className="p-4 text-center font-semibold text-white">{team.matches_played}</td>
-                                                                            <td className="p-4 text-center font-semibold text-white">{team.wins}</td>
-                                                                            <td className="p-4 text-center font-semibold text-white">{team.draws}</td>
-                                                                            <td className="p-4 text-center font-semibold text-white">{team.losses}</td>
-                                                                            <td className="p-4 text-center font-semibold text-white">{team.goals_for}</td>
-                                                                            <td className="p-4 text-center font-semibold text-white">{team.goals_against}</td>
-                                                                            <td className={`p-4 text-center font-bold text-white ${
-                                                                                team.goal_difference > 0 ? 'text-green-300' : 
-                                                                                team.goal_difference < 0 ? 'text-red-300' : ''
-                                                                            }`}>
-                                                                                {team.goal_difference > 0 ? '+' : ''}{team.goal_difference}
-                                                                            </td>
+                                                                            {isExpanded && (
+                                                                                <>
+                                                                                    <td className="p-4 text-center font-semibold text-white">{team.matches_played}</td>
+                                                                                    <td className="p-4 text-center font-semibold text-white">{team.wins}</td>
+                                                                                    <td className="p-4 text-center font-semibold text-white">{team.draws}</td>
+                                                                                    <td className="p-4 text-center font-semibold text-white">{team.losses}</td>
+                                                                                    <td className="p-4 text-center font-semibold text-white">{team.goals_for}</td>
+                                                                                    <td className="p-4 text-center font-semibold text-white">{team.goals_against}</td>
+                                                                                    <td className="p-4 text-center font-bold text-white">
+                                                                                        {team.goal_difference > 0 ? '+' : ''}{team.goal_difference}
+                                                                                    </td>
+                                                                                </>
+                                                                            )}
                                                                             <td className="p-4 text-center font-black text-lg text-white bg-white/10">{team.points}</td>
                                                                         </tr>
                                                                     ))}

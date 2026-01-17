@@ -59,6 +59,7 @@ class MatchController extends Controller
                     'home_score' => $match->home_score,
                     'away_score' => $match->away_score,
                     'status' => $match->status,
+                    'competition' => $match->competition ? $match->competition->name : null,
                 ];
             });
 
@@ -67,9 +68,16 @@ class MatchController extends Controller
             ->get()
             ->map(fn($s) => ['id' => $s->id, 'name' => $s->name]);
 
+        $teams = \App\Models\Team::where('is_active', true)
+            ->orderBy('category')
+            ->orderBy('name')
+            ->get()
+            ->map(fn($t) => ['id' => $t->id, 'name' => $t->name, 'category' => $t->category]);
+
         return Inertia::render('admin/matches/index', [
             'matches' => $matches,
             'seasons' => $seasons,
+            'teams' => $teams,
         ]);
     }
 
@@ -136,9 +144,10 @@ class MatchController extends Controller
             'events.player',
             'lineups.player',
             'convoctions',
+            'competition',
         ]);
 
-        // Get team players for lineup
+        // Get team players for lineup and events
         $teamPlayers = $match->team ? $match->team->players()->get()->map(function($p) {
             return [
                 'id' => $p->id,
@@ -159,6 +168,9 @@ class MatchController extends Controller
             ];
         });
 
+        // Sort events by minute
+        $sortedEvents = $match->events->sortBy('minute')->values();
+
         return Inertia::render('admin/matches/show', [
             'match' => [
                 'id' => $match->id,
@@ -166,6 +178,7 @@ class MatchController extends Controller
                     'id' => $match->team->id,
                     'name' => $match->team->name,
                     'category' => $match->team->category,
+                    'players' => $teamPlayers,
                 ] : null,
                 'opponent' => $match->opponent,
                 'opponent_team' => $match->opponentTeam ? [
@@ -182,7 +195,8 @@ class MatchController extends Controller
                 'status' => $match->status,
                 'match_report' => $match->match_report,
                 'coach_notes' => $match->coach_notes,
-                'events' => $match->events->map(function($e) {
+                'competition' => $match->competition ? $match->competition->name : null,
+                'events' => $sortedEvents->map(function($e) {
                     return [
                         'id' => $e->id,
                         'type' => $e->type,
@@ -192,6 +206,11 @@ class MatchController extends Controller
                             'id' => $e->player->id,
                             'first_name' => $e->player->first_name,
                             'last_name' => $e->player->last_name,
+                        ] : null,
+                        'substituted_player' => $e->substitutedPlayer ? [
+                            'id' => $e->substitutedPlayer->id,
+                            'first_name' => $e->substitutedPlayer->first_name,
+                            'last_name' => $e->substitutedPlayer->last_name,
                         ] : null,
                     ];
                 }),
@@ -303,7 +322,7 @@ class MatchController extends Controller
     public function addEvent(Request $request, GameMatch $match)
     {
         $validated = $request->validate([
-            'type' => 'required|in:goal,yellow_card,red_card,substitution,injury,penalty,missed_penalty',
+            'type' => 'required|in:goal,yellow_card,red_card,substitution,injury,penalty,missed_penalty,own_goal',
             'player_id' => 'nullable|exists:players,id',
             'minute' => 'required|integer|min:1|max:120',
             'description' => 'nullable|string',
@@ -315,6 +334,116 @@ class MatchController extends Controller
             ...$validated,
         ]);
 
+        // If goal event, update match scores automatically
+        if (in_array($validated['type'], ['goal', 'own_goal', 'penalty'])) {
+            $this->recalculateMatchScore($match);
+        }
+
         return redirect()->back()->with('success', 'Événement ajouté avec succès');
+    }
+
+    public function finishMatch(Request $request, GameMatch $match)
+    {
+        $validated = $request->validate([
+            'home_score' => 'required|integer|min:0',
+            'away_score' => 'required|integer|min:0',
+            'match_report' => 'nullable|string',
+            'coach_notes' => 'nullable|string',
+        ]);
+
+        $match->update([
+            'home_score' => $validated['home_score'],
+            'away_score' => $validated['away_score'],
+            'status' => 'finished',
+            'match_report' => $validated['match_report'] ?? null,
+            'coach_notes' => $validated['coach_notes'] ?? null,
+        ]);
+
+        // Standings are calculated dynamically, no need to store
+
+        return redirect()->back()->with('success', 'Match terminé avec succès');
+    }
+
+    public function updateScore(Request $request, GameMatch $match)
+    {
+        $validated = $request->validate([
+            'home_score' => 'required|integer|min:0',
+            'away_score' => 'required|integer|min:0',
+        ]);
+
+        $match->update([
+            'home_score' => $validated['home_score'],
+            'away_score' => $validated['away_score'],
+        ]);
+
+        // If match is finished, standings will be recalculated automatically
+        if ($match->status === 'finished') {
+            // Standings are calculated dynamically
+        }
+
+        return redirect()->back()->with('success', 'Score mis à jour avec succès');
+    }
+
+    private function recalculateMatchScore(GameMatch $match)
+    {
+        // Calculate scores from goal events
+        // Only recalculate if match is finished and we have goal events
+        if ($match->status !== 'finished') {
+            return; // Don't auto-calculate if match isn't finished
+        }
+        
+        // This method is called after adding goal events, so we can update score
+        // But we should respect manually entered scores if they exist
+        // For now, we'll calculate from events if scores are null
+        
+        $goals = $match->events()->whereIn('type', ['goal', 'penalty'])->with('player')->get();
+        $ownGoals = $match->events()->where('type', 'own_goal')->with('player')->get();
+        
+        $homeGoals = 0;
+        $awayGoals = 0;
+        
+        // Count goals from our team players
+        $ourGoals = $goals->filter(function($goal) use ($match) {
+            return $goal->player && $goal->player->team_id === $match->team_id;
+        })->count();
+        
+        // Count opponent goals (goals scored by opponent players)
+        // Note: If opponent is just a string (not opponent_team), we can't determine their players
+        // So we'll only count if we have opponent_team_id
+        $opponentGoals = 0;
+        if ($match->opponent_team_id) {
+            $opponentGoals = $goals->filter(function($goal) use ($match) {
+                // Goals by players not from our team
+                return $goal->player && $goal->player->team_id !== $match->team_id;
+            })->count();
+        }
+        
+        // Own goals: if our player scores own goal, it counts for opponent
+        $ourOwnGoals = $ownGoals->filter(function($goal) use ($match) {
+            return $goal->player && $goal->player->team_id === $match->team_id;
+        })->count();
+        
+        // Opponent own goals: if opponent player scores own goal, it counts for us
+        $opponentOwnGoals = $ownGoals->filter(function($goal) use ($match) {
+            return $goal->player && $goal->player->team_id !== $match->team_id;
+        })->count();
+        
+        if ($match->type === 'domicile') {
+            // Home team = our team
+            $homeGoals = $ourGoals + $opponentOwnGoals;
+            $awayGoals = $opponentGoals + $ourOwnGoals;
+        } else {
+            // Away team = our team
+            $homeGoals = $opponentGoals + $ourOwnGoals;
+            $awayGoals = $ourGoals + $opponentOwnGoals;
+        }
+        
+        // Only update if scores were null, otherwise respect manual entry
+        if ($match->home_score === null || $match->away_score === null) {
+            $match->update([
+                'home_score' => $homeGoals,
+                'away_score' => $awayGoals,
+            ]);
+        }
     }
 }

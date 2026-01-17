@@ -35,3 +35,10 @@ export default function DisciplineIndex({ discipline = { data: [] } }) {
 
 
 
+
+
+
+
+
+
+

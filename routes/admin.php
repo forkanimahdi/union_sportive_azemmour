@@ -63,6 +63,8 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         Route::resource('matches', MatchController::class);
         Route::post('matches/{match}/lineup', [MatchController::class, 'updateLineup'])->name('matches.lineup');
         Route::post('matches/{match}/events', [MatchController::class, 'addEvent'])->name('matches.events');
+        Route::post('matches/{match}/finish', [MatchController::class, 'finishMatch'])->name('matches.finish');
+        Route::post('matches/{match}/update-score', [MatchController::class, 'updateScore'])->name('matches.update-score');
     });
     
     // Convocations - Admin, Technical Director & Coach

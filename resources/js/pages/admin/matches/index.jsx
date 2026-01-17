@@ -4,14 +4,17 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Home, Plane, Trophy, Clock, Search, X, Calendar, Radio } from 'lucide-react';
+import { Plus, Home, Plane, Trophy, Clock, Search, X, Calendar, Radio, Users, Filter } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 
-export default function MatchesIndex({ matches, seasons = [] }) {
+export default function MatchesIndex({ matches, seasons = [], teams = [] }) {
     const [search, setSearch] = useState('');
     const [seasonFilter, setSeasonFilter] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
+    const [teamFilter, setTeamFilter] = useState('');
+    const [dateFilter, setDateFilter] = useState('');
+    const [dayFilter, setDayFilter] = useState('');
 
     const groupedMatches = useMemo(() => {
         let allMatches = matches.data || [];
@@ -35,7 +38,30 @@ export default function MatchesIndex({ matches, seasons = [] }) {
             allMatches = allMatches.filter(match => match.category === categoryFilter);
         }
         
-        // Sort newest to oldest
+        if (teamFilter) {
+            allMatches = allMatches.filter(match => 
+                match.team?.id?.toString() === teamFilter
+            );
+        }
+        
+        if (dateFilter) {
+            const filterDate = new Date(dateFilter);
+            allMatches = allMatches.filter(match => {
+                const matchDate = new Date(match.scheduled_at);
+                return matchDate.toDateString() === filterDate.toDateString();
+            });
+        }
+        
+        if (dayFilter) {
+            allMatches = allMatches.filter(match => {
+                const matchDate = new Date(match.scheduled_at);
+                const dayOfWeek = matchDate.getDay();
+                const dayNames = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+                return dayNames[dayOfWeek].toLowerCase() === dayFilter.toLowerCase();
+            });
+        }
+        
+        // Sort by date (newest first)
         allMatches.sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at));
         
         // Group by category
@@ -49,7 +75,23 @@ export default function MatchesIndex({ matches, seasons = [] }) {
         });
         
         return grouped;
-    }, [matches.data, search, seasonFilter, categoryFilter]);
+    }, [matches.data, search, seasonFilter, categoryFilter, teamFilter, dateFilter, dayFilter]);
+
+    const formatMatchDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR', {
+            day: 'numeric',
+            month: 'long'
+        }).toUpperCase();
+    };
+
+    const formatMatchTime = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleTimeString('fr-FR', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
 
     const statusConfig = {
         scheduled: { label: 'Programmé', color: 'bg-blue-500/10 text-blue-700 border-blue-500/20', icon: Calendar },
@@ -66,7 +108,7 @@ export default function MatchesIndex({ matches, seasons = [] }) {
         'Senior': 'from-primary to-primary/80',
     };
 
-    const hasActiveFilters = search || seasonFilter || categoryFilter;
+    const hasActiveFilters = search || seasonFilter || categoryFilter || teamFilter || dateFilter || dayFilter;
 
     return (
         <AdminLayout>
@@ -102,52 +144,104 @@ export default function MatchesIndex({ matches, seasons = [] }) {
                     </div>
 
                     {/* Filters */}
-                    <div className="flex items-center gap-4 flex-wrap">
-                        <div className="relative flex-1 min-w-[280px]">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                            <Input
-                                placeholder="Rechercher un match..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="pl-12 h-12 bg-white border-2 border-primary/10 focus:border-primary rounded-xl text-base"
-                            />
-                        </div>
-                        <Select value={seasonFilter || 'all'} onValueChange={(value) => setSeasonFilter(value === 'all' ? '' : value)}>
-                            <SelectTrigger className="h-12 w-[200px] bg-white border-2 border-primary/10 rounded-xl">
-                                <SelectValue placeholder="Saison" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Toutes les saisons</SelectItem>
-                                {seasons.map((season) => (
-                                    <SelectItem key={season.id} value={season.id.toString()}>
-                                        {season.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <Select value={categoryFilter || 'all'} onValueChange={(value) => setCategoryFilter(value === 'all' ? '' : value)}>
-                            <SelectTrigger className="h-12 w-[200px] bg-white border-2 border-primary/10 rounded-xl">
-                                <SelectValue placeholder="Catégorie" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Toutes les catégories</SelectItem>
-                                <SelectItem value="U13">U13</SelectItem>
-                                <SelectItem value="U15">U15</SelectItem>
-                                <SelectItem value="U17">U17</SelectItem>
-                                <SelectItem value="Senior">Senior</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        {hasActiveFilters && (
-                            <Button 
-                                variant="outline" 
-                                onClick={() => { setSearch(''); setSeasonFilter(''); setCategoryFilter(''); }} 
-                                className="h-12 px-4 bg-white border-2 border-primary/10 rounded-xl"
-                            >
-                                <X className="w-4 h-4 mr-2" />
-                                Réinitialiser
-                            </Button>
-                        )}
-                    </div>
+                    <Card className="bg-white border-2 border-gray-200">
+                        <CardContent className="p-4">
+                            <div className="flex items-center gap-2 mb-4">
+                                <Filter className="w-5 h-5 text-gray-600" />
+                                <span className="font-semibold text-gray-700">Filtres:</span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    <Input
+                                        placeholder="Rechercher..."
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                        className="pl-10 h-11 bg-white border-2 border-gray-200 focus:border-alpha rounded-lg"
+                                    />
+                                </div>
+                                <Select value={seasonFilter || 'all'} onValueChange={(value) => setSeasonFilter(value === 'all' ? '' : value)}>
+                                    <SelectTrigger className="h-11 bg-white border-2 border-gray-200 rounded-lg">
+                                        <SelectValue placeholder="Saison" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Toutes les saisons</SelectItem>
+                                        {seasons.map((season) => (
+                                            <SelectItem key={season.id} value={season.id.toString()}>
+                                                {season.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <Select value={categoryFilter || 'all'} onValueChange={(value) => setCategoryFilter(value === 'all' ? '' : value)}>
+                                    <SelectTrigger className="h-11 bg-white border-2 border-gray-200 rounded-lg">
+                                        <SelectValue placeholder="Catégorie" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Toutes les catégories</SelectItem>
+                                        <SelectItem value="U13">U13</SelectItem>
+                                        <SelectItem value="U15">U15</SelectItem>
+                                        <SelectItem value="U17">U17</SelectItem>
+                                        <SelectItem value="Senior">Senior</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <Select value={teamFilter || 'all'} onValueChange={(value) => setTeamFilter(value === 'all' ? '' : value)}>
+                                    <SelectTrigger className="h-11 bg-white border-2 border-gray-200 rounded-lg">
+                                        <SelectValue placeholder="Équipe" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Toutes les équipes</SelectItem>
+                                        {teams.map((team) => (
+                                            <SelectItem key={team.id} value={team.id.toString()}>
+                                                {team.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <Input
+                                    type="date"
+                                    value={dateFilter}
+                                    onChange={(e) => setDateFilter(e.target.value)}
+                                    className="h-11 bg-white border-2 border-gray-200 focus:border-alpha rounded-lg"
+                                    placeholder="Date"
+                                />
+                                <Select value={dayFilter || 'all'} onValueChange={(value) => setDayFilter(value === 'all' ? '' : value)}>
+                                    <SelectTrigger className="h-11 bg-white border-2 border-gray-200 rounded-lg">
+                                        <SelectValue placeholder="Jour" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Tous les jours</SelectItem>
+                                        <SelectItem value="lundi">Lundi</SelectItem>
+                                        <SelectItem value="mardi">Mardi</SelectItem>
+                                        <SelectItem value="mercredi">Mercredi</SelectItem>
+                                        <SelectItem value="jeudi">Jeudi</SelectItem>
+                                        <SelectItem value="vendredi">Vendredi</SelectItem>
+                                        <SelectItem value="samedi">Samedi</SelectItem>
+                                        <SelectItem value="dimanche">Dimanche</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            {hasActiveFilters && (
+                                <div className="mt-4">
+                                    <Button 
+                                        variant="outline" 
+                                        onClick={() => { 
+                                            setSearch(''); 
+                                            setSeasonFilter(''); 
+                                            setCategoryFilter(''); 
+                                            setTeamFilter(''); 
+                                            setDateFilter(''); 
+                                            setDayFilter(''); 
+                                        }} 
+                                        className="h-10 px-4 border-2 border-gray-200 rounded-lg"
+                                    >
+                                        <X className="w-4 h-4 mr-2" />
+                                        Réinitialiser
+                                    </Button>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
 
                     {/* Matches by Category */}
                     {Object.keys(groupedMatches).length > 0 ? (
@@ -165,86 +259,145 @@ export default function MatchesIndex({ matches, seasons = [] }) {
                                             </Badge>
                                         </div>
                                         
-                                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                             {categoryMatches.map((match) => {
-                                                const status = statusConfig[match.status] || statusConfig.scheduled;
-                                                const StatusIcon = status.icon;
+                                                const isHome = match.type === 'domicile';
+                                                const played = match.status === 'finished' && match.home_score !== null && match.away_score !== null;
+                                                
+                                                // Determine left and right teams based on home/away
+                                                const leftTeam = isHome ? {
+                                                    name: match.team?.name || 'Notre équipe',
+                                                    logo: null
+                                                } : {
+                                                    name: match.opponent_team?.name || match.opponent,
+                                                    logo: match.opponent_team?.logo
+                                                };
+                                                
+                                                const rightTeam = isHome ? {
+                                                    name: match.opponent_team?.name || match.opponent,
+                                                    logo: match.opponent_team?.logo
+                                                } : {
+                                                    name: match.team?.name || 'Notre équipe',
+                                                    logo: null
+                                                };
+                                                
+                                                // Determine scores
+                                                const leftScore = isHome ? match.home_score : match.away_score;
+                                                const rightScore = isHome ? match.away_score : match.home_score;
                                                 
                                                 return (
                                                     <Card
                                                         key={match.id}
-                                                        className="group relative overflow-hidden border-2 border-primary/10 hover:border-primary/30 transition-all duration-300 hover:shadow-2xl bg-white cursor-pointer"
+                                                        className="bg-white border-2 border-gray-200 shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
                                                         onClick={() => router.visit(`/admin/matches/${match.id}`)}
                                                     >
-                                                        <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${gradient}`}></div>
-                                                        
-                                                        <CardContent className="p-5 space-y-4">
-                                                            <div className="flex items-center justify-between">
-                                                                <Badge className={`${status.color} border`}>
-                                                                    <StatusIcon className="w-3 h-3 mr-1" />
-                                                                    {status.label}
-                                                                </Badge>
-                                                                <Badge variant="outline" className="text-xs">
-                                                                    {category}
-                                                                </Badge>
-                                                            </div>
-
-                                                            <div className="text-center space-y-2">
-                                                                <p className="font-bold text-sm text-primary">{match.team?.name || 'Équipe'}</p>
-                                                                <div className="text-3xl font-black text-primary my-2">VS</div>
-                                                                {match.opponent_team ? (
-                                                                    <>
-                                                                        {match.opponent_team.logo && (
+                                                        <CardContent className="p-6">
+                                                            {/* Teams and Score */}
+                                                            <div className="flex items-center justify-between mb-4">
+                                                                {/* Left Team */}
+                                                                <div className="flex-1 text-center">
+                                                                    <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-gray-200 flex items-center justify-center">
+                                                                        {leftTeam.logo ? (
                                                                             <img 
-                                                                                src={`/storage/${match.opponent_team.logo}`} 
-                                                                                alt={match.opponent_team.name}
-                                                                                className="w-16 h-16 mx-auto mb-2 rounded-full object-cover border-2 border-primary/20"
+                                                                                src={`/storage/${leftTeam.logo}`} 
+                                                                                alt={leftTeam.name}
+                                                                                className="w-12 h-12 rounded-full object-cover"
                                                                             />
+                                                                        ) : (
+                                                                            <Users className="w-6 h-6 text-gray-400" />
                                                                         )}
-                                                                        <p className="font-bold text-sm">{match.opponent_team.name}</p>
-                                                                    </>
-                                                                ) : (
-                                                                    <p className="font-bold text-sm">{match.opponent}</p>
-                                                                )}
-                                                            </div>
+                                                                    </div>
+                                                                    <div className="font-bold text-sm text-gray-900">{leftTeam.name}</div>
+                                                                </div>
 
-                                                            {(match.home_score !== null && match.away_score !== null) && (
-                                                                <div className="text-center py-2 bg-primary/5 rounded-lg border border-primary/10">
-                                                                    <div className="text-2xl font-black text-primary">
-                                                                        {match.type === 'domicile' 
-                                                                            ? `${match.home_score} - ${match.away_score}`
-                                                                            : `${match.away_score} - ${match.home_score}`
+                                                                {/* Score Box */}
+                                                                <div className={`px-4 py-2 rounded-lg ${played ? 'bg-alpha/10' : 'bg-gray-100'}`}>
+                                                                    <div className={`text-2xl font-black ${played ? 'text-alpha' : 'text-gray-500'}`}>
+                                                                        {played 
+                                                                            ? `${leftScore !== null ? leftScore : '-'} - ${rightScore !== null ? rightScore : '-'}`
+                                                                            : '0 - 0'
                                                                         }
                                                                     </div>
                                                                 </div>
+
+                                                                {/* Right Team */}
+                                                                <div className="flex-1 text-center">
+                                                                    <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-gray-200 flex items-center justify-center">
+                                                                        {rightTeam.logo ? (
+                                                                            <img 
+                                                                                src={`/storage/${rightTeam.logo}`} 
+                                                                                alt={rightTeam.name}
+                                                                                className="w-12 h-12 rounded-full object-cover"
+                                                                            />
+                                                                        ) : (
+                                                                            <Users className="w-6 h-6 text-gray-400" />
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="font-bold text-sm text-gray-900">{rightTeam.name}</div>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Match Details */}
+                                                            <div className="space-y-2 mb-4">
+                                                                <div className="text-xs text-gray-500 font-medium">
+                                                                    {formatMatchDate(match.scheduled_at)} • {match.venue?.toUpperCase()}
+                                                                </div>
+                                                                <div className={`text-lg font-bold ${played ? 'text-alpha' : 'text-gray-700'}`}>
+                                                                    {formatMatchTime(match.scheduled_at)}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Status Badge */}
+                                                            <div className="flex items-center justify-between mb-4">
+                                                                {match.status === 'finished' && (
+                                                                    <Badge className="bg-alpha/10 text-alpha border-alpha">
+                                                                        Terminé
+                                                                    </Badge>
+                                                                )}
+                                                                {match.status === 'scheduled' && (
+                                                                    <Badge className="bg-beta/10 text-beta border-beta">
+                                                                        À venir
+                                                                    </Badge>
+                                                                )}
+                                                                {match.status === 'live' && (
+                                                                    <Badge className="bg-red-100 text-red-600 border-red-300 animate-pulse">
+                                                                        En direct
+                                                                    </Badge>
+                                                                )}
+                                                                {match.status === 'postponed' && (
+                                                                    <Badge className="bg-yellow-100 text-yellow-600 border-yellow-300">
+                                                                        Reporté
+                                                                    </Badge>
+                                                                )}
+                                                                {match.status === 'cancelled' && (
+                                                                    <Badge className="bg-gray-100 text-gray-600 border-gray-300">
+                                                                        Annulé
+                                                                    </Badge>
+                                                                )}
+                                                                
+                                                                <div className={`text-xs font-semibold ${isHome ? 'text-alpha' : 'text-beta'}`}>
+                                                                    {isHome ? '🏠 Domicile' : '✈️ Extérieur'}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Competition if available */}
+                                                            {match.competition && (
+                                                                <div className="text-xs text-gray-500 mb-4 pb-4 border-b border-gray-200">
+                                                                    {match.competition}
+                                                                </div>
                                                             )}
 
-                                                            <div className="space-y-2 pt-3 border-t border-primary/10">
-                                                                <div className="flex items-center justify-between text-xs">
-                                                                    <span className="flex items-center gap-1 text-muted-foreground">
-                                                                        {match.type === 'domicile' ? (
-                                                                            <Home className="w-3 h-3" />
-                                                                        ) : (
-                                                                            <Plane className="w-3 h-3" />
-                                                                        )}
-                                                                        {match.type === 'domicile' ? 'Domicile' : 'Extérieur'}
-                                                                    </span>
-                                                                    <span className="flex items-center gap-1 text-muted-foreground">
-                                                                        <Clock className="w-3 h-3" />
-                                                                        {new Date(match.scheduled_at).toLocaleDateString('fr-FR', {
-                                                                            day: 'numeric',
-                                                                            month: 'short',
-                                                                            hour: '2-digit',
-                                                                            minute: '2-digit'
-                                                                        })}
-                                                                    </span>
-                                                                </div>
-                                                                {match.venue && (
-                                                                    <p className="text-xs text-muted-foreground text-center truncate">
-                                                                        {match.venue}
-                                                                    </p>
-                                                                )}
-                                                            </div>
+                                                            {/* Action Button */}
+                                                            <Button
+                                                                variant="outline"
+                                                                className="w-full bg-alpha text-white hover:bg-alpha/90 border-alpha"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    router.visit(`/admin/matches/${match.id}`);
+                                                                }}
+                                                            >
+                                                                {played ? 'Voir les détails' : 'Gérer le match'}
+                                                            </Button>
                                                         </CardContent>
                                                     </Card>
                                                 );
@@ -287,4 +440,11 @@ export default function MatchesIndex({ matches, seasons = [] }) {
         </AdminLayout>
     );
 }
+
+
+
+
+
+
+
 
