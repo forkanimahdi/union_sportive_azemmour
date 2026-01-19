@@ -42,3 +42,4 @@ export default function ImageRightsIndex({ imageRights = { data: [] } }) {
 
 
 
+

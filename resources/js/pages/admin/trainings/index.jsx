@@ -42,3 +42,4 @@ export default function TrainingsIndex({ trainings = { data: [] } }) {
 
 
 
+
