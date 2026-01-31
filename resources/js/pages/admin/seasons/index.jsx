@@ -114,7 +114,7 @@ export default function SeasonsIndex({ seasons }) {
         <AdminLayout>
             <Head title="Saisons" />
             <div className="min-h-screen bg-background">
-                <div className="space-y-6 p-4 sm:p-6 max-w-6xl mx-auto">
+                <div className="space-y-6 p-4 sm:p-6 max-w-6xl ">
                     {/* Header: title, subtitle, New Season button */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
@@ -167,7 +167,7 @@ export default function SeasonsIndex({ seasons }) {
 
                     {/* Season cards */}
                     {filteredSeasons.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                             {filteredSeasons.map((season) => (
                                 <Card
                                     key={season.id}

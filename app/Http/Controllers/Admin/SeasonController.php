@@ -177,6 +177,7 @@ class SeasonController extends Controller
                         'id' => $team->id,
                         'name' => $team->name,
                         'category' => $team->category,
+                        'division' => $team->division,
                         'description' => $team->description,
                         'image' => $team->image,
                         'is_active' => $team->is_active,

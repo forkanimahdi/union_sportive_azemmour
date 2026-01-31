@@ -17,6 +17,7 @@ class Team extends Model
     protected $fillable = [
         'season_id',
         'category',
+        'division',
         'name',
         'description',
         'is_active',

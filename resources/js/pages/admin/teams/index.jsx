@@ -561,6 +561,11 @@ export default function TeamsIndex({ teams, players, seasons, categories = [], s
                                                                 <Badge className="mt-1 bg-white/20 text-white border-0 text-xs">
                                                                     {team.category}
                                                                 </Badge>
+                                                                {team.division && (
+                                                                    <span className="mt-1 ml-2 text-xs text-white/80 uppercase tracking-wide">
+                                                                        {team.division}
+                                                                    </span>
+                                                                )}
                                                                 {team.is_active && (
                                                                     <Badge className="mt-1 ml-2 bg-white/30 text-white border-0 text-xs">
                                                                         Active

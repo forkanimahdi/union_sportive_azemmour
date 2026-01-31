@@ -22,6 +22,7 @@ class TeamController extends Controller
                     'id' => $team->id,
                     'name' => $team->name,
                     'category' => $team->category,
+                    'division' => $team->division,
                     'season' => $team->season ? [
                         'id' => $team->season->id,
                         'name' => $team->season->name,
@@ -136,6 +137,7 @@ class TeamController extends Controller
         $validated = $request->validate([
             'season_id' => 'required|exists:seasons,id',
             'category' => 'required|in:U13,U15,U17,Senior',
+            'division' => 'nullable|string|max:255',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
@@ -178,6 +180,7 @@ class TeamController extends Controller
                 'id' => $team->id,
                 'name' => $team->name,
                 'category' => $team->category,
+                'division' => $team->division,
                 'description' => $team->description,
                 'is_active' => $team->is_active,
                 'season' => $team->season ? [
@@ -246,6 +249,7 @@ class TeamController extends Controller
                 'id' => $team->id,
                 'season_id' => $team->season_id,
                 'category' => $team->category,
+                'division' => $team->division,
                 'name' => $team->name,
                 'description' => $team->description,
                 'is_active' => $team->is_active,
@@ -259,6 +263,7 @@ class TeamController extends Controller
         $validated = $request->validate([
             'season_id' => 'required|exists:seasons,id',
             'category' => 'required|in:U13,U15,U17,Senior',
+            'division' => 'nullable|string|max:255',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'is_active' => 'boolean',

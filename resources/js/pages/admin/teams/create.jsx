@@ -13,6 +13,7 @@ export default function TeamsCreate({ seasons, initialSeasonId = null, returnToS
     const { data, setData, post, processing, errors } = useForm({
         season_id: initialSeasonId || '',
         category: '',
+        division: '',
         name: '',
         description: '',
         is_active: true,
@@ -94,6 +95,17 @@ export default function TeamsCreate({ seasons, initialSeasonId = null, returnToS
                                     />
                                     <InputError message={errors.name} />
                                 </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="division">Division</Label>
+                                <Input
+                                    id="division"
+                                    value={data.division}
+                                    onChange={(e) => setData('division', e.target.value)}
+                                    placeholder="Ex: Division 1, Premier Division"
+                                />
+                                <InputError message={errors.division} />
                             </div>
 
                             <div className="space-y-2">

@@ -337,6 +337,7 @@ export default function SeasonsShow({ season }) {
     const createTeamForm = useForm({
         season_id: '',
         category: '',
+        division: '',
         name: '',
         description: '',
         is_active: true,
@@ -347,6 +348,7 @@ export default function SeasonsShow({ season }) {
         season_id: '',
         name: '',
         category: '',
+        division: '',
         description: '',
         is_active: true,
         return_to_season_id: '',
@@ -356,6 +358,7 @@ export default function SeasonsShow({ season }) {
         createTeamForm.setData({
             season_id: season.id,
             category: '',
+            division: '',
             name: '',
             description: '',
             is_active: true,
@@ -378,6 +381,7 @@ export default function SeasonsShow({ season }) {
             season_id: season.id,
             name: team.name,
             category: team.category,
+            division: team.division || '',
             description: team.description || '',
             is_active: team.is_active ?? true,
             return_to_season_id: season.id,
@@ -417,8 +421,8 @@ export default function SeasonsShow({ season }) {
     return (
         <AdminLayout>
             <Head title={season.name} />
-            <div className="min-h-screen bg-background">
-                <div className="space-y-6 p-4 sm:p-6 max-w-6xl mx-auto">
+            <div className="min-h-screen  w-full ">
+                <div className="space-y-6 p-4 sm:p-6 ">
                     {/* Breadcrumbs */}
                     <nav className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Link href="/admin/dashboard" className="hover:text-foreground">Accueil</Link>
@@ -452,7 +456,7 @@ export default function SeasonsShow({ season }) {
                         <div className="flex items-center justify-between flex-wrap gap-3">
                             <h2 className="text-lg sm:text-xl font-bold text-primary">Effectifs actifs</h2>
                             <Select value={squadCategoryFilter} onValueChange={setSquadCategoryFilter}>
-                                <SelectTrigger className="w-[140px] sm:w-[180px] h-9 bg-card border rounded-lg">
+                                <SelectTrigger className="w-fit px-2 h-9 bg-card border rounded-lg">
                                     <FilterIcon className="w-4 h-4 mr-1 sm:mr-2 text-muted-foreground" />
                                     <SelectValue placeholder="Filtrer" />
                                 </SelectTrigger>
@@ -464,17 +468,17 @@ export default function SeasonsShow({ season }) {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 py-4">
                             {(filteredSquads || []).map((team) => (
-                                <Card key={team.id} className="overflow-hidden border rounded-xl shadow-sm bg-card hover:shadow-md transition-shadow flex flex-col">
+                                <Card key={team.id} className="overflow-hidden border p-0 rounded-xl shadow-sm bg-card hover:shadow-md transition-shadow flex flex-col">
                                     <div className="relative h-32 sm:h-36 overflow-hidden bg-muted">
                                         <img
                                             src={team.image || DEFAULT_TEAM_IMAGE}
                                             alt=""
                                             className="w-full h-full object-cover"
                                         />
-                                        <div className="absolute top-2 right-2 flex items-center gap-1">
-                                            <span className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium uppercase ${
+                                        <div className="absolute top-0 right-2 flex flex-col items-end h-full justify-between py-3 gap-1">
+                                            <span className={`inline-flex rounded-lg items-center  px-2 py-0.5 text-xs font-medium uppercase ${
                                                 team.is_active
                                                     ? 'bg-primary text-primary-foreground'
                                                     : 'bg-muted text-muted-foreground'
@@ -526,9 +530,11 @@ export default function SeasonsShow({ season }) {
                                             <Users className="w-4 h-4 shrink-0" />
                                             <span>{team.players_count ?? 0} joueur{(team.players_count ?? 0) !== 1 ? 's' : ''} inscrit{(team.players_count ?? 0) !== 1 ? 's' : ''}</span>
                                         </p>
-                                        <p className="text-xs text-muted-foreground mt-2 uppercase tracking-wide">
-                                            {team.category}
-                                        </p>
+                                        <div className="mt-2 flex items-center justify-between gap-2">
+                                            <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                                                {team.division || team.category}
+                                            </p>
+                                        </div>
                                         <Button
                                             variant="outline"
                                             size="sm"
@@ -619,6 +625,17 @@ export default function SeasonsShow({ season }) {
                                     </div>
                                 </div>
                                 <div className="space-y-2">
+                                    <Label htmlFor="create_team_division">Division</Label>
+                                    <Input
+                                        id="create_team_division"
+                                        value={createTeamForm.data.division}
+                                        onChange={(e) => createTeamForm.setData('division', e.target.value)}
+                                        placeholder="Ex: Division 1, Premier Division"
+                                        className="bg-background border-border"
+                                    />
+                                    <InputError message={createTeamForm.errors.division} />
+                                </div>
+                                <div className="space-y-2">
                                     <Label htmlFor="create_team_description">Description</Label>
                                     <textarea
                                         id="create_team_description"
@@ -690,6 +707,17 @@ export default function SeasonsShow({ season }) {
                                         />
                                         <InputError message={editTeamForm.errors.name} />
                                     </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit_team_division">Division</Label>
+                                    <Input
+                                        id="edit_team_division"
+                                        value={editTeamForm.data.division}
+                                        onChange={(e) => editTeamForm.setData('division', e.target.value)}
+                                        placeholder="Ex: Division 1, Premier Division"
+                                        className="bg-background border-border"
+                                    />
+                                    <InputError message={editTeamForm.errors.division} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="edit_team_description">Description</Label>

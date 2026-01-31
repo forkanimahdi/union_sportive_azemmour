@@ -13,6 +13,7 @@ export default function TeamsEdit({ team, seasons }) {
     const { data, setData, put, processing, errors } = useForm({
         season_id: team.season_id,
         category: team.category,
+        division: team.division || '',
         name: team.name,
         description: team.description || '',
         is_active: team.is_active,
@@ -83,6 +84,17 @@ export default function TeamsEdit({ team, seasons }) {
                                     />
                                     <InputError message={errors.name} />
                                 </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="division">Division</Label>
+                                <Input
+                                    id="division"
+                                    value={data.division}
+                                    onChange={(e) => setData('division', e.target.value)}
+                                    placeholder="Ex: Division 1, Premier Division"
+                                />
+                                <InputError message={errors.division} />
                             </div>
 
                             <div className="space-y-2">
