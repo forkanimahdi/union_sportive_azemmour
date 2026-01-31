@@ -33,6 +33,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     // Teams - Admin & Technical Director
     Route::middleware('role:admin,technical_director')->group(function () {
         Route::resource('teams', TeamController::class);
+        Route::get('teams/{team}/export', [TeamController::class, 'exportRoster'])->name('teams.export');
         Route::post('teams/{team}/assign-player', [TeamController::class, 'assignPlayer'])->name('teams.assign-player');
         Route::delete('teams/{team}/players/{player}', [TeamController::class, 'removePlayer'])->name('teams.remove-player');
     });

@@ -157,24 +157,54 @@ class TeamController extends Controller
     public function show(Team $team)
     {
         $team->load(['season', 'players', 'staff', 'trainings', 'matches']);
-        
-        // Get available players (not assigned to any team or assigned to this team)
-        $availablePlayers = \App\Models\Player::where(function($query) use ($team) {
-            $query->whereNull('team_id')
-                  ->orWhere('team_id', $team->id);
-        })
-        ->where('is_active', true)
-        ->orderBy('last_name')
-        ->get()
-        ->map(function($p) {
+
+        $players = $team->players->map(function ($p) {
+            $canPlay = $p->canPlay();
+            $blockReason = $p->getFitToPlayBlockReason();
+            $age = $p->date_of_birth ? now()->diffInYears($p->date_of_birth) : null;
             return [
                 'id' => $p->id,
                 'first_name' => $p->first_name,
                 'last_name' => $p->last_name,
                 'position' => $p->position,
+                'photo' => $p->photo,
+                'jersey_number' => $p->jersey_number,
+                'date_of_birth' => $p->date_of_birth?->format('Y-m-d'),
+                'can_play' => $canPlay,
+                'block_reason' => $blockReason,
+                'has_valid_medical' => $p->hasValidMedicalCertificate(),
+                'age' => $age,
             ];
         });
-        
+
+        $matchReady = $players->where('can_play', true)->count();
+        $actionRequired = $players->where('can_play', false)->count();
+        $ages = $players->pluck('age')->filter();
+        $avgAge = $ages->isNotEmpty() ? round($ages->avg(), 1) : null;
+
+        $stats = [
+            'total_players' => $players->count(),
+            'match_ready' => $matchReady,
+            'action_required' => $actionRequired,
+            'avg_age' => $avgAge,
+        ];
+
+        // Available players for "Add New Player" (not in this team, active)
+        $availablePlayers = \App\Models\Player::where(function ($query) use ($team) {
+            $query->whereNull('team_id')->orWhere('team_id', $team->id);
+        })
+            ->where('is_active', true)
+            ->orderBy('last_name')
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'id' => $p->id,
+                    'first_name' => $p->first_name,
+                    'last_name' => $p->last_name,
+                    'position' => $p->position,
+                ];
+            });
+
         return Inertia::render('admin/teams/show', [
             'team' => [
                 'id' => $team->id,
@@ -187,15 +217,9 @@ class TeamController extends Controller
                     'id' => $team->season->id,
                     'name' => $team->season->name,
                 ] : null,
-                'players' => $team->players->map(function($p) {
-                    return [
-                        'id' => $p->id,
-                        'first_name' => $p->first_name,
-                        'last_name' => $p->last_name,
-                        'position' => $p->position,
-                    ];
-                }),
-                'staff' => $team->staff->map(function($s) {
+                'players' => $players->values()->all(),
+                'stats' => $stats,
+                'staff' => $team->staff->map(function ($s) {
                     return [
                         'id' => $s->id,
                         'first_name' => $s->first_name,
@@ -203,9 +227,38 @@ class TeamController extends Controller
                         'role' => $s->pivot->role,
                     ];
                 }),
+                'former_players' => [], // Reserved for future (e.g. left_team_at, status)
+                'trialists' => [], // Reserved for future
             ],
             'availablePlayers' => $availablePlayers,
         ]);
+    }
+
+    public function exportRoster(Team $team)
+    {
+        $team->load(['players']);
+        $filename = 'effectif-' . \Illuminate\Support\Str::slug($team->name) . '-' . now()->format('Y-m-d') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+        $callback = function () use ($team) {
+            $stream = fopen('php://output', 'w');
+            fputcsv($stream, ['Nom', 'Prénom', 'Poste', 'Numéro', 'Âge', 'Prête à jouer'], ';');
+            foreach ($team->players as $p) {
+                $age = $p->date_of_birth ? now()->diffInYears($p->date_of_birth) : '';
+                fputcsv($stream, [
+                    $p->last_name,
+                    $p->first_name,
+                    $p->position ?? '',
+                    $p->jersey_number ?? '',
+                    $age,
+                    $p->canPlay() ? 'Oui' : 'Non',
+                ], ';');
+            }
+            fclose($stream);
+        };
+        return response()->stream($callback, 200, $headers);
     }
 
     public function assignPlayer(Request $request, Team $team)
