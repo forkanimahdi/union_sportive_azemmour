@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import AdminLayout from '../../../layouts/AdminLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
@@ -18,13 +18,6 @@ export default function TeamsCreate({ seasons, initialSeasonId = null, returnToS
         is_active: true,
         return_to_season_id: returnToSeasonId || '',
     });
-
-    useEffect(() => {
-        if (initialSeasonId) {
-            setData('season_id', initialSeasonId);
-            setData('return_to_season_id', returnToSeasonId || initialSeasonId);
-        }
-    }, [initialSeasonId, returnToSeasonId]);
 
     const submit = (e) => {
         e.preventDefault();

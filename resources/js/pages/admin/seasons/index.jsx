@@ -171,7 +171,7 @@ export default function SeasonsIndex({ seasons }) {
                             {filteredSeasons.map((season) => (
                                 <Card
                                     key={season.id}
-                                    className="overflow-hidden border rounded-xl shadow-sm bg-card hover:shadow-md transition-shadow flex flex-col"
+                                    className="overflow-hidden border p-0 rounded-xl shadow-sm bg-card hover:shadow-md transition-shadow flex flex-col"
                                 >
                                     {/* Card image - default usa_hero.jpg, grayscale when archived */}
                                     <div className="relative h-36 sm:h-44 overflow-hidden bg-muted">

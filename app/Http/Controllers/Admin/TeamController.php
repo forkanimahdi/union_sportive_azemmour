@@ -266,13 +266,25 @@ class TeamController extends Controller
 
         $team->update($validated);
 
+        if ($request->filled('return_to_season_id')) {
+            return redirect()->route('admin.seasons.show', $request->return_to_season_id)
+                ->with('success', 'Équipe mise à jour avec succès');
+        }
+
         return redirect()->route('admin.teams.index')
             ->with('success', 'Équipe mise à jour avec succès');
     }
 
-    public function destroy(Team $team)
+    public function destroy(Request $request, Team $team)
     {
         $team->delete();
+
+        $returnToSeasonId = $request->query('return_to_season_id') ?? $request->input('return_to_season_id');
+
+        if ($returnToSeasonId) {
+            return redirect()->route('admin.seasons.show', $returnToSeasonId)
+                ->with('success', 'Équipe supprimée avec succès');
+        }
 
         return redirect()->route('admin.teams.index')
             ->with('success', 'Équipe supprimée avec succès');
