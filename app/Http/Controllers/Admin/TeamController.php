@@ -12,93 +12,68 @@ class TeamController extends Controller
 {
     public function index(Request $request)
     {
-        // Load all teams for frontend filtering
-        $teams = Team::with(['season', 'players'])
+        $activeSeason = Season::where('is_active', true)->first();
+
+        $query = Team::with(['season', 'staff'])
             ->orderBy('category')
-            ->orderBy('name')
-            ->paginate(50)
-            ->through(function ($team) {
-                return [
-                    'id' => $team->id,
-                    'name' => $team->name,
-                    'category' => $team->category,
-                    'division' => $team->division,
-                    'season' => $team->season ? [
-                        'id' => $team->season->id,
-                        'name' => $team->season->name,
-                    ] : null,
-                    'is_active' => $team->is_active,
-                    'players_count' => $team->players()->count(),
-                    'description' => $team->description,
-                ];
-            });
+            ->orderBy('name');
 
-        // Load all players for frontend filtering (same as PlayerController)
-        $players = \App\Models\Player::with(['team'])
-            ->orderBy('last_name')
-            ->paginate(100)
-            ->through(function ($player) {
-                // Calculate statistics
-                $appearances = $player->matchLineups()->whereHas('match', function($q) {
-                    $q->where('status', 'finished');
-                })->count();
-                
-                $goals = $player->matchEvents()->where('type', 'goal')->count();
-                
-                // Assists - count passes that led to goals (simplified)
-                $assists = 0;
-                
-                // Current season stats (simplified)
-                $currentSeasonAppearances = $appearances;
-                $currentSeasonGoals = $goals;
-                $currentSeasonAssists = $assists;
-                
-                $dateOfBirth = $player->date_of_birth ? $player->date_of_birth->format('Y-m-d') : null;
-                
-                return [
-                    'id' => $player->id,
-                    'first_name' => $player->first_name,
-                    'last_name' => $player->last_name,
-                    'photo' => $player->photo,
-                    'jersey_number' => $player->jersey_number,
-                    'position' => $player->position,
-                    'date_of_birth' => $dateOfBirth,
-                    'team' => $player->team ? [
-                        'id' => $player->team->id,
-                        'name' => $player->team->name,
-                        'category' => $player->team->category,
-                    ] : null,
-                    'is_active' => $player->is_active,
-                    'can_play' => $player->canPlay(),
-                    'stats' => [
-                        'appearances' => [
-                            'total' => $appearances,
-                            'season' => $currentSeasonAppearances,
-                        ],
-                        'goals' => [
-                            'total' => $goals,
-                            'season' => $currentSeasonGoals,
-                        ],
-                        'assists' => [
-                            'total' => $assists,
-                            'season' => $currentSeasonAssists,
-                        ],
-                    ],
-                ];
-            });
+        if ($request->filled('season_id')) {
+            $query->where('season_id', $request->season_id);
+        }
 
-        $seasons = Season::orderBy('start_date', 'desc')->get()->map(function($s) {
-            return ['id' => $s->id, 'name' => $s->name];
+        $teams = $query->paginate(50)->through(function ($team) {
+            $primaryCoach = $team->staff()
+                ->wherePivotIn('role', ['head_coach', 'assistant_coach'])
+                ->wherePivot('is_primary', true)
+                ->first();
+            if (!$primaryCoach) {
+                $primaryCoach = $team->staff()->wherePivotIn('role', ['head_coach', 'assistant_coach'])->first();
+            }
+            if (!$primaryCoach) {
+                $primaryCoach = $team->staff()->first();
+            }
+            $coachName = $primaryCoach ? $primaryCoach->fullName() : null;
+
+            return [
+                'id' => $team->id,
+                'name' => $team->name,
+                'category' => $team->category,
+                'division' => $team->division,
+                'image' => $team->image,
+                'season' => $team->season ? [
+                    'id' => $team->season->id,
+                    'name' => $team->season->name,
+                    'is_active' => $team->season->is_active,
+                ] : null,
+                'is_active' => $team->is_active,
+                'players_count' => $team->players()->count(),
+                'description' => $team->description,
+                'coach_name' => $coachName,
+            ];
         });
 
-        // Get unique categories from teams
+        $seasons = Season::orderBy('start_date', 'desc')->get()->map(function ($s) {
+            return [
+                'id' => $s->id,
+                'name' => $s->name,
+                'is_active' => (bool) $s->is_active,
+            ];
+        });
+
         $categories = Team::distinct()->pluck('category')->filter()->values()->toArray();
 
         return Inertia::render('admin/teams/index', [
             'teams' => $teams,
-            'players' => $players,
             'seasons' => $seasons,
+            'activeSeason' => $activeSeason ? [
+                'id' => $activeSeason->id,
+                'name' => $activeSeason->name,
+            ] : null,
             'categories' => $categories,
+            'filters' => [
+                'season_id' => $request->season_id,
+            ],
         ]);
     }
 
