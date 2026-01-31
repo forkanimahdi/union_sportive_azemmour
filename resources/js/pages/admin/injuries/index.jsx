@@ -43,3 +43,10 @@ export default function InjuriesIndex({ injuries = { data: [] } }) {
 
 
 
+
+
+
+
+
+
+

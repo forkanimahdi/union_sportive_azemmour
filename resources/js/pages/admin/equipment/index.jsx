@@ -43,3 +43,10 @@ export default function EquipmentIndex({ equipment = { data: [] } }) {
 
 
 
+
+
+
+
+
+
+
