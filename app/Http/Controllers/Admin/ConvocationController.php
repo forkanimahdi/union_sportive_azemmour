@@ -7,6 +7,10 @@ use App\Models\Convocation;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
+/**
+ * Convocations: when adding players to a match convocation, enforce Fit-to-Play gates.
+ * Use FitToPlayGate::canBeConvoked($player) – if non-null, block add or set pivot block_reason.
+ */
 class ConvocationController extends Controller
 {
     public function index(Request $request)

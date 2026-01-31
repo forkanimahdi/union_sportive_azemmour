@@ -103,9 +103,7 @@ class TeamController extends Controller
 
     public function create()
     {
-        $seasons = Season::where('is_active', true)
-            ->orWhere('is_active', false)
-            ->orderBy('start_date', 'desc')
+        $seasons = Season::orderBy('start_date', 'desc')
             ->get()
             ->map(fn($s) => [
                 'id' => $s->id,
@@ -114,6 +112,22 @@ class TeamController extends Controller
 
         return Inertia::render('admin/teams/create', [
             'seasons' => $seasons,
+        ]);
+    }
+
+    public function createForSeason(Season $season)
+    {
+        $seasons = Season::orderBy('start_date', 'desc')
+            ->get()
+            ->map(fn($s) => [
+                'id' => $s->id,
+                'name' => $s->name,
+            ]);
+
+        return Inertia::render('admin/teams/create', [
+            'seasons' => $seasons,
+            'initialSeasonId' => $season->id,
+            'returnToSeasonId' => $season->id,
         ]);
     }
 
@@ -127,7 +141,12 @@ class TeamController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        Team::create($validated);
+        $team = Team::create($validated);
+
+        if ($request->filled('return_to_season_id')) {
+            return redirect()->route('admin.seasons.show', $request->return_to_season_id)
+                ->with('success', 'Équipe créée avec succès');
+        }
 
         return redirect()->route('admin.teams.index')
             ->with('success', 'Équipe créée avec succès');

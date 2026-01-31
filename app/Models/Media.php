@@ -66,6 +66,10 @@ class Media extends Model
         return $this->belongsTo(User::class, 'uploaded_by');
     }
 
+    /**
+     * Media & Image Rights firewall: no export/share for external if player consent not DIFFUSION_PUBLIQUE.
+     * NON_SIGNE = total block; USAGE_INTERNE = internal only; DIFFUSION_PUBLIQUE = external allowed.
+     */
     public function canBeShared(): bool
     {
         if (!$this->approved_for_social_media) {
@@ -74,17 +78,26 @@ class Media extends Model
 
         if ($this->player_id) {
             $player = $this->player;
-            $imageRight = $player->imageRight;
-            
-            if (!$imageRight || $imageRight->consent_status !== 'signe_diffusion_publique') {
-                return false;
-            }
+            $imageRight = $player?->imageRight;
 
-            if ($imageRight->expiry_date && $imageRight->expiry_date->isPast()) {
+            if (!$imageRight || !$imageRight->canBeUsedForSocialMedia()) {
                 return false;
             }
         }
 
         return true;
+    }
+
+    /** Internal use only (dashboard): allowed if consent is USAGE_INTERNE or DIFFUSION_PUBLIQUE. */
+    public function canBeUsedInternally(): bool
+    {
+        if (!$this->player_id) {
+            return true;
+        }
+        $imageRight = $this->player?->imageRight;
+        if (!$imageRight) {
+            return false;
+        }
+        return $imageRight->canBeUsedInternally();
     }
 }

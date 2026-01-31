@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../../layouts/AdminLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
@@ -9,19 +9,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import InputError from '@/components/input-error';
 
-export default function TeamsCreate({ seasons }) {
+export default function TeamsCreate({ seasons, initialSeasonId = null, returnToSeasonId = null }) {
     const { data, setData, post, processing, errors } = useForm({
-        season_id: '',
+        season_id: initialSeasonId || '',
         category: '',
         name: '',
         description: '',
         is_active: true,
+        return_to_season_id: returnToSeasonId || '',
     });
+
+    useEffect(() => {
+        if (initialSeasonId) {
+            setData('season_id', initialSeasonId);
+            setData('return_to_season_id', returnToSeasonId || initialSeasonId);
+        }
+    }, [initialSeasonId, returnToSeasonId]);
 
     const submit = (e) => {
         e.preventDefault();
         post('/admin/teams');
     };
+
+    const cancelHref = returnToSeasonId ? `/admin/seasons/${returnToSeasonId}` : '/admin/teams';
 
     return (
         <AdminLayout>
@@ -41,7 +51,11 @@ export default function TeamsCreate({ seasons }) {
                         <form onSubmit={submit} className="space-y-6">
                             <div className="space-y-2">
                                 <Label htmlFor="season_id">Saison *</Label>
-                                <Select value={data.season_id} onValueChange={(value) => setData('season_id', value)}>
+                                <Select
+                                    value={data.season_id}
+                                    onValueChange={(value) => setData('season_id', value)}
+                                    disabled={!!initialSeasonId}
+                                >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Sélectionner une saison" />
                                     </SelectTrigger>
@@ -53,6 +67,9 @@ export default function TeamsCreate({ seasons }) {
                                         ))}
                                     </SelectContent>
                                 </Select>
+                                {initialSeasonId && (
+                                    <p className="text-xs text-muted-foreground">L&apos;équipe sera liée à cette saison.</p>
+                                )}
                                 <InputError message={errors.season_id} />
                             </div>
 
@@ -113,7 +130,7 @@ export default function TeamsCreate({ seasons }) {
                                 <Button type="submit" disabled={processing}>
                                     {processing ? 'Création...' : 'Créer l\'équipe'}
                                 </Button>
-                                <Link href="/admin/teams">
+                                <Link href={cancelHref}>
                                     <Button type="button" variant="outline">
                                         Annuler
                                     </Button>

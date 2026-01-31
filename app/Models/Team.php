@@ -20,6 +20,7 @@ class Team extends Model
         'name',
         'description',
         'is_active',
+        'image',
     ];
 
     protected function casts(): array

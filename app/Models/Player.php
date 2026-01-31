@@ -110,11 +110,17 @@ class Player extends Model
         return $this->date_of_birth->age < 18;
     }
 
+    /**
+     * Medical gate: blocked if any injury is "En soins", "Reprise" or not medically cleared.
+     * Only "Apte" (fit) with fit_to_play = true allows play.
+     */
     public function isInjured(): bool
     {
         return $this->injuries()
-            ->where('status', '!=', 'apte')
-            ->where('fit_to_play', false)
+            ->where(function ($query) {
+                $query->whereIn('status', ['en_soins', 'reprise_progressive'])
+                    ->orWhere('fit_to_play', false);
+            })
             ->exists();
     }
 
@@ -129,18 +135,65 @@ class Player extends Model
             ->exists();
     }
 
+    /**
+     * Fit-to-Play: all three gates must pass (Medical, Disciplinary, Administrative).
+     */
     public function canPlay(): bool
     {
-        return $this->is_active 
-            && !$this->isInjured() 
+        return $this->is_active
+            && !$this->isInjured()
             && !$this->isSuspended()
-            && $this->hasValidMedicalCertificate();
+            && $this->hasValidMedicalCertificate()
+            && $this->hasValidLicense()
+            && $this->hasParentalAuthorizationWhenMinor();
     }
 
     public function hasValidMedicalCertificate(): bool
     {
-        return $this->medical_certificate_path 
-            && $this->medical_certificate_expiry 
-            && $this->medical_certificate_expiry->isFuture();
+        return $this->medical_certificate_path
+            && $this->medical_certificate_expiry
+            && !$this->medical_certificate_expiry->isPast();
+    }
+
+    /** Administrative gate: valid license required. */
+    public function hasValidLicense(): bool
+    {
+        return !empty($this->license_number) && !empty($this->license_path);
+    }
+
+    /** Administrative gate: minors must have signed parental authorization. */
+    public function hasParentalAuthorizationWhenMinor(): bool
+    {
+        if (!$this->date_of_birth || !$this->isMinor()) {
+            return true;
+        }
+        return !empty($this->parental_authorization_path);
+    }
+
+    /**
+     * Returns the reason a player is blocked from match convocation (or null if fit to play).
+     * Use for gatekeeping when adding players to convocations.
+     */
+    public function getFitToPlayBlockReason(): ?string
+    {
+        if (!$this->is_active) {
+            return __('Joueuse inactive');
+        }
+        if ($this->isInjured()) {
+            return __('Indisponible médicalement (blessure en soins / reprise ou non apte)');
+        }
+        if ($this->isSuspended()) {
+            return __('Suspendue (discipline)');
+        }
+        if (!$this->hasValidMedicalCertificate()) {
+            return __('Certificat médical absent ou expiré');
+        }
+        if (!$this->hasValidLicense()) {
+            return __('Licence invalide ou manquante');
+        }
+        if (!$this->hasParentalAuthorizationWhenMinor()) {
+            return __('Autorisation parentale manquante (mineure)');
+        }
+        return null;
     }
 }

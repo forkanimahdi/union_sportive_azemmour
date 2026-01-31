@@ -24,11 +24,12 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     // Seasons - Admin & Technical Director
     Route::middleware('role:admin,technical_director')->group(function () {
         Route::resource('seasons', SeasonController::class);
+        Route::get('seasons/{season}/teams/create', [TeamController::class, 'createForSeason'])->name('seasons.teams.create');
         Route::post('seasons/{season}/duplicate', [SeasonController::class, 'duplicate'])->name('seasons.duplicate');
         Route::get('seasons/{season}/export', [SeasonController::class, 'export'])->name('seasons.export');
         Route::get('seasons/{season}/bulk-message', [SeasonController::class, 'bulkMessage'])->name('seasons.bulk-message');
     });
-    
+
     // Teams - Admin & Technical Director
     Route::middleware('role:admin,technical_director')->group(function () {
         Route::resource('teams', TeamController::class);

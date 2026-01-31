@@ -13,9 +13,11 @@ class SeasonController extends Controller
     {
         // Load all seasons for frontend filtering
         $seasons = Season::query()
+            ->withCount(['teams'])
             ->orderBy('start_date', 'desc')
             ->paginate(15)
             ->through(function ($season) {
+                $playersCount = $season->teams()->withCount('players')->get()->sum('players_count');
                 return [
                     'id' => $season->id,
                     'name' => $season->name,
@@ -23,7 +25,8 @@ class SeasonController extends Controller
                     'end_date' => $season->end_date->format('Y-m-d'),
                     'is_active' => $season->is_active,
                     'description' => $season->description,
-                    'teams_count' => $season->teams()->count(),
+                    'teams_count' => $season->teams_count,
+                    'players_count' => (int) $playersCount,
                 ];
             });
 
@@ -62,6 +65,7 @@ class SeasonController extends Controller
     public function show(Season $season)
     {
         $season->load([
+            'teams.staff',
             'teams.players.matchEvents' => function ($query) {
                 $query->whereIn('type', ['goal', 'penalty']);
             },
@@ -155,12 +159,31 @@ class SeasonController extends Controller
                 'is_active' => $season->is_active,
                 'description' => $season->description,
                 'teams' => $season->teams->map(function($team) {
+                    $playersCount = $team->players()->count();
+                    $primaryCoach = $team->staff()
+                        ->wherePivotIn('role', ['head_coach', 'assistant_coach'])
+                        ->wherePivot('is_primary', true)
+                        ->first();
+                    if (!$primaryCoach) {
+                        $primaryCoach = $team->staff()->wherePivotIn('role', ['head_coach', 'assistant_coach'])->first();
+                    }
+                    if (!$primaryCoach) {
+                        $primaryCoach = $team->staff()->first();
+                    }
+                    $coachName = $primaryCoach ? $primaryCoach->fullName() : null;
+                    $minRoster = in_array($team->category, ['U17', 'Senior']) ? 14 : 12;
+                    $rosterComplete = $playersCount >= $minRoster;
                     return [
-                    'id' => $team->id,
-                    'name' => $team->name,
-                    'category' => $team->category,
+                        'id' => $team->id,
+                        'name' => $team->name,
+                        'category' => $team->category,
+                        'image' => $team->image,
+                        'is_active' => $team->is_active,
+                        'players_count' => $playersCount,
+                        'coach_name' => $coachName,
+                        'roster_complete' => $rosterComplete,
                     ];
-                }),
+                })->values(),
                 'competitions' => $season->competitions->map(function($comp) {
                     return [
                     'id' => $comp->id,

@@ -14,8 +14,17 @@ import {
     ArrowLeft, Edit, Users, Trophy, Calendar as CalendarIcon,
     TrendingUp, BarChart3, Copy, Download, MessageSquare,
     Clock, MapPin, Home, Plane, Award, Target, ArrowRight,
-    ChevronDown, ChevronUp, Filter, X, Plus, Frown
+    ChevronDown, ChevronUp, Filter, X, Plus, Frown,
+    MoreVertical, User, Filter as FilterIcon
 } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
+const DEFAULT_TEAM_IMAGE = '/assets/images/hero/usa_hero.jpg';
 
 export default function SeasonsShow({ season }) {
     const [selectedCategory, setSelectedCategory] = useState('all');
@@ -316,103 +325,187 @@ export default function SeasonsShow({ season }) {
         });
     };
 
+    const [squadCategoryFilter, setSquadCategoryFilter] = useState('all');
+    const filteredSquads = useMemo(() => {
+        const teams = season.teams || [];
+        if (squadCategoryFilter === 'all') return teams;
+        return teams.filter(t => t.category === squadCategoryFilter);
+    }, [season.teams, squadCategoryFilter]);
+
     return (
         <AdminLayout>
             <Head title={season.name} />
-            <div className="min-h-screen">
-                <div className="space-y-6 p-6">
-                    {/* Hero Header - FPL Style */}
-                    <div className="bg-primary rounded-xl p-8 text-white shadow-xl">
-                        <Link href="/admin/seasons">
-                            <Button variant="ghost" size="sm" className="mb-6 text-white hover:bg-white/20">
-                                <ArrowLeft className="w-4 h-4 mr-2" />
-                                Retour
+            <div className="min-h-screen bg-background">
+                <div className="space-y-6 p-4 sm:p-6 max-w-6xl mx-auto">
+                    {/* Breadcrumbs */}
+                    <nav className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Link href="/admin/dashboard" className="hover:text-foreground">Accueil</Link>
+                        <span>/</span>
+                        <Link href="/admin/seasons" className="hover:text-foreground">Saisons</Link>
+                        <span>/</span>
+                        <span className="text-foreground font-medium">{season.name}</span>
+                    </nav>
+
+                    {/* Season Overview Header + Create New Team */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+                                {season.name} – Aperçu
+                            </h1>
+                            <p className="text-muted-foreground text-sm sm:text-base mt-1">
+                                Gérez les effectifs, équipes et staff pour ce cycle.
+                            </p>
+                        </div>
+                        <Link href={`/admin/seasons/${season.id}/teams/create`}>
+                            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto shrink-0">
+                                <Plus className="w-5 h-5 mr-2" />
+                                Nouvelle équipe
                             </Button>
                         </Link>
-                        <div className="flex items-start justify-between flex-wrap gap-6">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-4 mb-4">
-                                    <h1 className="text-4xl font-black uppercase italic">
-                                        {season.name}
-                                    </h1>
-                                    {season.is_active && (
-                                        <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm">
-                                            Saison Active
-                                        </Badge>
-                                    )}
-                                </div>
-                                <div className="flex items-center gap-4 text-white/90">
-                                    <div className="flex items-center gap-2">
-                                        <CalendarIcon className="w-5 h-5" />
-                                        <span>{season.start_date} - {season.end_date}</span>
+                    </div>
+
+                    {/* Active Squads */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between flex-wrap gap-3">
+                            <h2 className="text-lg sm:text-xl font-bold text-primary">Effectifs actifs</h2>
+                            <Select value={squadCategoryFilter} onValueChange={setSquadCategoryFilter}>
+                                <SelectTrigger className="w-[140px] sm:w-[180px] h-9 bg-card border rounded-lg">
+                                    <FilterIcon className="w-4 h-4 mr-1 sm:mr-2 text-muted-foreground" />
+                                    <SelectValue placeholder="Filtrer" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Toutes</SelectItem>
+                                    {(season.categories || []).map((cat) => (
+                                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {(filteredSquads || []).map((team) => (
+                                <Card key={team.id} className="overflow-hidden border rounded-xl shadow-sm bg-card hover:shadow-md transition-shadow flex flex-col">
+                                    <div className="relative h-32 sm:h-36 overflow-hidden bg-muted">
+                                        <img
+                                            src={team.image || DEFAULT_TEAM_IMAGE}
+                                            alt=""
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <div className="absolute top-2 right-2 flex items-center gap-1">
+                                            <span className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium uppercase ${
+                                                team.is_active
+                                                    ? 'bg-primary text-primary-foreground'
+                                                    : 'bg-muted text-muted-foreground'
+                                            }`}>
+                                                {team.is_active ? 'Active' : 'Inactive'}
+                                            </span>
+                                            {!team.roster_complete && (
+                                                <span className="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium uppercase bg-amber-500 text-white">
+                                                    Effectif incomplet
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="absolute top-2 left-2">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-white/90 hover:bg-white" onClick={(e) => e.stopPropagation()}>
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="start">
+                                                    <DropdownMenuItem onClick={() => router.visit(`/admin/teams/${team.id}`)}>
+                                                        <Users className="w-4 h-4 mr-2" /> Voir l&apos;équipe
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => router.visit(`/admin/teams/${team.id}/edit`)}>
+                                                        <Edit className="w-4 h-4 mr-2" /> Modifier
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <Users className="w-5 h-5" />
-                                        <span>{season.teams?.length || 0} équipe{season.teams?.length !== 1 ? 's' : ''}</span>
-                                    </div>
-                                </div>
-                                {season.description && (
-                                    <p className="mt-4 text-white/80 leading-relaxed max-w-2xl">
-                                        {season.description}
-                                    </p>
-                                )}
+                                    <CardContent className="p-3 sm:p-4 flex flex-col flex-1">
+                                        <h3 className="font-bold text-foreground text-base truncate">{team.name}</h3>
+                                        {team.coach_name && (
+                                            <p className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                                                <User className="w-4 h-4 shrink-0" />
+                                                <span className="truncate">Coach: {team.coach_name}</span>
+                                            </p>
+                                        )}
+                                        <p className="flex items-center gap-2 text-sm text-muted-foreground mt-0.5">
+                                            <Users className="w-4 h-4 shrink-0" />
+                                            <span>{team.players_count ?? 0} joueur{(team.players_count ?? 0) !== 1 ? 's' : ''} inscrit{(team.players_count ?? 0) !== 1 ? 's' : ''}</span>
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-2 uppercase tracking-wide">
+                                            {team.category}
+                                        </p>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="mt-3 w-full border-primary text-primary hover:bg-primary/10"
+                                            onClick={() => router.visit(`/admin/teams/${team.id}`)}
+                                        >
+                                            Voir l&apos;équipe
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                        {(!filteredSquads || filteredSquads.length === 0) && (
+                            <Card className="border-2 border-dashed border-border bg-card">
+                                <CardContent className="py-10 text-center">
+                                    <p className="text-muted-foreground">Aucune équipe dans cette saison.</p>
+                                    <Link href={`/admin/seasons/${season.id}/teams/create`} className="inline-block mt-3">
+                                        <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                                            <Plus className="w-4 h-4 mr-2" /> Nouvelle équipe
+                                        </Button>
+                                    </Link>
+                                </CardContent>
+                            </Card>
+                        )}
+                    </div>
+
+                    {/* Season Planning & Insights */}
+                    <Card className="rounded-xl border bg-card shadow-sm">
+                        <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
+                                <h3 className="font-bold text-primary text-lg">Planification & suivi</h3>
+                                <p className="text-muted-foreground text-sm mt-1">
+                                    Utilisez cet aperçu pour suivre les délais d&apos;inscription, les affectations des coachs et la taille des effectifs par catégorie. Besoin d&apos;une nouvelle équipe ? Utilisez l&apos;action « Nouvelle équipe » pour commencer.
+                                </p>
                             </div>
-                            <div className="flex gap-3 flex-wrap">
-                                <Button
-                                    variant="outline"
-                                    onClick={handleDuplicate}
-                                    className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-                                >
-                                    <Copy className="w-4 h-4 mr-2" />
-                                    Dupliquer
+                            <div className="flex flex-wrap gap-2 shrink-0">
+                                <Button variant="outline" className="border-primary text-primary hover:bg-primary/10" onClick={handleExport}>
+                                    <Download className="w-4 h-4 mr-2" /> Exporter les stats
                                 </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={handleExport}
-                                    className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-                                >
-                                    <Download className="w-4 h-4 mr-2" />
-                                    Exporter
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={handleBulkMessage}
-                                    className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-                                >
-                                    <MessageSquare className="w-4 h-4 mr-2" />
-                                    Message
-                                </Button>
-                                <Link href={`/admin/seasons/${season.id}/edit`}>
-                                    <Button className="bg-white text-alpha hover:bg-white/95">
-                                        <Edit className="w-4 h-4 mr-2" />
-                                        Modifier
+                                <Link href={`/admin/seasons/${season.id}`}>
+                                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                                        <CalendarIcon className="w-4 h-4 mr-2" /> Calendrier de la saison
                                     </Button>
                                 </Link>
                             </div>
-                        </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Legacy actions row */}
+                    <div className="flex flex-wrap gap-2">
+                        <Link href="/admin/seasons">
+                            <Button variant="outline" size="sm">
+                                <ArrowLeft className="w-4 h-4 mr-2" /> Retour aux saisons
+                            </Button>
+                        </Link>
+                        <Button variant="outline" size="sm" onClick={handleDuplicate}>
+                            <Copy className="w-4 h-4 mr-2" /> Dupliquer
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleBulkMessage}>
+                            <MessageSquare className="w-4 h-4 mr-2" /> Message
+                        </Button>
+                        <Link href={`/admin/seasons/${season.id}/edit`}>
+                            <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                                <Edit className="w-4 h-4 mr-2" /> Modifier la saison
+                            </Button>
+                        </Link>
                     </div>
 
-                    {/* Category Filter - Alpha Background */}
-                    {/* <Card className="bg-alpha border-2 border-alpha">
-                        <CardContent className="p-6">
-                            <div className="flex items-center gap-4 flex-wrap">
-                                <label className="text-sm font-semibold text-white">Filtrer par catégorie:</label>
-                                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                                    <SelectTrigger className="w-[200px] bg-white border-primary/20 text-foreground">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Toutes les catégories</SelectItem>
-                                        {season.categories?.map((cat) => (
-                                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </CardContent>
-                    </Card> */}
-
-                    {/* Tabs - FPL Style */}
+                    {/* Tabs - Calendar, Standings, Statistics */}
                     <Tabs defaultValue="calendar" className="space-y-6">
                         <TabsList className="bg-primary/80 border-primary/20 p-1 h-auto">
                             <TabsTrigger
