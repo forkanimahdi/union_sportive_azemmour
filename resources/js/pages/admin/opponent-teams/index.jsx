@@ -1,318 +1,341 @@
 import React, { useState, useMemo } from 'react';
 import AdminLayout from '../../../layouts/AdminLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Edit, Trash2, Trophy, Search, Award, Medal } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Edit, Trash2, Search } from 'lucide-react';
+import DeleteModal from '@/components/DeleteModal';
+import InputError from '@/components/input-error';
 
-export default function OpponentTeamsIndex({ teams = [], activeSeason }) {
+const CATEGORY_LABELS = {
+    Senior: 'SENIOR',
+    U17: 'U17',
+    U15: 'U15',
+    U13: 'U13',
+};
+
+export default function OpponentTeamsIndex({
+    teams = [],
+    activeSeason,
+    seasons = [],
+    categories = [],
+}) {
     const [search, setSearch] = useState('');
+    const [seasonFilter, setSeasonFilter] = useState('all');
+    const [categoryFilter, setCategoryFilter] = useState('all');
+    const [createModalOpen, setCreateModalOpen] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [teamToDelete, setTeamToDelete] = useState(null);
+    const [logoPreview, setLogoPreview] = useState(null);
 
-    // Group teams by category
-    const teamsByCategory = useMemo(() => {
-        const grouped = {};
-        
-        teams.forEach(team => {
-            const category = team.category || 'Autre';
-            if (!grouped[category]) {
-                grouped[category] = [];
-            }
-            grouped[category].push(team);
+    const createForm = useForm({
+        name: '',
+        category: '',
+        logo: null,
+    });
+
+    const handleCreateSubmit = (e) => {
+        e.preventDefault();
+        createForm.post('/admin/opponent-teams', {
+            forceFormData: true,
+            onSuccess: () => {
+                setCreateModalOpen(false);
+                createForm.reset();
+                setLogoPreview(null);
+            },
         });
+    };
 
-        // Sort each category
-        Object.keys(grouped).forEach(category => {
-            grouped[category] = grouped[category].sort((a, b) => {
-                if ((b.points || 0) !== (a.points || 0)) {
-                    return (b.points || 0) - (a.points || 0);
-                }
-                const diffA = (a.goal_difference || 0);
-                const diffB = (b.goal_difference || 0);
-                if (diffB !== diffA) {
-                    return diffB - diffA;
-                }
-                if ((b.goals_for || 0) !== (a.goals_for || 0)) {
-                    return (b.goals_for || 0) - (a.goals_for || 0);
-                }
-                return (a.goals_against || 0) - (b.goals_against || 0);
-            }).map((team, index) => ({
-                ...team,
-                rank: index + 1
-            }));
-
-            // Filter by search if applicable
-            if (search) {
-                const searchLower = search.toLowerCase();
-                grouped[category] = grouped[category].filter(team => 
-                    team.name.toLowerCase().includes(searchLower)
-                );
-            }
-        });
-
-        return grouped;
-    }, [teams, search]);
-
-    const handleDelete = (id) => {
-        if (confirm('Êtes-vous sûr de vouloir supprimer cette équipe adverse ?')) {
-            router.delete(`/admin/opponent-teams/${id}`);
+    const handleLogoChange = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            createForm.setData('logo', file);
+            const reader = new FileReader();
+            reader.onloadend = () => setLogoPreview(reader.result);
+            reader.readAsDataURL(file);
+        } else {
+            createForm.setData('logo', null);
+            setLogoPreview(null);
         }
     };
 
-    const getRankIcon = (rank) => {
-        if (rank === 1) return <Medal className="w-5 h-5 text-yellow-500" />;
-        if (rank === 2) return <Medal className="w-5 h-5 text-gray-400" />;
-        if (rank === 3) return <Medal className="w-5 h-5 text-orange-600" />;
-        return null;
+    const openCreateModal = () => {
+        createForm.reset();
+        setLogoPreview(null);
+        setCreateModalOpen(true);
+    };
+
+    // Filter and group teams by category (no calendar, no standings)
+    const teamsByCategory = useMemo(() => {
+        let filtered = [...teams];
+        const searchLower = search.trim().toLowerCase();
+        if (searchLower) {
+            filtered = filtered.filter(
+                (t) =>
+                    (t.name && t.name.toLowerCase().includes(searchLower)) ||
+                    (t.short_code && t.short_code.toLowerCase().includes(searchLower))
+            );
+        }
+        if (categoryFilter && categoryFilter !== 'all') {
+            filtered = filtered.filter((t) => (t.category || '') === categoryFilter);
+        }
+        const grouped = {};
+        filtered.forEach((team) => {
+            const cat = team.category || 'Autre';
+            if (!grouped[cat]) grouped[cat] = [];
+            grouped[cat].push(team);
+        });
+        Object.keys(grouped).forEach((cat) => {
+            grouped[cat].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        });
+        return grouped;
+    }, [teams, search, categoryFilter]);
+
+    const orderedCategoryKeys = useMemo(() => {
+        const keys = Object.keys(teamsByCategory);
+        const order = ['Senior', 'U17', 'U15', 'U13', 'Autre'];
+        return order.filter((k) => keys.includes(k)).concat(keys.filter((k) => !order.includes(k)));
+    }, [teamsByCategory]);
+
+    const handleDeleteClick = (team) => {
+        setTeamToDelete(team);
+        setDeleteModalOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (teamToDelete) {
+            router.delete(`/admin/opponent-teams/${teamToDelete.id}`, {
+                onSuccess: () => {
+                    setDeleteModalOpen(false);
+                    setTeamToDelete(null);
+                },
+            });
+        }
     };
 
     return (
         <AdminLayout>
-            <Head title="Équipes Adverses & Classement" />
-            <div className="min-h-screen bg-gradient-to-br from-primary/5 via-white to-primary/5">
-                <div className="space-y-8 p-6">
-                    {/* Hero Header */}
-                    <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/80 to-transparent rounded-2xl opacity-10 blur-3xl"></div>
-                        <div className="relative bg-primary rounded-2xl p-8 shadow-2xl">
-                            <div className="flex items-center justify-between flex-wrap gap-6">
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                                            <Award className="w-8 h-8 text-white" />
-                                        </div>
-                                        <h1 className="text-4xl font-black text-white uppercase italic tracking-tight">
-                                            Classement Botola Pro
-                                        </h1>
-                                    </div>
-                                    <p className="text-white/90 text-lg ml-14">
-                                        {activeSeason?.name || 'Saison active'} • {teams.length} équipe{teams.length > 1 ? 's' : ''}
-                                    </p>
-                                </div>
-                                <Link href="/admin/opponent-teams/create">
-                                    <Button size="lg" className="bg-white text-primary hover:bg-white/95 shadow-xl h-12 px-6 text-base font-semibold">
-                                        <Plus className="w-5 h-5 mr-2" />
-                                        Nouvelle Équipe
-                                    </Button>
-                                </Link>
-                            </div>
+            <Head title="Gérer les équipes adverses" />
+            <div className="min-h-screen bg-muted/30">
+                <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
+                    {/* Page title + Add button */}
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                                Gérer les équipes adverses
+                            </h1>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                Configurez les équipes externes et les abréviations pour les tableaux de compétition.
+                            </p>
                         </div>
+                        <Button
+                            className="shrink-0 bg-primary text-primary-foreground hover:bg-primary/90"
+                            onClick={openCreateModal}
+                        >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Ajouter une équipe externe
+                        </Button>
                     </div>
 
-                    {/* Search */}
-                    <div className="flex items-center gap-4">
-                        <div className="relative flex-1 max-w-md">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    {/* Search and filters */}
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
-                                placeholder="Rechercher une équipe..."
+                                placeholder="Rechercher équipes ou abréviations..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="pl-12 h-12 bg-white border-2 border-primary/10 focus:border-primary rounded-xl text-base"
+                                className="pl-9 bg-background"
                             />
+                        </div>
+                        <div className="flex flex-wrap gap-2 sm:gap-3">
+                            <Select value={seasonFilter} onValueChange={setSeasonFilter}>
+                                <SelectTrigger className="w-full min-w-[140px] sm:w-[160px] bg-background">
+                                    <SelectValue placeholder="Saison" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Toutes les saisons</SelectItem>
+                                    {seasons.map((s) => (
+                                        <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                                <SelectTrigger className="w-full min-w-[140px] sm:w-[180px] bg-background">
+                                    <SelectValue placeholder="Catégorie" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Toutes les catégories</SelectItem>
+                                    {(categories.length ? categories : ['Senior', 'U17', 'U15', 'U13']).map((c) => (
+                                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
 
-                    {/* Leaderboard by Category */}
-                    {Object.keys(teamsByCategory).length > 0 ? (
-                        <div className="space-y-6">
-                            {Object.keys(teamsByCategory).sort((a, b) => {
-                                if (a === 'Senior') return -1;
-                                if (b === 'Senior') return 1;
-                                return a.localeCompare(b);
-                            }).map((category, catIndex) => {
-                                const categoryTeams = teamsByCategory[category];
-                                if (categoryTeams.length === 0) return null;
-
+                    {/* Teams by category - cards only, no calendar */}
+                    {orderedCategoryKeys.length > 0 ? (
+                        <div className="space-y-8">
+                            {orderedCategoryKeys.map((category) => {
+                                const list = teamsByCategory[category];
+                                if (!list || list.length === 0) return null;
+                                const heading = CATEGORY_LABELS[category] || category.toUpperCase();
                                 return (
-                                    <Card key={category} className="border-0 shadow-xl overflow-hidden bg-white">
-                                        <div className="bg-gradient-to-r from-primary to-primary/80 p-6">
-                                            <div className="flex items-center gap-3">
-                                                <Trophy className="w-6 h-6 text-white" />
-                                                <h2 className="text-2xl font-black text-white uppercase tracking-wide">
-                                                    Classement - {category}
-                                                </h2>
-                                                <Badge className="bg-white/30 text-white border-0 ml-auto">
-                                                    {categoryTeams.length} équipe{categoryTeams.length > 1 ? 's' : ''}
-                                                </Badge>
-                                            </div>
+                                    <section key={category}>
+                                        <h2 className="mb-4 text-sm font-bold uppercase tracking-wide text-muted-foreground">
+                                            {heading}
+                                        </h2>
+                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                            {list.map((team) => (
+                                                <div
+                                                    key={team.id}
+                                                    className="flex items-center gap-4 rounded-lg border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
+                                                >
+                                                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/90 text-base font-bold text-primary-foreground">
+                                                        {team.short_code || (team.name || '').slice(0, 2).toUpperCase() || '—'}
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="font-semibold text-foreground truncate">
+                                                            {team.name}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Saison {activeSeason?.name || '—'}
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex shrink-0 items-center gap-1">
+                                                        <Link href={`/admin/opponent-teams/${team.id}/edit`}>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-9 w-9 text-primary hover:bg-primary/10"
+                                                            >
+                                                                <Edit className="h-4 w-4" />
+                                                            </Button>
+                                                        </Link>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-9 w-9 text-destructive hover:bg-destructive/10"
+                                                            onClick={() => handleDeleteClick(team)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
-                                        <CardContent className="p-0">
-                                            <div className="overflow-x-auto">
-                                                <table className="w-full">
-                                                    <thead>
-                                                        <tr className="bg-primary/5 border-b-2 border-primary/20">
-                                                            <th className="px-6 py-4 text-left font-black text-sm uppercase tracking-wide text-primary">RANG</th>
-                                                            <th className="px-6 py-4 text-left font-black text-sm uppercase tracking-wide text-primary">ÉQUIPE</th>
-                                                            <th className="px-6 py-4 text-center font-black text-sm uppercase tracking-wide text-primary">J</th>
-                                                            <th className="px-6 py-4 text-center font-black text-sm uppercase tracking-wide text-green-600">G</th>
-                                                            <th className="px-6 py-4 text-center font-black text-sm uppercase tracking-wide text-yellow-600">N</th>
-                                                            <th className="px-6 py-4 text-center font-black text-sm uppercase tracking-wide text-red-600">P</th>
-                                                            <th className="px-6 py-4 text-center font-black text-sm uppercase tracking-wide text-primary">BP</th>
-                                                            <th className="px-6 py-4 text-center font-black text-sm uppercase tracking-wide text-primary">BC</th>
-                                                            <th className="px-6 py-4 text-center font-black text-sm uppercase tracking-wide text-primary">DIFF</th>
-                                                            <th className="px-6 py-4 text-center font-black text-sm uppercase tracking-wide text-primary">PTS</th>
-                                                            <th className="px-6 py-4 text-center font-black text-sm uppercase tracking-wide text-primary">ACTIONS</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {categoryTeams.map((team) => {
-                                                            const rank = team.rank;
-                                                            const isTopThree = rank <= 3;
-                                                            const isOurTeam = !team.is_opponent;
-                                                            
-                                                            return (
-                                                                <tr 
-                                                                    key={team.id}
-                                                                    className={`border-b border-primary/10 hover:bg-primary/5 transition-colors ${
-                                                                        isTopThree ? 'bg-primary/5' : ''
-                                                                    } ${isOurTeam ? 'bg-primary/10 font-semibold ring-2 ring-primary/20' : ''}`}
-                                                                >
-                                                                    <td className="px-6 py-4">
-                                                                        <div className="flex items-center gap-2">
-                                                                            <span className={`font-black text-lg ${
-                                                                                rank === 1 ? 'text-yellow-600' : 
-                                                                                rank === 2 ? 'text-gray-400' : 
-                                                                                rank === 3 ? 'text-orange-600' : 
-                                                                                'text-gray-600'
-                                                                            }`}>
-                                                                                {rank}
-                                                                            </span>
-                                                                            {getRankIcon(rank)}
-                                                                        </div>
-                                                                    </td>
-                                                                    <td className="px-6 py-4">
-                                                                        <div className="flex items-center gap-3">
-                                                                            {team.logo ? (
-                                                                                <img 
-                                                                                    src={`/storage/${team.logo}`} 
-                                                                                    alt={team.name}
-                                                                                    className="w-12 h-12 object-cover rounded-full border-2 border-primary/20"
-                                                                                />
-                                                                            ) : (
-                                                                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-white font-black text-lg">
-                                                                                    {team.name[0]}
-                                                                                </div>
-                                                                            )}
-                                                                            <div>
-                                                                                <div className="font-bold text-foreground flex items-center gap-2">
-                                                                                    {team.name}
-                                                                                    {isOurTeam && (
-                                                                                        <Badge className="bg-primary text-white border-0 text-xs">
-                                                                                            Notre équipe
-                                                                                        </Badge>
-                                                                                    )}
-                                                                                </div>
-                                                                                {isOurTeam && team.category && (
-                                                                                    <Badge variant="outline" className="mt-1 text-xs bg-primary/10 text-primary border-primary/20">
-                                                                                        {team.category}
-                                                                                    </Badge>
-                                                                                )}
-                                                                            </div>
-                                                                        </div>
-                                                                    </td>
-                                                                    <td className="px-6 py-4 text-center font-bold text-foreground">
-                                                                        {team.matches_played || 0}
-                                                                    </td>
-                                                                    <td className="px-6 py-4 text-center">
-                                                                        <span className="inline-block px-3 py-1 rounded-lg bg-green-500/10 text-green-700 font-bold text-sm border border-green-500/20">
-                                                                            {team.wins || 0}
-                                                                        </span>
-                                                                    </td>
-                                                                    <td className="px-6 py-4 text-center">
-                                                                        <span className="inline-block px-3 py-1 rounded-lg bg-yellow-500/10 text-yellow-700 font-bold text-sm border border-yellow-500/20">
-                                                                            {team.draws || 0}
-                                                                        </span>
-                                                                    </td>
-                                                                    <td className="px-6 py-4 text-center">
-                                                                        <span className="inline-block px-3 py-1 rounded-lg bg-red-500/10 text-red-700 font-bold text-sm border border-red-500/20">
-                                                                            {team.losses || 0}
-                                                                        </span>
-                                                                    </td>
-                                                                    <td className="px-6 py-4 text-center font-bold text-foreground">
-                                                                        {team.goals_for || 0}
-                                                                    </td>
-                                                                    <td className="px-6 py-4 text-center font-bold text-foreground">
-                                                                        {team.goals_against || 0}
-                                                                    </td>
-                                                                    <td className="px-6 py-4 text-center">
-                                                                        <span className={`font-black text-base ${
-                                                                            (team.goal_difference || 0) >= 0 ? 'text-green-600' : 'text-red-600'
-                                                                        }`}>
-                                                                            {(team.goal_difference || 0) >= 0 ? '+' : ''}{team.goal_difference || 0}
-                                                                        </span>
-                                                                    </td>
-                                                                    <td className="px-6 py-4 text-center">
-                                                                        <span className="font-black text-xl text-primary">
-                                                                            {team.points || 0}
-                                                                        </span>
-                                                                    </td>
-                                                                    <td className="px-6 py-4">
-                                                                        <div className="flex items-center justify-center gap-2">
-                                                                            {team.is_opponent ? (
-                                                                                <>
-                                                                                    <Link href={`/admin/opponent-teams/${team.id}/edit`}>
-                                                                                        <Button variant="ghost" size="sm" className="h-9 w-9 p-0 hover:bg-primary/10">
-                                                                                            <Edit className="w-4 h-4" />
-                                                                                        </Button>
-                                                                                    </Link>
-                                                                                    <Button 
-                                                                                        variant="ghost" 
-                                                                                        size="sm" 
-                                                                                        className="h-9 w-9 p-0 text-destructive hover:bg-destructive/10"
-                                                                                        onClick={() => handleDelete(team.id)}
-                                                                                    >
-                                                                                        <Trash2 className="w-4 h-4" />
-                                                                                    </Button>
-                                                                                </>
-                                                                            ) : (
-                                                                                <Link href={`/admin/teams/${team.id}`}>
-                                                                                    <Button variant="outline" size="sm" className="border-primary/20 hover:bg-primary/10">
-                                                                                        Voir
-                                                                                    </Button>
-                                                                                </Link>
-                                                                            )}
-                                                                        </div>
-                                                                    </td>
-                                                                </tr>
-                                                            );
-                                                        })}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
+                                    </section>
                                 );
                             })}
                         </div>
                     ) : (
-                        <Card className="border-0 shadow-xl overflow-hidden bg-white">
-                            <CardContent className="p-0">
-                                <div className="text-center py-20">
-                                    <div className="max-w-md mx-auto space-y-4">
-                                        <div className="p-4 bg-primary/10 rounded-full w-20 h-20 mx-auto flex items-center justify-center">
-                                            <Trophy className="w-10 h-10 text-primary/50" />
-                                        </div>
-                                        <h3 className="text-2xl font-bold text-foreground">Aucune équipe enregistrée</h3>
-                                        <p className="text-muted-foreground">
-                                            {search 
-                                                ? 'Aucune équipe ne correspond à votre recherche'
-                                                : 'Commencez par ajouter votre première équipe adverse'
-                                            }
-                                        </p>
-                                        {!search && (
-                                            <Link href="/admin/opponent-teams/create">
-                                                <Button size="lg" className="mt-4 bg-primary hover:bg-primary/90 text-white">
-                                                    <Plus className="w-5 h-5 mr-2" />
-                                                    Ajouter une équipe
-                                                </Button>
-                                            </Link>
+                        <div className="rounded-lg border border-dashed bg-card py-16 text-center">
+                            <p className="text-muted-foreground">
+                                {search || categoryFilter !== 'all'
+                                    ? 'Aucune équipe ne correspond aux critères.'
+                                    : 'Aucune équipe adverse. Ajoutez une équipe externe pour commencer.'}
+                            </p>
+                            {!search && categoryFilter === 'all' && (
+                                <Button
+                                    className="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground"
+                                    onClick={openCreateModal}
+                                >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Ajouter une équipe externe
+                                </Button>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Create Opponent Modal */}
+                    <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Nouvelle équipe adverse</DialogTitle>
+                                <DialogDescription>
+                                    Ajoutez un club externe. Le nom et la catégorie permettent de l&apos;identifier dans les tableaux.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={handleCreateSubmit} className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="create-name">Nom du club *</Label>
+                                    <Input
+                                        id="create-name"
+                                        value={createForm.data.name}
+                                        onChange={(e) => createForm.setData('name', e.target.value)}
+                                        placeholder="Nom de l'équipe adverse"
+                                        required
+                                    />
+                                    <InputError message={createForm.errors.name} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="create-category">Catégorie</Label>
+                                    <Select
+                                        value={createForm.data.category || 'none'}
+                                        onValueChange={(v) => createForm.setData('category', v === 'none' ? '' : v)}
+                                    >
+                                        <SelectTrigger id="create-category">
+                                            <SelectValue placeholder="Sélectionner une catégorie" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">Aucune</SelectItem>
+                                            <SelectItem value="U13">U13</SelectItem>
+                                            <SelectItem value="U15">U15</SelectItem>
+                                            <SelectItem value="U17">U17</SelectItem>
+                                            <SelectItem value="Senior">Senior</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError message={createForm.errors.category} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="create-logo">Logo</Label>
+                                    <div className="flex items-center gap-4">
+                                        <Input
+                                            id="create-logo"
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleLogoChange}
+                                            className="flex-1"
+                                        />
+                                        {logoPreview && (
+                                            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 border-primary/20">
+                                                <img src={logoPreview} alt="Aperçu" className="h-full w-full object-cover" />
+                                            </div>
                                         )}
                                     </div>
+                                    <InputError message={createForm.errors.logo} />
                                 </div>
-                            </CardContent>
-                        </Card>
-                    )}
+                                <DialogFooter>
+                                    <Button type="button" variant="outline" onClick={() => setCreateModalOpen(false)}>
+                                        Annuler
+                                    </Button>
+                                    <Button type="submit" disabled={createForm.processing} className="bg-primary hover:bg-primary/90">
+                                        {createForm.processing ? 'Création…' : 'Ajouter'}
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+
+                    <DeleteModal
+                        open={deleteModalOpen}
+                        onOpenChange={(open) => {
+                            setDeleteModalOpen(open);
+                            if (!open) setTeamToDelete(null);
+                        }}
+                        onConfirm={confirmDelete}
+                        title="Supprimer l'équipe adverse"
+                        description={
+                            teamToDelete
+                                ? `Êtes-vous sûr de vouloir supprimer « ${teamToDelete.name} » ? Cette action est irréversible.`
+                                : "Cette action est irréversible."
+                        }
+                        loading={false}
+                    />
                 </div>
             </div>
         </AdminLayout>
