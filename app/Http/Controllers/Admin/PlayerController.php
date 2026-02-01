@@ -240,11 +240,20 @@ class PlayerController extends Controller
                 ] : null,
                 'is_active' => $player->is_active,
                 'can_play' => $player->canPlay(),
+                'is_injured' => $player->isInjured(),
+                'status_label' => !$player->is_active ? 'LEFT' : ($player->isInjured() ? 'INJURED' : 'FIT'),
                 'is_minor' => $player->isMinor(),
                 'stats' => [
                     'appearances' => $appearances,
                     'goals' => $goals,
                     'assists' => $assists,
+                    'clean_sheets' => 0,
+                    'saves' => 0,
+                ],
+                'stats_chart_data' => [
+                    ['label' => 'MP', 'value' => $appearances, 'fill' => 'var(--color-primary)'],
+                    ['label' => 'B', 'value' => $goals, 'fill' => 'var(--color-chart-1)'],
+                    ['label' => 'PD', 'value' => $assists, 'fill' => 'var(--color-chart-2)'],
                 ],
                 'teammates' => $teammates,
                 'upcoming_match' => $upcomingMatch ? [
