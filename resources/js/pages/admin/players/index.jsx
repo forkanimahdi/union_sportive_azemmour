@@ -1,332 +1,616 @@
 import React, { useMemo, useState } from 'react';
 import AdminLayout from '../../../layouts/AdminLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, Filter, Users, X, Sparkles, TrendingUp, Activity } from 'lucide-react';
-import PlayerCard from '../../../components/admin/PlayerCard';
-import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Plus, Search, LayoutGrid, List, Users, Info } from 'lucide-react';
+import InputError from '@/components/input-error';
 
-export default function PlayersIndex({ players, teams }) {
-    const [search, setSearch] = useState('');
-    const [teamId, setTeamId] = useState('');
-    const [position, setPosition] = useState('');
+const POSITION_SHORT = {
+    gardien: 'GK',
+    defenseur: 'DEF',
+    milieu: 'MID',
+    attaquant: 'FWD',
+};
 
-    // Frontend filtering with useMemo
-    const filteredPlayers = useMemo(() => {
-        let allPlayers = players.data || [];
-        
-        if (search) {
-            const searchLower = search.toLowerCase();
-            allPlayers = allPlayers.filter(player => 
-                `${player.first_name} ${player.last_name}`.toLowerCase().includes(searchLower) ||
-                player.first_name?.toLowerCase().includes(searchLower) ||
-                player.last_name?.toLowerCase().includes(searchLower)
-            );
-        }
-        
-        if (teamId) {
-            allPlayers = allPlayers.filter(player => 
-                player.team?.id?.toString() === teamId.toString()
-            );
-        }
-        
-        if (position) {
-            allPlayers = allPlayers.filter(player => 
-                player.position === position
-            );
-        }
-        
-        return allPlayers;
-    }, [players.data, search, teamId, position]);
+export default function PlayersIndex({
+    players,
+    teams = [],
+    seasons = [],
+    categories = [],
+    filters = {},
+}) {
+    const [search, setSearch] = useState(filters.search || '');
+    const [seasonId, setSeasonId] = useState(filters.season_id || '');
+    const [category, setCategory] = useState(filters.category || '');
+    const [status, setStatus] = useState(filters.status || '');
+    const [viewMode, setViewMode] = useState('grid');
+    const [createModalOpen, setCreateModalOpen] = useState(false);
 
-    const handleReset = () => {
-        setSearch('');
-        setTeamId('');
-        setPosition('');
+    const createForm = useForm({
+        team_id: '',
+        first_name: '',
+        last_name: '',
+        date_of_birth: '',
+        position: '',
+        preferred_foot: '',
+        jersey_number: '',
+        email: '',
+        phone: '',
+        address: '',
+        guardian_name: '',
+        guardian_phone: '',
+        guardian_email: '',
+        guardian_relationship: '',
+        photo: null,
+        is_active: true,
+    });
+
+    const handleCreatePlayer = (e) => {
+        e.preventDefault();
+        createForm.post('/admin/players', {
+            forceFormData: true,
+            onSuccess: () => {
+                setCreateModalOpen(false);
+                createForm.reset();
+            },
+        });
     };
 
-    const handleDelete = (id) => {
-        if (confirm('Êtes-vous sûr de vouloir supprimer cette joueuse ?')) {
-            router.delete(`/admin/players/${id}`);
-        }
+    const teamList = players?.data || [];
+
+    const filteredBySearch = useMemo(() => {
+        return teamList;
+    }, [teamList]);
+
+    const { activeRoster, alumni } = useMemo(() => {
+        const active = [];
+        const alumniList = [];
+        filteredBySearch.forEach((p) => {
+            if (p.is_active) active.push(p);
+            else alumniList.push(p);
+        });
+        return { activeRoster: active, alumni: alumniList };
+    }, [filteredBySearch]);
+
+    const applyFilters = () => {
+        router.get('/admin/players', {
+            search: search || undefined,
+            season_id: seasonId || undefined,
+            category: category || undefined,
+            status: status || undefined,
+        }, { preserveState: false });
     };
 
-    const hasActiveFilters = search || teamId || position;
+    const totalCount = players?.total ?? teamList.length;
 
     return (
         <AdminLayout>
-            <Head title="Joueuses" />
-            <div className="space-y-6">
-                {/* Header with gradient */}
-                <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 backdrop-blur-sm">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent"></div>
-                    <div className="relative flex items-center justify-between flex-wrap gap-4">
-                        <div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="p-2 rounded-lg bg-primary/10 backdrop-blur-sm">
-                                    <Users className="w-6 h-6 text-primary" />
-                                </div>
-                                <h1 className="text-3xl font-black uppercase italic text-dark">Joueuses</h1>
+            <Head title="Répertoire des joueuses" />
+            <div className="min-h-screen bg-muted/30">
+                <div className="space-y-6 p-6">
+                    {/* Header - dark primary */}
+                    <div className="rounded-xl border border-primary/20 bg-primary p-6 text-primary-foreground">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+                                    Répertoire des joueuses
+                                </h1>
+                                <p className="mt-1 text-sm text-primary-foreground/80">
+                                    Gérez et consultez l'effectif du club.
+                                </p>
                             </div>
-                            <p className="text-muted-foreground">Gestion des joueuses de votre club</p>
+                            <div className="flex items-center gap-3">
+                                {/* <div className="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-alpha shadow-sm">
+                                    {totalCount} joueuse{totalCount !== 1 ? 's' : ''} au total
+                                </div> */}
+                                <Button
+                                    // size="sm"
+                                    variant="secondary"
+                                    className="bg-white text-primary  px-4 py-2.5  hover:bg-white/90"
+                                    onClick={() => setCreateModalOpen(true)}
+                                >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Nouvelle joueuse
+                                </Button>
+                            </div>
                         </div>
-                        <Link href="/admin/players/create">
-                            <Button className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
-                                <Plus className="w-4 h-4 mr-2" />
-                                Nouvelle Joueuse
-                            </Button>
-                        </Link>
                     </div>
-                </div>
 
-                {/* Stats Overview */}
-                {(players.data?.length > 0 || filteredPlayers.length > 0) && (
-                    <div className="grid gap-4 md:grid-cols-3">
-                        <Card className="bg-card/60 backdrop-blur-sm border-border/50 hover:shadow-lg transition-all duration-200 hover:scale-105">
-                            <CardContent className="pt-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm text-muted-foreground mb-1">Total Joueuses</p>
-                                        <p className="text-3xl font-black text-dark">{players.data?.length || 0}</p>
-                                    </div>
-                                    <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                                        <Users className="w-6 h-6 text-primary" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <Card className="bg-card/60 backdrop-blur-sm border-border/50 hover:shadow-lg transition-all duration-200 hover:scale-105">
-                            <CardContent className="pt-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm text-muted-foreground mb-1">Disponibles</p>
-                                        <p className="text-3xl font-black text-green-600">
-                                            {(players.data || []).filter(p => p.can_play).length}
-                                        </p>
-                                    </div>
-                                    <div className="p-3 rounded-full bg-green-500/10 group-hover:bg-green-500/20 transition-colors">
-                                        <Users className="w-6 h-6 text-green-500" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <Card className="bg-card/60 backdrop-blur-sm border-border/50 hover:shadow-lg transition-all duration-200 hover:scale-105">
-                            <CardContent className="pt-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm text-muted-foreground mb-1">Équipes</p>
-                                        <p className="text-3xl font-black text-dark">
-                                            {new Set((players.data || []).filter(p => p.team).map(p => p.team?.id)).size}
-                                        </p>
-                                    </div>
-                                    <div className="p-3 rounded-full bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
-                                        <Users className="w-6 h-6 text-blue-500" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                )}
-
-                {/* Filters */}
-                <Card className="bg-card/60 backdrop-blur-sm border-border/50">
-                    <CardHeader>
-                        <div className="flex items-center justify-between flex-wrap gap-3">
-                            <CardTitle className="flex items-center gap-2">
-                                <Filter className="w-5 h-5 text-primary" />
-                                Recherche et Filtres
-                            </CardTitle>
-                            {hasActiveFilters && (
-                                <div className="flex items-center gap-2">
-                                    {/* Active Filters Badges */}
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        {search && (
-                                            <Badge variant="secondary" className="gap-1">
-                                                <Search className="w-3 h-3" />
-                                                {search}
-                                                <X 
-                                                    className="w-3 h-3 cursor-pointer hover:text-destructive" 
-                                                    onClick={() => setSearch('')}
-                                                />
-                                            </Badge>
-                                        )}
-                                        {teamId && (
-                                            <Badge variant="secondary" className="gap-1">
-                                                <Users className="w-3 h-3" />
-                                                {teams.find(t => t.id.toString() === teamId)?.name}
-                                                <X 
-                                                    className="w-3 h-3 cursor-pointer hover:text-destructive" 
-                                                    onClick={() => setTeamId('')}
-                                                />
-                                            </Badge>
-                                        )}
-                                        {position && (
-                                            <Badge variant="secondary" className="gap-1">
-                                                {position}
-                                                <X 
-                                                    className="w-3 h-3 cursor-pointer hover:text-destructive" 
-                                                    onClick={() => setPosition('')}
-                                                />
-                                            </Badge>
-                                        )}
-                                    </div>
-                                    <Button variant="ghost" size="sm" onClick={handleReset}>
-                                        <X className="w-4 h-4 mr-2" />
-                                        Réinitialiser
-                                    </Button>
-                                </div>
-                            )}
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div className="space-y-2">
-                                <Label className="flex items-center gap-2">
-                                    <Search className="w-4 h-4 text-primary" />
-                                    Recherche
-                                </Label>
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    {/* Filter bar - white card */}
+                    <Card>
+                        <CardContent className="p-4">
+                            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:gap-3">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                     <Input
-                                        placeholder="Nom, prénom..."
+                                        placeholder="Rechercher par nom..."
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
-                                        className="pl-10 bg-white/50 backdrop-blur-sm transition-all focus:ring-2 focus:ring-primary/20"
+                                        onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
+                                        className="pl-9"
                                     />
                                 </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Équipe</Label>
-                                <Select value={teamId || 'all'} onValueChange={(value) => setTeamId(value === 'all' ? '' : value)}>
-                                    <SelectTrigger className="bg-white/50 backdrop-blur-sm">
-                                        <SelectValue placeholder="Toutes les équipes" />
+                                <Select value={seasonId || 'all'} onValueChange={(v) => setSeasonId(v === 'all' ? '' : v)}>
+                                    <SelectTrigger className="w-full lg:w-[180px]">
+                                        <SelectValue placeholder="Saison" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">Toutes les équipes</SelectItem>
-                                        {teams.map((team) => (
-                                            <SelectItem key={team.id} value={team.id.toString()}>
-                                                {team.name}
-                                            </SelectItem>
+                                        <SelectItem value="all">Toutes les saisons</SelectItem>
+                                        {seasons.map((s) => (
+                                            <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
+                                <Select value={category || 'all'} onValueChange={(v) => setCategory(v === 'all' ? '' : v)}>
+                                    <SelectTrigger className="w-full lg:w-[180px]">
+                                        <SelectValue placeholder="Catégorie" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Toutes les catégories</SelectItem>
+                                        {categories.map((c) => (
+                                            <SelectItem key={c} value={c}>{c}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <Select value={status || 'all'} onValueChange={(v) => setStatus(v === 'all' ? '' : v)}>
+                                    <SelectTrigger className="w-full lg:w-[160px]">
+                                        <SelectValue placeholder="Statut" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Tous les statuts</SelectItem>
+                                        <SelectItem value="active">Actives</SelectItem>
+                                        <SelectItem value="alumni">Anciennes</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <Button onClick={applyFilters} className="bg-primary hover:bg-primary/90">
+                                    Appliquer les filtres
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Active Roster */}
+                    {activeRoster.length > 0 && (
+                        <section className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <span className="h-2 w-2 rounded-full bg-green-500" aria-hidden />
+                                    <h2 className="text-lg font-semibold text-foreground">Effectif actif</h2>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Button
+                                        variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                                        size="icon"
+                                        onClick={() => setViewMode('grid')}
+                                    >
+                                        <LayoutGrid className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                                        size="icon"
+                                        onClick={() => setViewMode('list')}
+                                    >
+                                        <List className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                            <div
+                                className={
+                                    viewMode === 'grid'
+                                        ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+                                        : 'flex flex-col gap-3'
+                                }
+                            >
+                                {activeRoster.map((player) => (
+                                    <PlayerDirectoryCard
+                                        key={player.id}
+                                        player={player}
+                                        isActive
+                                        viewMode={viewMode}
+                                        onClick={() => router.visit(`/admin/players/${player.id}`)}
+                                    />
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Alumni / Left Club */}
+                    {alumni.length > 0 && (
+                        <section className="space-y-4">
+                            <div className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-muted-foreground/60" aria-hidden />
+                                <h2 className="text-lg font-semibold text-foreground">Anciennes / Parties</h2>
+                            </div>
+                            <div
+                                className={
+                                    viewMode === 'grid'
+                                        ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+                                        : 'flex flex-col gap-3'
+                                }
+                            >
+                                {alumni.map((player) => (
+                                    <PlayerDirectoryCard
+                                        key={player.id}
+                                        player={player}
+                                        isActive={false}
+                                        viewMode={viewMode}
+                                        onClick={() => router.visit(`/admin/players/${player.id}`)}
+                                    />
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Empty state */}
+                    {filteredBySearch.length === 0 && (
+                        <Card>
+                            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                                <Users className="h-12 w-12 text-muted-foreground/50" />
+                                <p className="mt-4 text-muted-foreground">
+                                    {search ? 'Aucune joueuse ne correspond à votre recherche.' : 'Aucune joueuse pour cette sélection.'}
+                                </p>
+                                <Button variant="outline" className="mt-4" onClick={() => router.get('/admin/players')}>
+                                    Réinitialiser les filtres
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Pagination */}
+                    {players?.last_page > 1 && (
+                        <div className="flex flex-wrap items-center justify-between gap-4">
+                            <p className="text-sm text-muted-foreground">
+                                Page {players.current_page} sur {players.last_page}
+                            </p>
+                            <div className="flex gap-2">
+                                {players.current_page > 1 && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => router.get(players.prev_page_url)}
+                                    >
+                                        Précédent
+                                    </Button>
+                                )}
+                                {players.current_page < players.last_page && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => router.get(players.next_page_url)}
+                                    >
+                                        Suivant
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Create Player Modal */}
+            <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Nouvelle joueuse</DialogTitle>
+                        <DialogDescription>Ajouter une nouvelle joueuse à l'effectif</DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleCreatePlayer} className="space-y-4">
+                        {/* Name */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Prénom *</Label>
+                                <Input
+                                    value={createForm.data.first_name}
+                                    onChange={(e) => createForm.setData('first_name', e.target.value)}
+                                    required
+                                />
+                                <InputError message={createForm.errors.first_name} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Nom *</Label>
+                                <Input
+                                    value={createForm.data.last_name}
+                                    onChange={(e) => createForm.setData('last_name', e.target.value)}
+                                    required
+                                />
+                                <InputError message={createForm.errors.last_name} />
+                            </div>
+                        </div>
+
+                        {/* DOB, Position, Jersey */}
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <Label>Date de naissance *</Label>
+                                <Input
+                                    type="date"
+                                    value={createForm.data.date_of_birth}
+                                    onChange={(e) => createForm.setData('date_of_birth', e.target.value)}
+                                    required
+                                />
+                                <InputError message={createForm.errors.date_of_birth} />
                             </div>
                             <div className="space-y-2">
                                 <Label>Poste</Label>
-                                <Select value={position || 'all'} onValueChange={(value) => setPosition(value === 'all' ? '' : value)}>
-                                    <SelectTrigger className="bg-white/50 backdrop-blur-sm">
-                                        <SelectValue placeholder="Tous les postes" />
+                                <Select
+                                    value={createForm.data.position || 'none'}
+                                    onValueChange={(v) => createForm.setData('position', v === 'none' ? '' : v)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Sélectionner" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">Tous les postes</SelectItem>
+                                        <SelectItem value="none">Aucun</SelectItem>
                                         <SelectItem value="gardien">Gardien</SelectItem>
                                         <SelectItem value="defenseur">Défenseur</SelectItem>
                                         <SelectItem value="milieu">Milieu</SelectItem>
                                         <SelectItem value="attaquant">Attaquant</SelectItem>
                                     </SelectContent>
                                 </Select>
+                                <InputError message={createForm.errors.position} />
                             </div>
-                            <div className="flex items-end">
-                                {hasActiveFilters && (
-                                    <Button onClick={handleReset} variant="outline" className="w-full">
-                                        <X className="w-4 h-4 mr-2" />
-                                        Réinitialiser
-                                    </Button>
-                                )}
+                            <div className="space-y-2">
+                                <Label>Numéro</Label>
+                                <Input
+                                    value={createForm.data.jersey_number}
+                                    onChange={(e) => createForm.setData('jersey_number', e.target.value)}
+                                />
+                                <InputError message={createForm.errors.jersey_number} />
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
 
-                {/* Results Count */}
-                {filteredPlayers.length > 0 && (
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <p>
-                            <span className="font-semibold text-foreground">{filteredPlayers.length}</span> joueuse{filteredPlayers.length > 1 ? 's' : ''} trouvée{filteredPlayers.length > 1 ? 's' : ''}
-                            {hasActiveFilters && players.data?.length > filteredPlayers.length && (
-                                <span className="text-muted-foreground/70"> sur {players.data?.length || 0}</span>
-                            )}
-                        </p>
-                        {hasActiveFilters && (
-                            <div className="flex items-center gap-2">
-                                <Activity className="w-4 h-4" />
-                                <span>Filtres actifs</span>
+                        {/* Team */}
+                        <div className="space-y-2">
+                            <Label>Équipe</Label>
+                            <Select
+                                value={createForm.data.team_id || 'none'}
+                                onValueChange={(v) => createForm.setData('team_id', v === 'none' ? '' : v)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Sélectionner une équipe" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">Aucune équipe</SelectItem>
+                                    {teams.map((t) => (
+                                        <SelectItem key={t.id} value={t.id.toString()}>
+                                            {t.name} {t.category ? `(${t.category})` : ''}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <InputError message={createForm.errors.team_id} />
+                        </div>
+
+                        {/* Contact */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Email</Label>
+                                <Input
+                                    type="email"
+                                    value={createForm.data.email}
+                                    onChange={(e) => createForm.setData('email', e.target.value)}
+                                />
+                                <InputError message={createForm.errors.email} />
                             </div>
+                            <div className="space-y-2">
+                                <Label>Téléphone</Label>
+                                <Input
+                                    value={createForm.data.phone}
+                                    onChange={(e) => createForm.setData('phone', e.target.value)}
+                                />
+                                <InputError message={createForm.errors.phone} />
+                            </div>
+                        </div>
+
+                        {/* Photo */}
+                        <div className="space-y-2">
+                            <Label>Photo</Label>
+                            <Input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => createForm.setData('photo', e.target.files?.[0] || null)}
+                            />
+                            <InputError message={createForm.errors.photo} />
+                        </div>
+
+                        {/* Guardian (collapsible section) */}
+                        <details className="rounded-md border p-3">
+                            <summary className="cursor-pointer text-sm font-medium">
+                                Tuteur légal (pour mineures)
+                            </summary>
+                            <div className="mt-3 grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Nom du tuteur</Label>
+                                    <Input
+                                        value={createForm.data.guardian_name}
+                                        onChange={(e) => createForm.setData('guardian_name', e.target.value)}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Relation</Label>
+                                    <Input
+                                        value={createForm.data.guardian_relationship}
+                                        onChange={(e) => createForm.setData('guardian_relationship', e.target.value)}
+                                        placeholder="Parent, tuteur…"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Téléphone tuteur</Label>
+                                    <Input
+                                        value={createForm.data.guardian_phone}
+                                        onChange={(e) => createForm.setData('guardian_phone', e.target.value)}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Email tuteur</Label>
+                                    <Input
+                                        type="email"
+                                        value={createForm.data.guardian_email}
+                                        onChange={(e) => createForm.setData('guardian_email', e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                        </details>
+
+                        {/* Active */}
+                        <div className="flex items-center gap-2">
+                            <Checkbox
+                                id="create_is_active"
+                                checked={createForm.data.is_active}
+                                onCheckedChange={(c) => createForm.setData('is_active', !!c)}
+                            />
+                            <Label htmlFor="create_is_active" className="cursor-pointer">
+                                Joueuse active
+                            </Label>
+                        </div>
+
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setCreateModalOpen(false)}>
+                                Annuler
+                            </Button>
+                            <Button type="submit" disabled={createForm.processing}>
+                                {createForm.processing ? 'Création…' : 'Créer la joueuse'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+        </AdminLayout>
+    );
+}
+
+function PlayerDirectoryCard({ player, isActive, viewMode, onClick }) {
+    const photoUrl = player.photo ? `/storage/${player.photo}` : null;
+    const positionShort = player.position ? (POSITION_SHORT[player.position] || player.position) : null;
+    const stats = player.stats || {};
+    const mp = stats.appearances?.total ?? 0;
+    const g = stats.goals?.total ?? 0;
+    const a = stats.assists?.total ?? 0;
+    const cs = stats.clean_sheets ?? 0;
+    const s = stats.saves ?? 0;
+    const isGK = player.position === 'gardien';
+    const statusLabel = player.status_label || (isActive ? (player.can_play ? 'FIT' : 'INJURED') : 'LEFT');
+
+    const cardContent = (
+        <>
+            <div className={`relative aspect-[3/4] w-full overflow-hidden rounded-t-lg bg-muted ${!isActive ? 'grayscale' : ''}`}>
+                {photoUrl ? (
+                    <img src={photoUrl} alt="" className="h-full w-full object-cover object-top" />
+                ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-muted">
+                        <span className="text-2xl font-bold text-muted-foreground">
+                            {player.first_name?.[0]}
+                            {player.last_name?.[0]}
+                        </span>
+                    </div>
+                )}
+                <div className="absolute left-2 top-2 flex flex-col gap-1">
+                    <span
+                        className={`rounded px-2 py-0.5 text-xs font-semibold ${
+                            statusLabel === 'FIT'
+                                ? 'bg-green-500 text-white'
+                                : statusLabel === 'INJURED'
+                                ? 'bg-red-500 text-white'
+                                : 'bg-primary text-primary-foreground'
+                        }`}
+                    >
+                        {statusLabel}
+                    </span>
+                    {positionShort && (
+                        <span className="rounded bg-primary/90 px-2 py-0.5 text-xs font-medium text-primary-foreground">
+                            {positionShort}
+                        </span>
+                    )}
+                </div>
+            </div>
+            <CardContent className="p-4">
+                <p className={`text-xs font-medium ${!isActive ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
+                    {player.team?.name ?? 'Sans équipe'}
+                </p>
+                <div className="mt-1 flex items-center gap-1">
+                    <h3 className={`font-semibold ${!isActive ? 'text-muted-foreground' : 'text-foreground'}`}>
+                        {player.first_name} {player.last_name}
+                    </h3>
+                    <Info className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                </div>
+                {isActive && (
+                    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                        <span>MP {mp}</span>
+                        {!isGK && (
+                            <>
+                                <span>B {g}</span>
+                                <span>PD {a}</span>
+                            </>
+                        )}
+                        {isGK && (
+                            <>
+                                <span>CS {cs}</span>
+                                <span>Arrêts {s}</span>
+                            </>
                         )}
                     </div>
                 )}
-
-                {/* Players Grid */}
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-fr">
-                    {filteredPlayers.map((player, index) => (
-                        <div 
-                            key={player.id} 
-                            className="relative animate-in fade-in slide-in-from-bottom-4 h-full"
-                            style={{ animationDelay: `${index * 50}ms` }}
-                        >
-                            <PlayerCard 
-                                player={player}
-                                onClick={() => router.visit(`/admin/players/${player.id}`)}
-                            />
-                            {!player.can_play && (
-                                <div className="absolute top-3 right-3 z-10">
-                                    <Badge variant="destructive" className="text-xs animate-pulse shadow-lg">
-                                        Indisponible
-                                    </Badge>
-                                </div>
-                            )}
-                            {player.can_play && (
-                                <div className="absolute top-3 right-3 z-10">
-                                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200 shadow-lg">
-                                        <Activity className="w-3 h-3 mr-1" />
-                                        Disponible
-                                    </Badge>
-                                </div>
-                            )}
-                        </div>
-                    ))}
-                </div>
-
-                {filteredPlayers.length === 0 && (
-                    <Card className="bg-card/60 backdrop-blur-sm border-dashed border-2 border-border/50">
-                        <CardContent className="py-16 text-center">
-                            <div className="flex flex-col items-center gap-4">
-                                <div className="p-4 rounded-full bg-muted/30">
-                                    <Users className="w-12 h-12 text-muted-foreground/50" />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-semibold text-foreground mb-1">
-                                        {hasActiveFilters ? 'Aucune joueuse trouvée' : 'Aucune joueuse enregistrée'}
-                                    </h3>
-                                    <p className="text-sm text-muted-foreground mb-6">
-                                        {hasActiveFilters 
-                                            ? 'Aucun résultat ne correspond à vos critères de recherche'
-                                            : 'Commencez par ajouter votre première joueuse'}
-                                    </p>
-                                    {!hasActiveFilters && (
-                                        <Link href="/admin/players/create" className="inline-block">
-                                            <Button className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
-                                                <Plus className="w-4 h-4 mr-2" />
-                                                Ajouter une joueuse
-                                            </Button>
-                                        </Link>
-                                    )}
-                                    {hasActiveFilters && (
-                                        <Button onClick={handleReset} variant="outline">
-                                            <X className="w-4 h-4 mr-2" />
-                                            Réinitialiser les filtres
-                                        </Button>
-                                    )}
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                {!isActive && player.team?.season?.name && (
+                    <p className="mt-1 text-xs text-muted-foreground">Saison {player.team.season.name}</p>
                 )}
-            </div>
-        </AdminLayout>
+            </CardContent>
+        </>
+    );
+
+    if (viewMode === 'list') {
+        return (
+            <Card
+                className={`cursor-pointer transition-colors hover:bg-muted/50 ${!isActive ? 'opacity-90' : ''}`}
+                onClick={onClick}
+            >
+                <div className="flex flex-row">
+                    <div className={`relative h-24 w-28 shrink-0 overflow-hidden rounded-l-lg bg-muted ${!isActive ? 'grayscale' : ''}`}>
+                        {photoUrl ? (
+                            <img src={photoUrl} alt="" className="h-full w-full object-cover object-top" />
+                        ) : (
+                            <div className="flex h-full w-full items-center justify-center">
+                                <span className="text-sm font-bold text-muted-foreground">
+                                    {player.first_name?.[0]}
+                                    {player.last_name?.[0]}
+                                </span>
+                            </div>
+                        )}
+                        <span
+                            className={`absolute left-1 top-1 rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+                                statusLabel === 'FIT' ? 'bg-green-500 text-white' : statusLabel === 'INJURED' ? 'bg-red-500 text-white' : 'bg-primary text-primary-foreground'
+                            }`}
+                        >
+                            {statusLabel}
+                        </span>
+                    </div>
+                    <div className="flex flex-1 flex-col justify-center p-4">
+                        <p className="text-xs text-muted-foreground">{player.team?.name ?? 'Sans équipe'}</p>
+                        <p className={`font-semibold ${!isActive ? 'text-muted-foreground' : ''}`}>
+                            {player.first_name} {player.last_name}
+                        </p>
+                        {isActive && (
+                            <p className="text-xs text-muted-foreground">
+                                MP {mp} · B {g} · PD {a}
+                                {isGK && ` · CS ${cs} · Arrêts ${s}`}
+                            </p>
+                        )}
+                    </div>
+                </div>
+            </Card>
+        );
+    }
+
+    return (
+        <Card
+            className={`cursor-pointer overflow-hidden transition-shadow hover:shadow-md ${!isActive ? 'opacity-90' : ''}`}
+            onClick={onClick}
+        >
+            {cardContent}
+        </Card>
     );
 }

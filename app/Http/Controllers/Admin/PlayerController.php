@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Player;
 use App\Models\Team;
+use App\Models\Season;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
@@ -13,68 +14,89 @@ class PlayerController extends Controller
 {
     public function index(Request $request)
     {
-        // Load all players for frontend filtering
-        $players = Player::with(['team'])
+        $query = Player::with(['team.season'])
             ->orderBy('last_name')
-            ->paginate(20)
-            ->through(function ($player) {
-                // Calculate statistics
-                $appearances = $player->matchLineups()->whereHas('match', function($q) {
-                    $q->where('status', 'finished');
-                })->count();
-                
-                $goals = $player->matchEvents()->where('type', 'goal')->count();
-                
-                // Assists - count passes that led to goals (simplified - you may need to add assist tracking)
-                $assists = 0; // Placeholder - would need assist tracking in match_events
-                
-                // Current season stats (if season is available)
-                $currentSeasonAppearances = $appearances; // Simplified
-                $currentSeasonGoals = $goals; // Simplified
-                $currentSeasonAssists = $assists; // Simplified
-                
-                $dateOfBirth = $player->date_of_birth ? $player->date_of_birth->format('Y-m-d') : null;
-                
-                return [
-                    'id' => $player->id,
-                    'first_name' => $player->first_name,
-                    'last_name' => $player->last_name,
-                    'photo' => $player->photo,
-                    'jersey_number' => $player->jersey_number,
-                    'position' => $player->position,
-                    'date_of_birth' => $dateOfBirth,
-                    'team' => $player->team ? [
-                        'id' => $player->team->id,
-                        'name' => $player->team->name,
-                    ] : null,
-                    'is_active' => $player->is_active,
-                    'can_play' => $player->canPlay(),
-                    'stats' => [
-                        'appearances' => [
-                            'total' => $appearances,
-                            'season' => $currentSeasonAppearances,
-                        ],
-                        'goals' => [
-                            'total' => $goals,
-                            'season' => $currentSeasonGoals,
-                        ],
-                        'assists' => [
-                            'total' => $assists,
-                            'season' => $currentSeasonAssists,
-                        ],
-                    ],
-                ];
+            ->orderBy('first_name');
+
+        if ($request->filled('season_id')) {
+            $query->whereHas('team', fn($q) => $q->where('season_id', $request->season_id));
+        }
+        if ($request->filled('category')) {
+            $query->whereHas('team', fn($q) => $q->where('category', $request->category));
+        }
+        if ($request->filled('status') && $request->status === 'active') {
+            $query->where('is_active', true);
+        }
+        if ($request->filled('status') && $request->status === 'alumni') {
+            $query->where('is_active', false);
+        }
+        if ($request->filled('search')) {
+            $term = '%' . $request->search . '%';
+            $query->where(function ($q) use ($term) {
+                $q->where('first_name', 'like', $term)
+                    ->orWhere('last_name', 'like', $term);
             });
+        }
+
+        $players = $query->paginate(24)->through(function ($player) {
+            $appearances = $player->matchLineups()->whereHas('match', function ($q) {
+                $q->where('status', 'finished');
+            })->count();
+            $goals = $player->matchEvents()->where('type', 'goal')->count();
+            $assists = 0;
+            $canPlay = $player->canPlay();
+            $isInjured = $player->isInjured();
+
+            return [
+                'id' => $player->id,
+                'first_name' => $player->first_name,
+                'last_name' => $player->last_name,
+                'photo' => $player->photo,
+                'jersey_number' => $player->jersey_number,
+                'position' => $player->position,
+                'date_of_birth' => $player->date_of_birth?->format('Y-m-d'),
+                'team' => $player->team ? [
+                    'id' => $player->team->id,
+                    'name' => $player->team->name,
+                    'category' => $player->team->category,
+                    'season' => $player->team->season ? [
+                        'id' => $player->team->season->id,
+                        'name' => $player->team->season->name,
+                    ] : null,
+                ] : null,
+                'is_active' => $player->is_active,
+                'can_play' => $canPlay,
+                'is_injured' => $isInjured,
+                'status_label' => !$player->is_active ? 'LEFT' : ($isInjured ? 'INJURED' : 'FIT'),
+                'stats' => [
+                    'appearances' => ['total' => $appearances, 'season' => $appearances],
+                    'goals' => ['total' => $goals, 'season' => $goals],
+                    'assists' => ['total' => $assists, 'season' => $assists],
+                    'clean_sheets' => 0,
+                    'saves' => 0,
+                ],
+            ];
+        });
 
         $teams = Team::where('is_active', true)->get()->map(fn($t) => [
             'id' => $t->id,
             'name' => $t->name,
+            'category' => $t->category,
         ]);
+
+        $seasons = Season::orderBy('start_date', 'desc')->get()->map(fn($s) => [
+            'id' => $s->id,
+            'name' => $s->name,
+        ]);
+
+        $categories = Team::distinct()->pluck('category')->filter()->values()->toArray();
 
         return Inertia::render('admin/players/index', [
             'players' => $players,
             'teams' => $teams,
-            'filters' => $request->only(['team_id', 'position', 'search']),
+            'seasons' => $seasons,
+            'categories' => $categories,
+            'filters' => $request->only(['season_id', 'category', 'status', 'search', 'team_id', 'position']),
         ]);
     }
 

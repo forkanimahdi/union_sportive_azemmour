@@ -3,7 +3,7 @@ import { AppHeader } from '@/components/app-header';
 import { AppShell } from '@/components/app-shell';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem, type NavItem } from '@/types';
-import { LayoutGrid, Trophy, Users } from 'lucide-react';
+import { LayoutGrid, Trophy, Users, UserCircle } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 
 const mainNavItems: NavItem[] = [
@@ -21,6 +21,11 @@ const mainNavItems: NavItem[] = [
         title: 'Équipes',
         href: '/admin/teams',
         icon: Users,
+    },
+    {
+        title: 'Joueuses',
+        href: '/admin/players',
+        icon: UserCircle,
     },
 ];
 
