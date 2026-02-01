@@ -1,9 +1,14 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import AdminLayout from '../../../layouts/AdminLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer } from '@/components/ui/chart';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Area,
     AreaChart,
@@ -23,8 +28,11 @@ import {
     Eye,
     Info,
     Upload,
-    Badge
+    Badge,
+    Trash2,
 } from 'lucide-react';
+import InputError from '@/components/input-error';
+import DeleteModal from '@/components/DeleteModal';
 
 const POSITION_LABELS = {
     gardien: 'Gardien',
@@ -41,7 +49,69 @@ const FOOT_LABELS = {
 
 const statsChartConfig = { value: { label: 'Valeur', color: 'var(--color-primary)' } };
 
-export default function PlayersShow({ player }) {
+export default function PlayersShow({ player, teams = [] }) {
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+
+    const editForm = useForm({
+        team_id: player.team_id ? String(player.team_id) : '',
+        first_name: player.first_name,
+        last_name: player.last_name,
+        date_of_birth: player.date_of_birth || '',
+        position: player.position || '',
+        preferred_foot: player.preferred_foot || '',
+        jersey_number: player.jersey_number || '',
+        email: player.email || '',
+        phone: player.phone || '',
+        address: player.address || '',
+        guardian_name: player.guardian_name || '',
+        guardian_phone: player.guardian_phone || '',
+        guardian_email: player.guardian_email || '',
+        guardian_relationship: player.guardian_relationship || '',
+        photo: null,
+        _method: 'PUT',
+        redirect: 'show',
+        is_active: player.is_active,
+    });
+
+    const openEditModal = () => {
+        editForm.setData({
+            team_id: player.team_id ? String(player.team_id) : '',
+            first_name: player.first_name,
+            last_name: player.last_name,
+            date_of_birth: player.date_of_birth || '',
+            position: player.position || '',
+            preferred_foot: player.preferred_foot || '',
+            jersey_number: player.jersey_number || '',
+            email: player.email || '',
+            phone: player.phone || '',
+            address: player.address || '',
+            guardian_name: player.guardian_name || '',
+            guardian_phone: player.guardian_phone || '',
+            guardian_email: player.guardian_email || '',
+            guardian_relationship: player.guardian_relationship || '',
+            photo: null,
+            _method: 'PUT',
+            redirect: 'show',
+            is_active: player.is_active,
+        });
+        setEditModalOpen(true);
+    };
+
+    const submitEdit = (e) => {
+        e.preventDefault();
+        editForm.post(`/admin/players/${player.id}`, {
+            forceFormData: true,
+            onSuccess: () => setEditModalOpen(false),
+        });
+    };
+
+    const confirmDelete = () => {
+        router.delete(`/admin/players/${player.id}`, {
+            onSuccess: () => setDeleteModalOpen(false),
+        });
+    };
+
     const positionLabel = player.position ? POSITION_LABELS[player.position] || player.position : '';
     const footLabel = player.preferred_foot ? FOOT_LABELS[player.preferred_foot] : null;
     const statusLabel = player.status_label || (player.can_play ? 'FIT' : player.is_injured ? 'INJURED' : 'LEFT');
@@ -146,12 +216,19 @@ export default function PlayersShow({ player }) {
                                             )}
                                         </div>
                                         <div className="flex shrink-0 gap-2">
-                                            <Link href={`/admin/players/${player.id}/edit`}>
-                                                <Button variant="outline" size="sm" className="border-muted-foreground/30">
-                                                    <Edit className="mr-2 h-4 w-4" />
-                                                    Modifier
-                                                </Button>
-                                            </Link>
+                                            <Button variant="outline" size="sm" className="border-muted-foreground/30" onClick={openEditModal}>
+                                                <Edit className="mr-2 h-4 w-4" />
+                                                Modifier
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="border-destructive/50 text-destructive hover:bg-destructive/10"
+                                                onClick={() => setDeleteModalOpen(true)}
+                                            >
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Supprimer
+                                            </Button>
                                             <a href={`/admin/players/${player.id}/export`} target="_blank" rel="noopener noreferrer">
                                                 <Button
                                                     size="sm"
@@ -411,6 +488,155 @@ export default function PlayersShow({ player }) {
                     </div>
                 </div>
             </div>
+
+            {/* Edit Player Modal */}
+            <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Modifier la joueuse</DialogTitle>
+                        <DialogDescription>
+                            {player.first_name} {player.last_name}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={submitEdit} className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Prénom *</Label>
+                                <Input
+                                    value={editForm.data.first_name}
+                                    onChange={(e) => editForm.setData('first_name', e.target.value)}
+                                    required
+                                />
+                                <InputError message={editForm.errors.first_name} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Nom *</Label>
+                                <Input
+                                    value={editForm.data.last_name}
+                                    onChange={(e) => editForm.setData('last_name', e.target.value)}
+                                    required
+                                />
+                                <InputError message={editForm.errors.last_name} />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <Label>Date de naissance *</Label>
+                                <Input
+                                    type="date"
+                                    value={editForm.data.date_of_birth}
+                                    onChange={(e) => editForm.setData('date_of_birth', e.target.value)}
+                                    required
+                                />
+                                <InputError message={editForm.errors.date_of_birth} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Poste</Label>
+                                <Select value={editForm.data.position || 'none'} onValueChange={(v) => editForm.setData('position', v === 'none' ? '' : v)}>
+                                    <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">Aucun</SelectItem>
+                                        <SelectItem value="gardien">Gardien</SelectItem>
+                                        <SelectItem value="defenseur">Défenseur</SelectItem>
+                                        <SelectItem value="milieu">Milieu</SelectItem>
+                                        <SelectItem value="attaquant">Attaquant</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={editForm.errors.position} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Numéro</Label>
+                                <Input
+                                    value={editForm.data.jersey_number}
+                                    onChange={(e) => editForm.setData('jersey_number', e.target.value)}
+                                />
+                                <InputError message={editForm.errors.jersey_number} />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Équipe</Label>
+                            <Select value={editForm.data.team_id || 'none'} onValueChange={(v) => editForm.setData('team_id', v === 'none' ? '' : v)}>
+                                <SelectTrigger><SelectValue placeholder="Sélectionner une équipe" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">Aucune équipe</SelectItem>
+                                    {teams.map((t) => (
+                                        <SelectItem key={t.id} value={String(t.id)}>{t.name} {t.category ? `(${t.category})` : ''}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <InputError message={editForm.errors.team_id} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Email</Label>
+                                <Input type="email" value={editForm.data.email} onChange={(e) => editForm.setData('email', e.target.value)} />
+                                <InputError message={editForm.errors.email} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Téléphone</Label>
+                                <Input value={editForm.data.phone} onChange={(e) => editForm.setData('phone', e.target.value)} />
+                                <InputError message={editForm.errors.phone} />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Adresse</Label>
+                            <Input value={editForm.data.address} onChange={(e) => editForm.setData('address', e.target.value)} />
+                            <InputError message={editForm.errors.address} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Photo (laisser vide pour conserver)</Label>
+                            <Input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => editForm.setData('photo', e.target.files?.[0] || null)}
+                            />
+                            <InputError message={editForm.errors.photo} />
+                        </div>
+                        <details className="rounded-md border p-3">
+                            <summary className="cursor-pointer text-sm font-medium">Tuteur légal</summary>
+                            <div className="mt-3 grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Nom du tuteur</Label>
+                                    <Input value={editForm.data.guardian_name} onChange={(e) => editForm.setData('guardian_name', e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Relation</Label>
+                                    <Input value={editForm.data.guardian_relationship} onChange={(e) => editForm.setData('guardian_relationship', e.target.value)} placeholder="Parent, tuteur…" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Téléphone tuteur</Label>
+                                    <Input value={editForm.data.guardian_phone} onChange={(e) => editForm.setData('guardian_phone', e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Email tuteur</Label>
+                                    <Input type="email" value={editForm.data.guardian_email} onChange={(e) => editForm.setData('guardian_email', e.target.value)} />
+                                </div>
+                            </div>
+                        </details>
+                        <div className="flex items-center gap-2">
+                            <Checkbox
+                                id="edit_is_active"
+                                checked={editForm.data.is_active}
+                                onCheckedChange={(c) => editForm.setData('is_active', !!c)}
+                            />
+                            <Label htmlFor="edit_is_active" className="cursor-pointer">Joueuse active</Label>
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setEditModalOpen(false)}>Annuler</Button>
+                            <Button type="submit" disabled={editForm.processing}>{editForm.processing ? 'Mise à jour…' : 'Mettre à jour'}</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            <DeleteModal
+                open={deleteModalOpen}
+                onOpenChange={setDeleteModalOpen}
+                onConfirm={confirmDelete}
+                title="Supprimer la joueuse"
+                description={`Êtes-vous sûr de vouloir supprimer ${player.first_name} ${player.last_name} ? Cette action est irréversible.`}
+                loading={false}
+            />
         </AdminLayout>
     );
 }

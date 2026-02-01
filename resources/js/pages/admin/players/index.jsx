@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import AdminLayout from '../../../layouts/AdminLayout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Search, LayoutGrid, List, Users, Info } from 'lucide-react';
+import { Plus, Search, LayoutGrid, List, Users, Info, MoreVertical, Edit, Trash2 } from 'lucide-react';
 import InputError from '@/components/input-error';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import DeleteModal from '@/components/DeleteModal';
 
 const POSITION_SHORT = {
     gardien: 'GK',
@@ -31,6 +38,10 @@ export default function PlayersIndex({
     const [status, setStatus] = useState(filters.status || '');
     const [viewMode, setViewMode] = useState('grid');
     const [createModalOpen, setCreateModalOpen] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [playerToDelete, setPlayerToDelete] = useState(null);
+    const debounceRef = useRef(null);
+    const isInitialMount = useRef(true);
 
     const createForm = useForm({
         team_id: '',
@@ -87,6 +98,35 @@ export default function PlayersIndex({
         }, { preserveState: false });
     };
 
+    // Realtime filters: debounce 300ms (skip initial mount to avoid duplicate request)
+    useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(applyFilters, 300);
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+        };
+    }, [search, seasonId, category, status]);
+
+    const handleDeleteClick = (player) => {
+        setPlayerToDelete(player);
+        setDeleteModalOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (playerToDelete) {
+            router.delete(`/admin/players/${playerToDelete.id}`, {
+                onSuccess: () => {
+                    setDeleteModalOpen(false);
+                    setPlayerToDelete(null);
+                },
+            });
+        }
+    };
+
     const totalCount = players?.total ?? teamList.length;
 
     return (
@@ -132,7 +172,6 @@ export default function PlayersIndex({
                                         placeholder="Rechercher par nom..."
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
                                         className="pl-9"
                                     />
                                 </div>
@@ -168,9 +207,6 @@ export default function PlayersIndex({
                                         <SelectItem value="alumni">Anciennes</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <Button onClick={applyFilters} className="bg-primary hover:bg-primary/90">
-                                    Appliquer les filtres
-                                </Button>
                             </div>
                         </CardContent>
                     </Card>
@@ -214,6 +250,7 @@ export default function PlayersIndex({
                                         isActive
                                         viewMode={viewMode}
                                         onClick={() => router.visit(`/admin/players/${player.id}`)}
+                                        onDelete={handleDeleteClick}
                                     />
                                 ))}
                             </div>
@@ -241,6 +278,7 @@ export default function PlayersIndex({
                                         isActive={false}
                                         viewMode={viewMode}
                                         onClick={() => router.visit(`/admin/players/${player.id}`)}
+                                        onDelete={handleDeleteClick}
                                     />
                                 ))}
                             </div>
@@ -480,11 +518,22 @@ export default function PlayersIndex({
                     </form>
                 </DialogContent>
             </Dialog>
+
+            <DeleteModal
+                open={deleteModalOpen}
+                onOpenChange={(open) => { setDeleteModalOpen(open); if (!open) setPlayerToDelete(null); }}
+                onConfirm={confirmDelete}
+                title="Supprimer la joueuse"
+                description={playerToDelete
+                    ? `Êtes-vous sûr de vouloir supprimer ${playerToDelete.first_name} ${playerToDelete.last_name} ? Cette action est irréversible.`
+                    : 'Cette action est irréversible.'}
+                loading={false}
+            />
         </AdminLayout>
     );
 }
 
-function PlayerDirectoryCard({ player, isActive, viewMode, onClick }) {
+function PlayerDirectoryCard({ player, isActive, viewMode, onClick, onDelete }) {
     const photoUrl = player.photo ? `/storage/${player.photo}` : null;
     const positionShort = player.position ? (POSITION_SHORT[player.position] || player.position) : null;
     const stats = player.stats || {};
@@ -527,6 +576,27 @@ function PlayerDirectoryCard({ player, isActive, viewMode, onClick }) {
                         </span>
                     )}
                 </div>
+                {onDelete && (
+                    <div className="absolute right-2 top-2" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-white/90 hover:bg-white shadow">
+                                    <MoreVertical className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.visit(`/admin/players/${player.id}`); }}>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Modifier
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(player); }}>
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Supprimer
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                )}
             </div>
             <CardContent className="p-4">
                 <p className={`text-xs font-medium ${!isActive ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
@@ -568,7 +638,7 @@ function PlayerDirectoryCard({ player, isActive, viewMode, onClick }) {
                 className={`cursor-pointer transition-colors hover:bg-muted/50 ${!isActive ? 'opacity-90' : ''}`}
                 onClick={onClick}
             >
-                <div className="flex flex-row">
+                <div className="flex flex-row items-center">
                     <div className={`relative h-24 w-28 shrink-0 overflow-hidden rounded-l-lg bg-muted ${!isActive ? 'grayscale' : ''}`}>
                         {photoUrl ? (
                             <img src={photoUrl} alt="" className="h-full w-full object-cover object-top" />
@@ -600,6 +670,27 @@ function PlayerDirectoryCard({ player, isActive, viewMode, onClick }) {
                             </p>
                         )}
                     </div>
+                    {onDelete && (
+                        <div className="shrink-0 p-2" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                        <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.visit(`/admin/players/${player.id}`); }}>
+                                        <Edit className="h-4 w-4 mr-2" />
+                                        Modifier
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(player); }}>
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        Supprimer
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    )}
                 </div>
             </Card>
         );

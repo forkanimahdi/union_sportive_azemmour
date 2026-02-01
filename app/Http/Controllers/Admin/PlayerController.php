@@ -248,7 +248,13 @@ class PlayerController extends Controller
         }
 
         $dateOfBirth = $player->date_of_birth ? $player->date_of_birth->format('Y-m-d') : null;
-        
+
+        $teams = Team::where('is_active', true)->get()->map(fn($t) => [
+            'id' => $t->id,
+            'name' => $t->name,
+            'category' => $t->category,
+        ]);
+
         return Inertia::render('admin/players/show', [
             'player' => [
                 'id' => $player->id,
@@ -262,6 +268,11 @@ class PlayerController extends Controller
                 'email' => $player->email,
                 'phone' => $player->phone,
                 'address' => $player->address,
+                'guardian_name' => $player->guardian_name,
+                'guardian_phone' => $player->guardian_phone,
+                'guardian_email' => $player->guardian_email,
+                'guardian_relationship' => $player->guardian_relationship,
+                'team_id' => $player->team_id,
                 'team' => $player->team ? [
                     'id' => $player->team->id,
                     'name' => $player->team->name,
@@ -317,6 +328,7 @@ class PlayerController extends Controller
                     ];
                 }),
             ],
+            'teams' => $teams,
         ]);
     }
 
@@ -407,6 +419,10 @@ class PlayerController extends Controller
 
         $player->update($validated);
 
+        if ($request->input('redirect') === 'show') {
+            return redirect()->route('admin.players.show', $player)
+                ->with('success', 'Joueuse mise à jour avec succès');
+        }
         return redirect()->route('admin.players.index')
             ->with('success', 'Joueuse mise à jour avec succès');
     }
