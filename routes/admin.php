@@ -16,10 +16,16 @@ use App\Http\Controllers\Admin\ImageRightController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\EquipmentController;
 use App\Http\Controllers\Admin\OpponentTeamController;
+use App\Http\Controllers\Admin\ClassmentController;
 
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard - accessible to all authenticated users
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Classment (standings) - Admin, Technical Director & Coach
+    Route::middleware('role:admin,technical_director,coach')->group(function () {
+        Route::get('/classment', [ClassmentController::class, 'index'])->name('classment.index');
+    });
     
     // Seasons - Admin & Technical Director
     Route::middleware('role:admin,technical_director')->group(function () {
