@@ -52,6 +52,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     // Players - Admin, Technical Director & Coach
     Route::middleware('role:admin,technical_director,coach')->group(function () {
         Route::resource('players', PlayerController::class);
+        Route::get('players/{player}/export', [PlayerController::class, 'export'])->name('players.export');
     });
     
     // Trainings - Admin, Technical Director & Coach
