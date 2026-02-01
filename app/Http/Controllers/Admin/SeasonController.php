@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Season;
+use App\Models\Team;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -149,6 +150,22 @@ class SeasonController extends Controller
             'fees_pending' => 0, // Placeholder
             'total_expected' => 0, // Placeholder
         ];
+
+        // Teams not in this season (for "assign to season" modal)
+        $teamsNotInThisSeason = Team::with('season')
+            ->where(function ($q) use ($season) {
+                $q->where('season_id', '!=', $season->id)->orWhereNull('season_id');
+            })
+            ->orderBy('category')
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($team) => [
+                'id' => $team->id,
+                'name' => $team->name,
+                'category' => $team->category,
+                'division' => $team->division,
+                'season' => $team->season ? ['id' => $team->season->id, 'name' => $team->season->name] : null,
+            ]);
         
         return Inertia::render('admin/seasons/show', [
             'season' => [
@@ -223,7 +240,21 @@ class SeasonController extends Controller
                 'top_scorers' => $topScorers,
                 'financial_summary' => $financialSummary,
             ],
+            'teamsNotInThisSeason' => $teamsNotInThisSeason,
         ]);
+    }
+
+    public function assignTeam(Request $request, Season $season)
+    {
+        $validated = $request->validate([
+            'team_id' => 'required|exists:teams,id',
+        ]);
+
+        $team = Team::findOrFail($validated['team_id']);
+        $team->season_id = $season->id;
+        $team->save();
+
+        return redirect()->back()->with('success', 'Équipe affectée à cette saison.');
     }
 
     public function edit(Season $season)

@@ -17,7 +17,7 @@ import {
     TrendingUp, BarChart3, Copy, Download, MessageSquare,
     Clock, MapPin, Home, Plane, Award, Target, ArrowRight,
     ChevronDown, ChevronUp, Filter, X, Plus, Frown,
-    MoreVertical, User, Filter as FilterIcon, Trash2
+    MoreVertical, User, Filter as FilterIcon, Trash2, UserPlus
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -28,7 +28,9 @@ import {
 
 const DEFAULT_TEAM_IMAGE = '/assets/images/hero/usa_hero.jpg';
 
-export default function SeasonsShow({ season }) {
+export default function SeasonsShow({ season, teamsNotInThisSeason = [] }) {
+    const [assignTeamsModalOpen, setAssignTeamsModalOpen] = useState(false);
+    const [assigningTeamId, setAssigningTeamId] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [expandedCategories, setExpandedCategories] = useState({});
     const [expandedCalendarCategories, setExpandedCalendarCategories] = useState({});
@@ -442,14 +444,80 @@ export default function SeasonsShow({ season }) {
                                 Gérez les effectifs, équipes et staff pour ce cycle.
                             </p>
                         </div>
-                        <Button
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto shrink-0"
-                            onClick={openCreateTeamModal}
-                        >
-                            <Plus className="w-5 h-5 mr-2" />
-                            Nouvelle équipe
-                        </Button>
+                        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                            <Button
+                                variant="outline"
+                                className="border-primary text-primary hover:bg-primary/10 w-full sm:w-auto shrink-0"
+                                onClick={() => setAssignTeamsModalOpen(true)}
+                            >
+                                <UserPlus className="w-5 h-5 mr-2" />
+                                Affecter des équipes
+                            </Button>
+                            <Button
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto shrink-0"
+                                onClick={openCreateTeamModal}
+                            >
+                                <Plus className="w-5 h-5 mr-2" />
+                                Nouvelle équipe
+                            </Button>
+                        </div>
                     </div>
+
+                    {/* Assign teams modal */}
+                    <Dialog open={assignTeamsModalOpen} onOpenChange={setAssignTeamsModalOpen}>
+                        <DialogContent className="max-h-[85vh] overflow-hidden flex flex-col sm:max-w-xl">
+                            <DialogHeader>
+                                <DialogTitle>Équipes à affecter à cette saison</DialogTitle>
+                                <DialogDescription>
+                                    Sélectionnez une équipe pour l&apos;affecter à la saison &quot;{season.name}&quot;. Les équipes listées appartiennent actuellement à une autre saison ou n&apos;ont pas de saison.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="flex-1 overflow-y-auto min-h-0 -mx-6 px-6">
+                                {teamsNotInThisSeason.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground py-6 text-center">
+                                        Aucune équipe disponible à affecter. Toutes les équipes sont déjà dans cette saison.
+                                    </p>
+                                ) : (
+                                    <ul className="space-y-2 py-2">
+                                        {teamsNotInThisSeason.map((team) => (
+                                            <li
+                                                key={team.id}
+                                                className="flex items-center justify-between gap-4 rounded-lg border bg-card px-4 py-3"
+                                            >
+                                                <div>
+                                                    <p className="font-medium text-foreground">{team.name}</p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {team.category}
+                                                        {team.division && ` • ${team.division}`}
+                                                        {team.season && ` • Saison: ${team.season.name}`}
+                                                    </p>
+                                                </div>
+                                                <Button
+                                                    size="sm"
+                                                    className="shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground"
+                                                    disabled={assigningTeamId === team.id}
+                                                    onClick={() => {
+                                                        setAssigningTeamId(team.id);
+                                                        router.post(`/admin/seasons/${season.id}/assign-team`, { team_id: team.id }, {
+                                                            preserveScroll: true,
+                                                            onSuccess: () => {
+                                                                setAssigningTeamId(null);
+                                                                setAssignTeamsModalOpen(false);
+                                                            },
+                                                            onError: () => setAssigningTeamId(null),
+                                                            onFinish: () => setAssigningTeamId(null),
+                                                        });
+                                                    }}
+                                                >
+                                                    {assigningTeamId === team.id ? 'Affectation…' : 'Affecter à cette saison'}
+                                                </Button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        </DialogContent>
+                    </Dialog>
 
                     {/* Active Squads */}
                     <div className="space-y-4">

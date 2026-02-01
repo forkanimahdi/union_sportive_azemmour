@@ -11,10 +11,8 @@ class ClassmentController extends Controller
 {
     public function index(Request $request)
     {
-        $seasonId = $request->query('season_id');
-        $season = $seasonId
-            ? Season::find($seasonId)
-            : Season::where('is_active', true)->first();
+        // Classment shows only teams from the active season
+        $season = Season::where('is_active', true)->first();
 
         if (!$season) {
             $season = Season::orderBy('start_date', 'desc')->first();
@@ -23,7 +21,6 @@ class ClassmentController extends Controller
         if (!$season) {
             return Inertia::render('admin/classment/index', [
                 'activeSeason' => null,
-                'seasons' => [],
                 'standingsByCategory' => [],
                 'categories' => [],
                 'upcomingMatch' => null,
@@ -84,19 +81,12 @@ class ClassmentController extends Controller
 
         $dataVerifiedAt = now()->format('H:i');
 
-        $seasons = Season::orderBy('start_date', 'desc')->get()->map(fn ($s) => [
-            'id' => $s->id,
-            'name' => $s->name,
-            'is_active' => $s->is_active,
-        ]);
-
         return Inertia::render('admin/classment/index', [
             'activeSeason' => [
                 'id' => $season->id,
                 'name' => $season->name,
                 'is_active' => $season->is_active,
             ],
-            'seasons' => $seasons,
             'standingsByCategory' => $standingsByCategory,
             'categories' => $categories,
             'upcomingMatch' => $upcomingMatch ? [

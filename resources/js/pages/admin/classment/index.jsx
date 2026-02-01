@@ -4,7 +4,6 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
     Trophy,
     Users,
@@ -17,7 +16,6 @@ import {
 
 export default function ClassmentIndex({
     activeSeason,
-    seasons = [],
     standingsByCategory = {},
     categories = [],
     upcomingMatch = null,
@@ -47,11 +45,7 @@ export default function ClassmentIndex({
         });
     };
 
-    const handleSeasonChange = (seasonId) => {
-        router.get('/admin/classment', { season_id: seasonId || undefined }, { preserveState: false });
-    };
-
-    if (!activeSeason && seasons.length === 0) {
+    if (!activeSeason) {
         return (
             <AdminLayout>
                 <Head title="Classement" />
@@ -90,21 +84,6 @@ export default function ClassmentIndex({
                                 </p>
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
-                                <Select
-                                    value={activeSeason?.id?.toString() ?? ''}
-                                    onValueChange={handleSeasonChange}
-                                >
-                                    <SelectTrigger className="w-full sm:w-[220px] bg-white/10 border-white/20 text-primary-foreground hover:bg-white/20">
-                                        <SelectValue placeholder="Choisir une saison" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {seasons.map((s) => (
-                                            <SelectItem key={s.id} value={String(s.id)}>
-                                                {s.name} {s.is_active ? '(active)' : ''}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
                                 <Link href="/admin/opponent-teams">
                                     <Button
                                         variant="secondary"
