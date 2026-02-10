@@ -107,15 +107,8 @@ class OpponentTeamController extends Controller
             'team' => [
                 'id' => $opponentTeam->id,
                 'name' => $opponentTeam->name,
+                'category' => $opponentTeam->category,
                 'logo' => $opponentTeam->logo,
-                'rank' => $opponentTeam->rank,
-                'matches_played' => $opponentTeam->matches_played,
-                'wins' => $opponentTeam->wins,
-                'draws' => $opponentTeam->draws,
-                'losses' => $opponentTeam->losses,
-                'goals_for' => $opponentTeam->goals_for,
-                'goals_against' => $opponentTeam->goals_against,
-                'points' => $opponentTeam->points,
             ],
         ]);
     }
@@ -124,19 +117,11 @@ class OpponentTeamController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'category' => 'nullable|string|in:U13,U15,U17,Senior',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'rank' => 'nullable|integer|min:0',
-            'matches_played' => 'nullable|integer|min:0',
-            'wins' => 'nullable|integer|min:0',
-            'draws' => 'nullable|integer|min:0',
-            'losses' => 'nullable|integer|min:0',
-            'goals_for' => 'nullable|integer|min:0',
-            'goals_against' => 'nullable|integer|min:0',
-            'points' => 'nullable|integer|min:0',
         ]);
 
         if ($request->hasFile('logo')) {
-            // Delete old logo if exists
             if ($opponentTeam->logo) {
                 Storage::disk('public')->delete($opponentTeam->logo);
             }

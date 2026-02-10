@@ -70,7 +70,8 @@ export function AppHeader({ breadcrumbs = [], mainNavItems = defaultNavItems }: 
                     </div>
 
                     <Link href={dashboard()} prefetch className="flex items-center space-x-2">
-                        <AppLogo />
+                    <AppLogoIcon className="h-10 w-10 fill-current text-black dark:text-white" />
+                        {/* <AppLogo /> */}
                     </Link>
 
                     {/* Desktop Navigation */}

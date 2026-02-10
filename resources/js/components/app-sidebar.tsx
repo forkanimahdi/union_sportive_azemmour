@@ -8,6 +8,7 @@ import {
     LayoutDashboard, 
     Users, 
     Calendar, 
+    CalendarDays,
     Trophy, 
     FileText, 
     Image, 
@@ -54,6 +55,12 @@ export function AppSidebar() {
             title: 'Entraînements',
             href: '/admin/trainings',
             icon: Calendar,
+            roles: ['admin', 'technical_director', 'coach'],
+        },
+        {
+            title: 'Calendrier',
+            href: '/admin/fixtures',
+            icon: CalendarDays,
             roles: ['admin', 'technical_director', 'coach'],
         },
         {

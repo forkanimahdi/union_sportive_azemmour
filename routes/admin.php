@@ -70,6 +70,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     
     // Matches - Admin, Technical Director & Coach
     Route::middleware('role:admin,technical_director,coach')->group(function () {
+        Route::get('fixtures', [MatchController::class, 'fixtures'])->name('fixtures.index');
         Route::resource('matches', MatchController::class);
         Route::post('matches/{match}/lineup', [MatchController::class, 'updateLineup'])->name('matches.lineup');
         Route::post('matches/{match}/events', [MatchController::class, 'addEvent'])->name('matches.events');

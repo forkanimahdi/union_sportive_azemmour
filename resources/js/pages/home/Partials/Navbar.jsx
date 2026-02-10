@@ -1,20 +1,19 @@
 import React, { useState } from 'react';
 import { Link } from '@inertiajs/react';
 import { Search, ShoppingCart, User, Menu, X } from 'lucide-react';
+import AppLogoIcon from '@/components/app-logo-icon';
 
 export default function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    
 
     return (
         <nav className="absolute top-0 left-0 w-full z-50 text-white border-b border-white/10">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center py-4 lg:py-6">
+                <div className="flex justify-between items-center py-2 ">
                     {/* Logo */}
                     <Link href="/" className="flex items-center space-x-2">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-alpha rounded-full flex items-center justify-center font-bold text-lg sm:text-xl">
-                            US
-                        </div>
-                        <span className="font-bold text-lg sm:text-xl lg:text-2xl uppercase tracking-wider hidden sm:inline">Union Sportive</span>
+                        <AppLogoIcon className="w-14 h-14" />
                     </Link>
                     
                     {/* Desktop Navigation */}

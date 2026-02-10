@@ -7,9 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Home, Plane, Trophy, Clock, Search, X, Calendar, Radio, Users, Filter } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import MatchCreateModal from '@/components/admin/MatchCreateModal';
 
-export default function MatchesIndex({ matches, seasons = [], teams = [] }) {
+export default function MatchesIndex({ matches, seasons = [], teams = [], opponentTeams = [], activeSeason }) {
     const [search, setSearch] = useState('');
+    const [createModalOpen, setCreateModalOpen] = useState(false);
     const [seasonFilter, setSeasonFilter] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
     const [teamFilter, setTeamFilter] = useState('');
@@ -133,15 +135,25 @@ export default function MatchesIndex({ matches, seasons = [], teams = [] }) {
                                         Suivez tous vos matchs en temps réel
                                     </p>
                                 </div>
-                                <Link href="/admin/matches/create">
-                                    <Button size="lg" className="bg-white text-primary hover:bg-white/95 shadow-xl h-12 px-6 text-base font-semibold">
-                                        <Plus className="w-5 h-5 mr-2" />
-                                        Programmer un Match
-                                    </Button>
-                                </Link>
+                                <Button
+                                    size="lg"
+                                    className="bg-white text-primary hover:bg-white/95 shadow-xl h-12 px-6 text-base font-semibold"
+                                    onClick={() => setCreateModalOpen(true)}
+                                >
+                                    <Plus className="w-5 h-5 mr-2" />
+                                    Programmer un Match
+                                </Button>
                             </div>
                         </div>
                     </div>
+                    <MatchCreateModal
+                        open={createModalOpen}
+                        onOpenChange={setCreateModalOpen}
+                        teams={teams}
+                        opponentTeams={opponentTeams || []}
+                        activeSeason={activeSeason}
+                        onSuccess={() => router.reload()}
+                    />
 
                     {/* Filters */}
                     <Card className="bg-white border-2 border-gray-200">
@@ -424,12 +436,14 @@ export default function MatchesIndex({ matches, seasons = [], teams = [] }) {
                                         }
                                     </p>
                                     {!hasActiveFilters && (
-                                        <Link href="/admin/matches/create">
-                                            <Button size="lg" className="mt-4 bg-primary hover:bg-primary/90 text-white">
-                                                <Plus className="w-5 h-5 mr-2" />
-                                                Programmer un match
-                                            </Button>
-                                        </Link>
+                                        <Button
+                                            size="lg"
+                                            className="mt-4 bg-primary hover:bg-primary/90 text-white"
+                                            onClick={() => setCreateModalOpen(true)}
+                                        >
+                                            <Plus className="w-5 h-5 mr-2" />
+                                            Programmer un match
+                                        </Button>
                                     )}
                                 </div>
                             </CardContent>

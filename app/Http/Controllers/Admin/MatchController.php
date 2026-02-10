@@ -68,16 +68,91 @@ class MatchController extends Controller
             ->get()
             ->map(fn($s) => ['id' => $s->id, 'name' => $s->name]);
 
-        $teams = \App\Models\Team::where('is_active', true)
+        $activeSeason = Season::where('is_active', true)->first();
+        $teams = Team::when($activeSeason, fn ($q) => $q->where('season_id', $activeSeason->id))
+            ->where('is_active', true)
             ->orderBy('category')
             ->orderBy('name')
             ->get()
-            ->map(fn($t) => ['id' => $t->id, 'name' => $t->name, 'category' => $t->category]);
+            ->map(fn ($t) => ['id' => $t->id, 'name' => $t->name, 'category' => $t->category]);
+
+        $opponentTeams = OpponentTeam::orderBy('name')->get()
+            ->map(fn ($ot) => ['id' => $ot->id, 'name' => $ot->name, 'logo' => $ot->logo]);
 
         return Inertia::render('admin/matches/index', [
             'matches' => $matches,
             'seasons' => $seasons,
             'teams' => $teams,
+            'opponentTeams' => $opponentTeams,
+            'activeSeason' => $activeSeason ? ['id' => $activeSeason->id, 'name' => $activeSeason->name] : null,
+        ]);
+    }
+
+    public function fixtures(Request $request)
+    {
+        $activeSeason = Season::where('is_active', true)->first();
+        $seasonId = $request->season_id ?? $activeSeason?->id;
+
+        $query = GameMatch::with(['team', 'opponentTeam', 'competition']);
+
+        if ($seasonId) {
+            $query->whereHas('team', function ($q) use ($seasonId) {
+                $q->where('season_id', $seasonId);
+            });
+        }
+
+        $matches = $query->orderBy('scheduled_at', 'asc')
+            ->get()
+            ->map(function ($match) {
+                return [
+                    'id' => $match->id,
+                    'team' => $match->team ? [
+                        'id' => $match->team->id,
+                        'name' => $match->team->name,
+                        'category' => $match->team->category,
+                    ] : null,
+                    'opponent' => $match->opponent,
+                    'opponent_team' => $match->opponentTeam ? [
+                        'id' => $match->opponentTeam->id,
+                        'name' => $match->opponentTeam->name,
+                        'logo' => $match->opponentTeam->logo,
+                    ] : null,
+                    'category' => $match->category,
+                    'scheduled_at' => $match->scheduled_at?->format('Y-m-d H:i'),
+                    'venue' => $match->venue,
+                    'type' => $match->type,
+                    'home_score' => $match->home_score,
+                    'away_score' => $match->away_score,
+                    'status' => $match->status,
+                    'competition' => $match->competition ? $match->competition->name : null,
+                ];
+            });
+
+        $seasons = Season::orderBy('start_date', 'desc')
+            ->get()
+            ->map(fn ($s) => [
+                'id' => $s->id,
+                'name' => $s->name,
+                'is_active' => $s->is_active,
+            ]);
+
+        $teams = Team::when($seasonId, fn ($q) => $q->where('season_id', $seasonId))
+            ->where('is_active', true)
+            ->orderBy('category')
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($t) => ['id' => $t->id, 'name' => $t->name, 'category' => $t->category]);
+
+        $opponentTeams = OpponentTeam::orderBy('name')->get()
+            ->map(fn ($ot) => ['id' => $ot->id, 'name' => $ot->name, 'logo' => $ot->logo]);
+
+        return Inertia::render('admin/fixtures/index', [
+            'matches' => $matches,
+            'seasons' => $seasons,
+            'activeSeasonId' => $seasonId,
+            'teams' => $teams,
+            'opponentTeams' => $opponentTeams,
+            'activeSeason' => $activeSeason ? ['id' => $activeSeason->id, 'name' => $activeSeason->name] : null,
         ]);
     }
 

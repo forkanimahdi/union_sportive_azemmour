@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import AdminLayout from '../../../layouts/AdminLayout';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -27,11 +27,20 @@ export default function OpponentTeamsIndex({
     const [seasonFilter, setSeasonFilter] = useState('all');
     const [categoryFilter, setCategoryFilter] = useState('all');
     const [createModalOpen, setCreateModalOpen] = useState(false);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [teamToEdit, setTeamToEdit] = useState(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [teamToDelete, setTeamToDelete] = useState(null);
     const [logoPreview, setLogoPreview] = useState(null);
+    const [editLogoPreview, setEditLogoPreview] = useState(null);
 
     const createForm = useForm({
+        name: '',
+        category: '',
+        logo: null,
+    });
+
+    const editForm = useForm({
         name: '',
         category: '',
         logo: null,
@@ -66,6 +75,43 @@ export default function OpponentTeamsIndex({
         createForm.reset();
         setLogoPreview(null);
         setCreateModalOpen(true);
+    };
+
+    const openEditModal = (team) => {
+        setTeamToEdit(team);
+        editForm.setData({
+            name: team.name || '',
+            category: team.category || '',
+            logo: null,
+        });
+        setEditLogoPreview(team.logo ? `/storage/${team.logo}` : null);
+        setEditModalOpen(true);
+    };
+
+    const handleEditLogoChange = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            editForm.setData('logo', file);
+            const reader = new FileReader();
+            reader.onloadend = () => setEditLogoPreview(reader.result);
+            reader.readAsDataURL(file);
+        } else {
+            editForm.setData('logo', null);
+            setEditLogoPreview(teamToEdit?.logo ? `/storage/${teamToEdit.logo}` : null);
+        }
+    };
+
+    const handleEditSubmit = (e) => {
+        e.preventDefault();
+        if (!teamToEdit) return;
+        editForm.transform((data) => ({ ...data, _method: 'PUT' })).post(`/admin/opponent-teams/${teamToEdit.id}`, {
+            forceFormData: true,
+            onSuccess: () => {
+                setEditModalOpen(false);
+                setTeamToEdit(null);
+                setEditLogoPreview(null);
+            },
+        });
     };
 
     // Filter and group teams by category (no calendar, no standings)
@@ -207,15 +253,14 @@ export default function OpponentTeamsIndex({
                                                         </p>
                                                     </div>
                                                     <div className="flex shrink-0 items-center gap-1">
-                                                        <Link href={`/admin/opponent-teams/${team.id}/edit`}>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-9 w-9 text-primary hover:bg-primary/10"
-                                                            >
-                                                                <Edit className="h-4 w-4" />
-                                                            </Button>
-                                                        </Link>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-9 w-9 text-primary hover:bg-primary/10"
+                                                            onClick={() => openEditModal(team)}
+                                                        >
+                                                            <Edit className="h-4 w-4" />
+                                                        </Button>
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
@@ -250,6 +295,80 @@ export default function OpponentTeamsIndex({
                             )}
                         </div>
                     )}
+
+                    {/* Edit Opponent Modal */}
+                    <Dialog open={editModalOpen} onOpenChange={(open) => { setEditModalOpen(open); if (!open) setTeamToEdit(null); }}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Modifier l&apos;équipe adverse</DialogTitle>
+                                <DialogDescription>
+                                    {teamToEdit?.name}
+                                </DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={handleEditSubmit} className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-name">Nom du club *</Label>
+                                    <Input
+                                        id="edit-name"
+                                        value={editForm.data.name}
+                                        onChange={(e) => editForm.setData('name', e.target.value)}
+                                        placeholder="Nom de l'équipe adverse"
+                                        required
+                                    />
+                                    <InputError message={editForm.errors.name} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-category">Catégorie</Label>
+                                    <Select
+                                        value={editForm.data.category || 'none'}
+                                        onValueChange={(v) => editForm.setData('category', v === 'none' ? '' : v)}
+                                    >
+                                        <SelectTrigger id="edit-category">
+                                            <SelectValue placeholder="Sélectionner une catégorie" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">Aucune</SelectItem>
+                                            <SelectItem value="U13">U13</SelectItem>
+                                            <SelectItem value="U15">U15</SelectItem>
+                                            <SelectItem value="U17">U17</SelectItem>
+                                            <SelectItem value="Senior">Senior</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError message={editForm.errors.category} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-logo">Logo (laisser vide pour conserver)</Label>
+                                    <div className="flex items-center gap-4">
+                                        <Input
+                                            id="edit-logo"
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleEditLogoChange}
+                                            className="flex-1"
+                                        />
+                                        {(editLogoPreview || (teamToEdit?.logo && !editForm.data.logo)) && (
+                                            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 border-primary/20">
+                                                <img
+                                                    src={editLogoPreview || (teamToEdit?.logo ? `/storage/${teamToEdit.logo}` : '')}
+                                                    alt="Aperçu"
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <InputError message={editForm.errors.logo} />
+                                </div>
+                                <DialogFooter>
+                                    <Button type="button" variant="outline" onClick={() => setEditModalOpen(false)}>
+                                        Annuler
+                                    </Button>
+                                    <Button type="submit" disabled={editForm.processing} className="bg-primary hover:bg-primary/90">
+                                        {editForm.processing ? 'Enregistrement…' : 'Enregistrer'}
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
 
                     {/* Create Opponent Modal */}
                     <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
