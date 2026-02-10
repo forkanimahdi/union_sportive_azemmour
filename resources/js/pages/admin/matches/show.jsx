@@ -23,6 +23,8 @@ import {
     Save,
     MapPin,
     ChevronRight,
+    Plus,
+    RotateCcw,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -103,6 +105,38 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [] }) {
     const substitutes = lineupData.lineup.filter(p => p.position === 'remplacante');
     const opponentName = match.opponent_team?.name || match.opponent || 'Adversaire';
 
+    const availablePlayers = teamPlayers.filter(p => !lineupData.lineup.some(l => l.player_id === p.id));
+    const totalSelected = lineupData.lineup.length;
+
+    const addAsTitulaire = (player) => {
+        const currentTitulaires = lineupData.lineup.filter(p => p.position === 'titulaire' && p.starting_position);
+        if (currentTitulaires.length >= 11) return;
+        const used = currentTitulaires.map(p => p.starting_position);
+        let pos = null;
+        for (let i = 1; i <= 11; i++) if (!used.includes(i)) { pos = i; break; }
+        if (!pos) return;
+        setLineupData('lineup', [
+            ...lineupData.lineup,
+            { player_id: player.id, position: 'titulaire', jersey_number: player.jersey_number, starting_position: pos },
+        ]);
+    };
+
+    const addAsRemplacante = (player) => {
+        if (substitutes.length >= 7) return;
+        setLineupData('lineup', [
+            ...lineupData.lineup,
+            { player_id: player.id, position: 'remplacante', jersey_number: player.jersey_number, starting_position: null },
+        ]);
+    };
+
+    const removeFromLineup = (playerId) => {
+        setLineupData('lineup', lineupData.lineup.filter(l => l.player_id !== playerId));
+    };
+
+    const handleConfirmSquad = () => {
+        saveLineup(`/admin/matches/${match.id}/lineup`, { onSuccess: () => {} });
+    };
+
     return (
         <AdminLayout>
             <Head title={`Match vs ${opponentName}`} />
@@ -136,23 +170,31 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [] }) {
                 </div>
 
                 {/* Workflow steps */}
-                <div className="flex flex-wrap gap-1 rounded-lg border border-neutral-200 bg-white p-1">
-                    {[
-                        { id: 'overview', label: '1. Infos match' },
-                        { id: 'lineup', label: '2. Composition' },
-                        { id: 'events', label: '3. Événements' },
-                    ].map((step) => (
-                        <button
-                            key={step.id}
-                            type="button"
-                            onClick={() => setActiveTab(step.id)}
-                            className={`flex-1 min-w-[120px] rounded-md px-4 py-2.5 text-sm font-medium transition-colors ${
-                                activeTab === step.id ? 'bg-primary text-white shadow-sm' : 'text-neutral-600 hover:bg-neutral-100'
-                            }`}
-                        >
-                            {step.label}
-                        </button>
-                    ))}
+                <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap gap-1 rounded-lg border border-neutral-200 bg-white p-1 flex-1">
+                        {[
+                            { id: 'overview', label: '1. Infos match' },
+                            { id: 'lineup', label: '2. Composition' },
+                            { id: 'events', label: '3. Événements' },
+                        ].map((step) => (
+                            <button
+                                key={step.id}
+                                type="button"
+                                onClick={() => setActiveTab(step.id)}
+                                className={`flex-1 min-w-[120px] rounded-md px-4 py-2.5 text-sm font-medium transition-colors ${
+                                    activeTab === step.id ? 'bg-primary text-white shadow-sm' : 'text-neutral-600 hover:bg-neutral-100'
+                                }`}
+                            >
+                                {step.label}
+                            </button>
+                        ))}
+                    </div>
+                    {activeTab === 'lineup' && (
+                        <Button variant="outline" size="sm" className="shrink-0">
+                            <RotateCcw className="w-4 h-4 mr-2" />
+                            Charger composition précédente
+                        </Button>
+                    )}
                 </div>
 
                 {/* Hero banner */}
@@ -184,8 +226,8 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [] }) {
                     </div>
                 </div>
 
-                {/* Match Info Card - compact when overview, full when other tab */}
-                {(activeTab === 'overview' || activeTab === 'lineup') && (
+                {/* Overview: match info card only */}
+                {activeTab === 'overview' && (
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     <Card className="lg:col-span-1 border border-neutral-200 bg-white shadow-sm">
                     <CardHeader>
@@ -283,65 +325,143 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [] }) {
                         </div>
                     </CardContent>
                 </Card>
-                    <Card className="lg:col-span-2 border border-neutral-200 bg-white shadow-sm">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                            <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" />Composition du match</CardTitle>
-                            <Button onClick={() => setLineupDialogOpen(true)} size="sm" className="bg-primary hover:bg-primary/90">Gérer la composition</Button>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div>
-                                <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">XI titulaire • {startingXI.length}/11</h4>
-                                <div className="grid gap-2 sm:grid-cols-2">
-                                    {startingXI.map((player, idx) => {
-                                        const info = teamPlayers.find((p) => p.id === player.player_id);
-                                        return (
-                                            <div key={idx} className="flex items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50/50 p-3">
-                                                <Avatar className="h-10 w-10 shrink-0">
-                                                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">{info ? `${(info.first_name || '').charAt(0)}${(info.last_name || '').charAt(0)}` : '?'}</AvatarFallback>
-                                                </Avatar>
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="font-semibold text-sm truncate">{info ? `${info.first_name} ${info.last_name}` : '–'}</p>
-                                                    <div className="flex items-center gap-2 mt-0.5">
-                                                        <span className={`inline-flex rounded border px-1.5 py-0.5 text-xs font-medium ${positionPillClass(info?.position)}`}>{info?.position || '–'}</span>
-                                                        {player.jersey_number != null && <span className="text-xs text-muted-foreground">#{player.jersey_number}</span>}
-                                                    </div>
-                                                </div>
-                                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">{player.starting_position}</span>
+                </div>
+                )}
+
+                {/* Lineup: two-column convocation layout (Available Roster | Matchday Squad) */}
+                {activeTab === 'lineup' && (
+                <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
+                    {/* Left: Effectif disponible */}
+                    <div className="xl:col-span-2 space-y-4">
+                        <div>
+                            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Effectif disponible</h3>
+                            <p className="text-xs text-muted-foreground mt-0.5">Cliquez + pour ajouter à la composition</p>
+                        </div>
+                        <div className="rounded-lg border border-neutral-200 bg-white p-3 space-y-2 max-h-[480px] overflow-y-auto">
+                            {availablePlayers.length === 0 ? (
+                                <p className="text-sm text-muted-foreground py-4 text-center">Toutes les joueuses sont dans la composition.</p>
+                            ) : (
+                                availablePlayers.map((player) => (
+                                    <div key={player.id} className="flex items-center gap-3 rounded-lg border border-neutral-100 bg-neutral-50/50 p-3">
+                                        <Avatar className="h-9 w-9 shrink-0">
+                                            <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">{`${(player.first_name || '').charAt(0)}${(player.last_name || '').charAt(0)}`}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="font-medium text-sm truncate">{player.first_name} {player.last_name}</p>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <span className={`inline-flex rounded border px-1.5 py-0.5 text-xs font-medium ${positionPillClass(player.position)}`}>{player.position || '–'}</span>
+                                                {player.jersey_number != null && <span className="text-xs text-muted-foreground">#{player.jersey_number}</span>}
                                             </div>
-                                        );
-                                    })}
-                                    {startingXI.length === 0 && <p className="col-span-2 text-sm text-muted-foreground py-4">Aucun titulaire. Cliquez sur &quot;Gérer la composition&quot;.</p>}
+                                        </div>
+                                        <div className="flex gap-1 shrink-0">
+                                            {startingXI.length < 11 && (
+                                                <Button type="button" variant="outline" size="sm" className="h-8 w-8 p-0" onClick={() => addAsTitulaire(player)} title="Ajouter titulaire">
+                                                    <Plus className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                            {substitutes.length < 7 && (
+                                                <Button type="button" variant="outline" size="sm" className="h-8 px-2 text-xs" onClick={() => addAsRemplacante(player)} title="Ajouter remplaçante">
+                                                    Rempl.
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Right: Composition du match (Matchday Squad) */}
+                    <div className="xl:col-span-3 space-y-4">
+                        <div className="rounded-xl bg-primary px-4 py-4 text-primary-foreground flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
+                                    <Trophy className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold">Composition du match</h3>
+                                    <p className="text-sm text-primary-foreground/90">Match vs {opponentName}</p>
                                 </div>
                             </div>
-                            <div>
-                                <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Remplaçantes • {substitutes.length}/7</h4>
-                                <div className="grid gap-2 sm:grid-cols-2">
-                                    {substitutes.map((player, idx) => {
-                                        const info = teamPlayers.find((p) => p.id === player.player_id);
-                                        return (
-                                            <div key={idx} className="flex items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50/50 p-3">
-                                                <Avatar className="h-10 w-10 shrink-0">
-                                                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">{info ? `${(info.first_name || '').charAt(0)}${(info.last_name || '').charAt(0)}` : '?'}</AvatarFallback>
-                                                </Avatar>
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="font-semibold text-sm truncate">{info ? `${info.first_name} ${info.last_name}` : '–'}</p>
-                                                    <div className="flex items-center gap-2 mt-0.5">
-                                                        <span className={`inline-flex rounded border px-1.5 py-0.5 text-xs font-medium ${positionPillClass(info?.position)}`}>{info?.position || '–'}</span>
-                                                        {player.jersey_number != null && <span className="text-xs text-muted-foreground">#{player.jersey_number}</span>}
-                                                    </div>
-                                                </div>
-                                                <Badge variant="secondary" className="shrink-0">SUB</Badge>
-                                            </div>
-                                        );
-                                    })}
-                                    <button type="button" onClick={() => setLineupDialogOpen(true)} className="flex min-h-[72px] flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-neutral-300 bg-neutral-50/50 p-3 text-muted-foreground transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary">
-                                        <span className="text-2xl font-light">+</span>
-                                        <span className="text-xs font-medium">Ajouter remplaçante</span>
-                                    </button>
-                                </div>
+                            <div className="text-right">
+                                <p className="text-2xl font-black tracking-tight">{totalSelected}/18</p>
+                                <p className="text-xs text-primary-foreground/90 uppercase">Sélectionnées</p>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+
+                        <Card className="border border-neutral-200 bg-white shadow-sm">
+                            <CardContent className="pt-4 space-y-4">
+                                <div>
+                                    <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2 mb-2">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-primary" /> XI titulaire • {startingXI.length}/11
+                                    </h4>
+                                    <div className="grid gap-2 sm:grid-cols-2">
+                                        {startingXI.map((player, idx) => {
+                                            const info = teamPlayers.find((p) => p.id === player.player_id);
+                                            return (
+                                                <div key={idx} className="flex items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50/50 p-3 group">
+                                                    <Avatar className="h-10 w-10 shrink-0">
+                                                        <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">{info ? `${(info.first_name || '').charAt(0)}${(info.last_name || '').charAt(0)}` : '?'}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="font-semibold text-sm truncate">{info ? `${info.first_name} ${info.last_name}` : '–'}</p>
+                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                            <span className={`inline-flex rounded border px-1.5 py-0.5 text-xs font-medium ${positionPillClass(info?.position)}`}>{info?.position || '–'}</span>
+                                                            {player.jersey_number != null && <span className="text-xs text-muted-foreground">#{player.jersey_number}</span>}
+                                                        </div>
+                                                    </div>
+                                                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">{player.starting_position}</span>
+                                                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100" onClick={() => removeFromLineup(player.player_id)} aria-label="Retirer">
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            );
+                                        })}
+                                        {startingXI.length === 0 && <p className="col-span-2 text-sm text-muted-foreground py-4">Aucun titulaire. Ajoutez depuis l&apos;effectif disponible.</p>}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2 mb-2">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-primary" /> Remplaçantes • {substitutes.length}/7
+                                    </h4>
+                                    <div className="grid gap-2 sm:grid-cols-2">
+                                        {substitutes.map((player, idx) => {
+                                            const info = teamPlayers.find((p) => p.id === player.player_id);
+                                            return (
+                                                <div key={idx} className="flex items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50/50 p-3 group">
+                                                    <Avatar className="h-10 w-10 shrink-0">
+                                                        <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">{info ? `${(info.first_name || '').charAt(0)}${(info.last_name || '').charAt(0)}` : '?'}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="font-semibold text-sm truncate">{info ? `${info.first_name} ${info.last_name}` : '–'}</p>
+                                                        <span className={`inline-flex rounded border px-1.5 py-0.5 text-xs font-medium ${positionPillClass(info?.position)}`}>{info?.position || '–'}</span>
+                                                    </div>
+                                                    <Badge variant="secondary" className="shrink-0">Rempl.</Badge>
+                                                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100" onClick={() => removeFromLineup(player.player_id)} aria-label="Retirer">
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            );
+                                        })}
+                                        <button
+                                            type="button"
+                                            onClick={() => setLineupDialogOpen(true)}
+                                            className="flex min-h-[72px] flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-neutral-300 bg-neutral-50/50 p-3 text-muted-foreground transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary col-span-2 sm:col-span-1"
+                                        >
+                                            <span className="text-2xl font-light">+</span>
+                                            <span className="text-xs font-medium">Ajouter remplaçante</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <Button onClick={handleConfirmSquad} className="w-full bg-primary hover:bg-primary/90" size="lg">
+                                    <Trophy className="w-4 h-4 mr-2" />
+                                    Confirmer la composition
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
                 )}
 

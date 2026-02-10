@@ -65,17 +65,17 @@ class GameMatch extends Model
 
     public function convoctions(): HasMany
     {
-        return $this->hasMany(Convocation::class);
+        return $this->hasMany(Convocation::class, 'match_id');
     }
 
     public function media(): HasMany
     {
-        return $this->hasMany(Media::class);
+        return $this->hasMany(Media::class, 'match_id');
     }
 
     public function equipmentMovements(): HasMany
     {
-        return $this->hasMany(EquipmentMovement::class);
+        return $this->hasMany(EquipmentMovement::class, 'match_id');
     }
 
     public function getScoreAttribute(): string

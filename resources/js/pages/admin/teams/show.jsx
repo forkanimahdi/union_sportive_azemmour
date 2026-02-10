@@ -116,10 +116,10 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
 
     const filteredAvailablePlayers = availablePlayers.filter(
         (p) =>
-            !team.players?.some((tp) => tp.id === p.id) &&
-            (searchTerm === '' ||
-                `${p.first_name} ${p.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()))
+            searchTerm === '' ||
+            `${p.first_name} ${p.last_name}`.toLowerCase().includes(searchTerm.toLowerCase())
     );
+    const canAssignPlayer = (player) => player != null && player.team_id == null;
 
     const activeSquad = team.players || [];
     const filteredSquad =
@@ -205,38 +205,53 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
                                     </div>
                                     <div className="max-h-60 overflow-y-auto space-y-2">
                                         {filteredAvailablePlayers.length > 0 ? (
-                                            filteredAvailablePlayers.map((player) => (
-                                                <div
-                                                    key={player.id}
-                                                    onClick={() => setSelectedPlayerId(player.id)}
-                                                    className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                                                        selectedPlayerId === player.id
-                                                            ? 'border-primary bg-primary/5'
-                                                            : 'border-border hover:bg-muted/50'
-                                                    }`}
-                                                >
-                                                    <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <p className="font-medium">
-                                                                {player.first_name} {player.last_name}
-                                                            </p>
-                                                            {player.position && (
-                                                                <p className="text-sm text-muted-foreground capitalize">
-                                                                    {player.position}
+                                            filteredAvailablePlayers.map((player) => {
+                                                const assignable = canAssignPlayer(player);
+                                                return (
+                                                    <div
+                                                        key={player.id}
+                                                        onClick={() => assignable && setSelectedPlayerId(player.id)}
+                                                        className={`p-3 rounded-lg border transition-colors ${
+                                                            !assignable
+                                                                ? 'cursor-not-allowed border-neutral-200 bg-neutral-100/80 opacity-75'
+                                                                : selectedPlayerId === player.id
+                                                                    ? 'cursor-pointer border-primary bg-primary/5'
+                                                                    : 'cursor-pointer border-border hover:bg-muted/50'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center justify-between">
+                                                            <div>
+                                                                <p className={`font-medium ${!assignable ? 'text-muted-foreground' : ''}`}>
+                                                                    {player.first_name} {player.last_name}
                                                                 </p>
+                                                                {player.position && (
+                                                                    <p className="text-sm text-muted-foreground capitalize">
+                                                                        {player.position}
+                                                                    </p>
+                                                                )}
+                                                                {!assignable && (
+                                                                    <p className="text-xs text-amber-600 mt-1 font-medium">
+                                                                        Déjà dans {player.team_name || 'une équipe'} — non assignable
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                            {assignable && selectedPlayerId === player.id && (
+                                                                <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                                                                    <div className="w-2 h-2 rounded-full bg-primary-foreground" />
+                                                                </div>
+                                                            )}
+                                                            {!assignable && (
+                                                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600" title="Assignation interdite">
+                                                                    <AlertTriangle className="h-4 w-4" />
+                                                                </div>
                                                             )}
                                                         </div>
-                                                        {selectedPlayerId === player.id && (
-                                                            <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                                                                <div className="w-2 h-2 rounded-full bg-primary-foreground" />
-                                                            </div>
-                                                        )}
                                                     </div>
-                                                </div>
-                                            ))
+                                                );
+                                            })
                                         ) : (
                                             <p className="text-center text-muted-foreground py-4">
-                                                Aucune joueuse disponible
+                                                Aucune joueuse trouvée
                                             </p>
                                         )}
                                     </div>
@@ -246,7 +261,7 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
                                         </Button>
                                         <Button
                                             onClick={handleAssignPlayer}
-                                            disabled={!selectedPlayerId || processing}
+                                            disabled={!selectedPlayerId || processing || !canAssignPlayer(availablePlayers.find((p) => p.id === selectedPlayerId))}
                                         >
                                             {processing ? 'Assignation...' : 'Assigner'}
                                         </Button>

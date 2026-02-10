@@ -164,10 +164,8 @@ class TeamController extends Controller
             'avg_age' => $avgAge,
         ];
 
-        // Available players for "Add New Player" (not in this team, active)
-        $availablePlayers = \App\Models\Player::where(function ($query) use ($team) {
-            $query->whereNull('team_id')->orWhere('team_id', $team->id);
-        })
+        // All active players for "Add New Player" dialog (with team info: only those without team are assignable)
+        $availablePlayers = \App\Models\Player::with('team')
             ->where('is_active', true)
             ->orderBy('last_name')
             ->get()
@@ -177,6 +175,8 @@ class TeamController extends Controller
                     'first_name' => $p->first_name,
                     'last_name' => $p->last_name,
                     'position' => $p->position,
+                    'team_id' => $p->team_id,
+                    'team_name' => $p->team ? $p->team->name : null,
                 ];
             });
 
@@ -257,6 +257,9 @@ class TeamController extends Controller
         ]);
 
         $player = \App\Models\Player::findOrFail($validated['player_id']);
+        if ($player->team_id !== null) {
+            return redirect()->back()->with('error', 'Cette joueuse est déjà assignée à une équipe. Seules les joueuses sans équipe peuvent être assignées.');
+        }
         $player->team_id = $team->id;
         $player->save();
 

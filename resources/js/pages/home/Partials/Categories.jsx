@@ -23,11 +23,11 @@ export default function Categories() {
     };
 
     return (
-        <div className="py-16 sm:py-20 lg:py-24 bg-dark text-white">
+        <div className="py-16 sm:py-20 lg:py-24 bg-alpha text-white">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 sm:mb-12 gap-4">
                     <div>
-                        <h4 className="text-alpha font-bold text-xs sm:text-sm uppercase mb-2">Équipes</h4>
+                        <h4 className="text-white font-bold text-xs sm:text-sm uppercase mb-2">Équipes</h4>
                         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic">Nos Catégories</h2>
                     </div>
                     <div className="flex gap-2">
