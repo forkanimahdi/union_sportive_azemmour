@@ -29,8 +29,8 @@ export default function Footer() {
                     {/* Brand */}
                     <div>
                         <div className="flex items-center space-x-2 mb-6">
-                            <div className="w-10 h-10 bg-alpha rounded-full flex items-center justify-center font-bold text-lg">US</div>
-                            <span className="font-bold text-xl uppercase tracking-wider">Union Sportive</span>
+                            <img src="/assets/images/logo.png" alt="Union Sportive Azemmour" className="w-10 h-10 rounded-full object-contain bg-white/5" />
+                            <span className="font-bold text-xl uppercase tracking-wider">Union Sportive Azemmour</span>
                         </div>
                         <p className="text-gray-400 text-sm leading-relaxed mb-6">
                             L'Union Sportive Azemmour est un club de football professionnel engagé dans l'excellence, la communauté et le beau jeu.
@@ -38,7 +38,7 @@ export default function Footer() {
                         <div className="flex gap-4">
                             <a href="#" className="w-10 h-10 bg-white/5 flex items-center justify-center rounded-full hover:bg-alpha transition-colors"><Facebook className="w-4 h-4" /></a>
                             <a href="#" className="w-10 h-10 bg-white/5 flex items-center justify-center rounded-full hover:bg-alpha transition-colors"><Twitter className="w-4 h-4" /></a>
-                            <a href="#" className="w-10 h-10 bg-white/5 flex items-center justify-center rounded-full hover:bg-alpha transition-colors"><Instagram className="w-4 h-4" /></a>
+                            <a href="https://www.instagram.com/tihadazemmourwomen/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-white/5 flex items-center justify-center rounded-full hover:bg-alpha transition-colors" aria-label="Instagram"><Instagram className="w-4 h-4" /></a>
                             <a href="#" className="w-10 h-10 bg-white/5 flex items-center justify-center rounded-full hover:bg-alpha transition-colors"><Linkedin className="w-4 h-4" /></a>
                         </div>
                     </div>
@@ -66,16 +66,31 @@ export default function Footer() {
                         </ul>
                     </div>
 
-                    {/* Instagram Feed (Placeholder) */}
+                    {/* Instagram Embed */}
                     <div>
-                        <h4 className="text-lg font-bold uppercase mb-6">@Instagram</h4>
-                        <div className="grid grid-cols-3 gap-2">
-                            {[1, 2, 3, 4, 5, 6].map((i) => (
-                                <div key={i} className="aspect-square bg-gray-800 rounded hover:opacity-80 cursor-pointer">
-                                    <img src={`https://picsum.photos/seed/${i + 50}/200`} alt="Insta" className="w-full h-full object-cover rounded" />
-                                </div>
-                            ))}
+                        <h4 className="text-lg font-bold uppercase mb-6">
+                            <a href="https://www.instagram.com/tihadazemmourwomen/" target="_blank" rel="noopener noreferrer" className="hover:text-alpha transition-colors">
+                                @tihadazemmourwomen
+                            </a>
+                        </h4>
+                        <div className="rounded-lg overflow-hidden bg-gray-800/50 border border-white/10">
+                            <iframe
+                                title="Instagram - Tihad Azemmour Women"
+                                src="https://www.instagram.com/tihadazemmourwomen/embed"
+                                className="w-full h-[480px] max-h-[520px] border-0"
+                                allowFullScreen
+                                loading="lazy"
+                            />
                         </div>
+                        <a
+                            href="https://www.instagram.com/tihadazemmourwomen/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 mt-3 text-sm text-gray-400 hover:text-alpha transition-colors"
+                        >
+                            <Instagram className="w-4 h-4" />
+                            Suivez-nous sur Instagram
+                        </a>
                     </div>
                 </div>
 

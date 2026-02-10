@@ -18,7 +18,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const DEFAULT_SEASON_IMAGE = '/assets/images/hero/usa_hero.jpg';
+const DEFAULT_SEASON_IMAGE = '/assets/images/hero/usa_hero.webp';
 
 export default function SeasonsIndex({ seasons }) {
     const [search, setSearch] = useState('');
@@ -173,7 +173,7 @@ export default function SeasonsIndex({ seasons }) {
                                     key={season.id}
                                     className="overflow-hidden border p-0 rounded-xl shadow-sm bg-card hover:shadow-md transition-shadow flex flex-col"
                                 >
-                                    {/* Card image - default usa_hero.jpg, grayscale when archived */}
+                                    {/* Card image - default usa_hero.webp, grayscale when archived */}
                                     <div className="relative h-36 sm:h-44 overflow-hidden bg-muted">
                                         <img
                                             src={DEFAULT_SEASON_IMAGE}

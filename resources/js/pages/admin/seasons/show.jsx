@@ -26,7 +26,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const DEFAULT_TEAM_IMAGE = '/assets/images/hero/usa_hero.jpg';
+const DEFAULT_TEAM_IMAGE = '/assets/images/hero/usa_hero.webp';
 
 export default function SeasonsShow({ season, teamsNotInThisSeason = [] }) {
     const [assignTeamsModalOpen, setAssignTeamsModalOpen] = useState(false);
