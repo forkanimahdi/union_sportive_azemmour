@@ -75,6 +75,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         Route::get('matches/{match}/data', [MatchController::class, 'matchData'])->name('matches.data');
         Route::post('matches/{match}/lineup', [MatchController::class, 'updateLineup'])->name('matches.lineup');
         Route::post('matches/{match}/events', [MatchController::class, 'addEvent'])->name('matches.events');
+        Route::delete('matches/{match}/events/{event}', [MatchController::class, 'destroyEvent'])->name('matches.events.destroy');
         Route::post('matches/{match}/finish', [MatchController::class, 'finishMatch'])->name('matches.finish');
         Route::post('matches/{match}/update-score', [MatchController::class, 'updateScore'])->name('matches.update-score');
         Route::post('matches/{match}/update-status', [MatchController::class, 'updateStatus'])->name('matches.update-status');

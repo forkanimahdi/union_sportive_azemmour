@@ -471,6 +471,15 @@ class MatchController extends Controller
         return redirect()->back()->with('success', 'Événement ajouté avec succès');
     }
 
+    public function destroyEvent(GameMatch $match, MatchEvent $event)
+    {
+        if ($event->match_id !== $match->id) {
+            abort(404);
+        }
+        $event->delete();
+        return redirect()->back()->with('success', 'Événement supprimé');
+    }
+
     public function finishMatch(Request $request, GameMatch $match)
     {
         $validated = $request->validate([

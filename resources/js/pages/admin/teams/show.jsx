@@ -27,8 +27,33 @@ import {
     History,
     UserCheck,
     X,
+    CalendarDays,
+    MapPin,
+    FileText,
 } from 'lucide-react';
 import DeleteModal from '@/components/DeleteModal';
+
+const CLUB_LOGO = '/assets/images/logo.png';
+
+function getStatusConfig(status) {
+    switch (status) {
+        case 'finished':
+            return { label: 'TERMINÉ', className: 'bg-primary/10 text-primary font-semibold' };
+        case 'live':
+            return { label: 'EN DIRECT', className: 'bg-red-500/10 text-red-600 font-semibold' };
+        case 'postponed':
+            return { label: 'REPORTÉ', className: 'bg-amber-500/10 text-amber-700 font-semibold' };
+        case 'cancelled':
+            return { label: 'ANNULÉ', className: 'bg-neutral-200 text-neutral-600 font-semibold' };
+        default:
+            return { label: 'À VENIR', className: 'bg-primary/10 text-primary font-semibold' };
+    }
+}
+
+function getLocationLabel(venue, type) {
+    if (venue === 'domicile' || type === 'domicile') return 'Terrain à domicile';
+    return 'Extérieur';
+}
 
 function playerPhotoUrl(photo) {
     if (!photo) return null;
@@ -112,6 +137,7 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
 
     const formerPlayers = team.former_players || [];
     const trialists = team.trialists || [];
+    const teamMatches = team.matches || [];
     const actionRequiredCount = stats.action_required || 0;
 
     const breadcrumbs = [
@@ -271,12 +297,16 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
                     </Card>
                 </div>
 
-                {/* Tabs: Active Squad / Former Players / Trialists */}
-                <Tabs defaultValue="active" className="space-y-4">
-                    <TabsList className="bg-muted/50 p-1 h-auto">
+                {/* Tabs: Matches / Active Squad / Former Players / Trialists */}
+                <Tabs defaultValue="matches" className="space-y-4">
+                    <TabsList className="bg-muted/50 p-1 h-auto flex flex-wrap">
+                        <TabsTrigger value="matches" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                            <CalendarDays className="w-4 h-4" />
+                            Matchs ({teamMatches.length})
+                        </TabsTrigger>
                         <TabsTrigger value="active" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
                             <Users className="w-4 h-4" />
-                            Effectif actif ({activeSquad.length})
+                            Effectif ({activeSquad.length})
                         </TabsTrigger>
                         <TabsTrigger value="former" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
                             <History className="w-4 h-4" />
@@ -287,6 +317,128 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
                             Essai
                         </TabsTrigger>
                     </TabsList>
+
+                    <TabsContent value="matches" className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                                <CalendarDays className="w-5 h-5" />
+                                Matchs de l&apos;équipe
+                            </h2>
+                            <Button variant="outline" size="sm" asChild>
+                                <Link href="/admin/fixtures">Voir le calendrier</Link>
+                            </Button>
+                        </div>
+                        {teamMatches.length > 0 ? (
+                            <div className="space-y-4">
+                                {teamMatches.map((m) => {
+                                    const isHome = m.type === 'domicile';
+                                    const ourTeam = { name: team.name, logo: null };
+                                    const opponent = m.opponent_team
+                                        ? { name: m.opponent_team.name, logo: m.opponent_team.logo }
+                                        : { name: m.opponent || 'Adversaire', logo: null };
+                                    const leftTeam = isHome ? ourTeam : opponent;
+                                    const rightTeam = isHome ? opponent : ourTeam;
+                                    const leftScore = isHome ? m.home_score : m.away_score;
+                                    const rightScore = isHome ? m.away_score : m.home_score;
+                                    const isFinished = m.status === 'finished';
+                                    const isLive = m.status === 'live';
+                                    const statusConfig = getStatusConfig(m.status);
+                                    const formatDate = (dateString) => {
+                                        const d = new Date(dateString);
+                                        return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+                                    };
+                                    const formatTime = (dateString) => {
+                                        const d = new Date(dateString);
+                                        return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                                    };
+                                    return (
+                                        <div
+                                            key={m.id}
+                                            className="relative overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm transition-shadow hover:shadow-md"
+                                        >
+                                            {isLive && (
+                                                <div className="absolute right-4 top-4 flex h-6 items-center gap-1 rounded-full bg-red-500 px-2.5 text-xs font-bold text-white">
+                                                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
+                                                    LIVE
+                                                </div>
+                                            )}
+                                            <div className="p-5 sm:p-6">
+                                                <div className="mb-4 flex flex-wrap items-center gap-2">
+                                                    <span className={`inline-flex items-center rounded px-2.5 py-1 text-xs ${statusConfig.className}`}>
+                                                        {statusConfig.label}
+                                                    </span>
+                                                    {!isLive && <span className="text-sm text-neutral-500">{formatDate(m.scheduled_at)}</span>}
+                                                    {isLive && <span className="text-sm font-medium text-neutral-700">Aujourd&apos;hui</span>}
+                                                    {!isLive && <span className="text-sm font-medium text-neutral-700">{formatTime(m.scheduled_at)}</span>}
+                                                </div>
+                                                <div className="flex flex-wrap items-center justify-between gap-6">
+                                                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                                                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-100">
+                                                            {isHome ? (
+                                                                <img src={CLUB_LOGO} alt="" className="h-12 w-12 object-cover" />
+                                                            ) : leftTeam.logo ? (
+                                                                <img src={`/storage/${leftTeam.logo}`} alt="" className="h-12 w-12 object-cover" />
+                                                            ) : (
+                                                                <span className="text-sm font-bold text-neutral-600">{(leftTeam.name || '').slice(0, 2).toUpperCase()}</span>
+                                                            )}
+                                                        </div>
+                                                        <span className="truncate font-semibold text-neutral-900">{leftTeam.name}</span>
+                                                    </div>
+                                                    <div className="flex shrink-0 flex-col items-center">
+                                                        {isFinished && leftScore != null && rightScore != null ? (
+                                                            <>
+                                                                <span className="text-2xl font-bold text-neutral-900">{leftScore} - {rightScore}</span>
+                                                                <span className="text-xs font-medium text-neutral-500">SCORE FINAL</span>
+                                                            </>
+                                                        ) : isLive ? (
+                                                            <>
+                                                                <span className="text-2xl font-bold text-neutral-900">{leftScore ?? 0} - {rightScore ?? 0}</span>
+                                                                <span className="text-xs font-medium text-red-600">EN COURS</span>
+                                                            </>
+                                                        ) : (
+                                                            <span className="text-xl font-bold text-neutral-300">VS</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex min-w-0 flex-1 items-center gap-3 justify-end">
+                                                        <span className="truncate text-right font-semibold text-neutral-900">{rightTeam.name}</span>
+                                                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-100">
+                                                            {!isHome ? (
+                                                                <img src={CLUB_LOGO} alt="" className="h-12 w-12 object-cover" />
+                                                            ) : rightTeam.logo ? (
+                                                                <img src={`/storage/${rightTeam.logo}`} alt="" className="h-12 w-12 object-cover" />
+                                                            ) : (
+                                                                <span className="text-sm font-bold text-neutral-600">{(rightTeam.name || '').slice(0, 2).toUpperCase()}</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-neutral-100 pt-4">
+                                                    <div className="flex items-center gap-1.5 text-sm text-neutral-500">
+                                                        <MapPin className="h-4 w-4" />
+                                                        {getLocationLabel(m.venue, m.type)}
+                                                    </div>
+                                                    <Link href={`/admin/matches/${m.id}`}>
+                                                        <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary/10">
+                                                            <FileText className="mr-1.5 h-4 w-4" />
+                                                            Détails
+                                                        </Button>
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="rounded-xl border border-neutral-200 bg-white py-16 text-center text-neutral-500">
+                                Aucun match pour cette équipe.
+                                <br />
+                                <Button variant="link" className="mt-2" asChild>
+                                    <Link href="/admin/fixtures">Voir le calendrier</Link>
+                                </Button>
+                            </div>
+                        )}
+                    </TabsContent>
 
                     <TabsContent value="active" className="space-y-4">
                         <div className="flex flex-wrap items-center justify-between gap-2">

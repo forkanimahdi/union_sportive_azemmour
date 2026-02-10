@@ -131,7 +131,7 @@ class TeamController extends Controller
 
     public function show(Team $team)
     {
-        $team->load(['season', 'players', 'staff', 'trainings', 'matches']);
+        $team->load(['season', 'players', 'staff', 'trainings', 'matches' => fn ($q) => $q->with('opponentTeam')->orderBy('scheduled_at', 'desc')]);
 
         $players = $team->players->map(function ($p) {
             $canPlay = $p->canPlay();
@@ -204,6 +204,20 @@ class TeamController extends Controller
                 }),
                 'former_players' => [], // Reserved for future (e.g. left_team_at, status)
                 'trialists' => [], // Reserved for future
+                'matches' => $team->matches->map(function ($m) {
+                    return [
+                        'id' => $m->id,
+                        'opponent' => $m->opponent,
+                        'opponent_team' => $m->opponentTeam ? ['id' => $m->opponentTeam->id, 'name' => $m->opponentTeam->name, 'logo' => $m->opponentTeam->logo] : null,
+                        'scheduled_at' => $m->scheduled_at?->format('Y-m-d H:i'),
+                        'venue' => $m->venue,
+                        'type' => $m->type,
+                        'status' => $m->status,
+                        'home_score' => $m->home_score,
+                        'away_score' => $m->away_score,
+                        'category' => $m->category,
+                    ];
+                })->values()->all(),
             ],
             'availablePlayers' => $availablePlayers,
         ]);

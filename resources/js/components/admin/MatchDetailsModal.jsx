@@ -28,6 +28,9 @@ import {
     ArrowLeft,
     CreditCard,
     AlertTriangle,
+    Trash2,
+    ArrowDownToLine,
+    ArrowUpFromLine,
 } from 'lucide-react';
 
 const STATUS_OPTIONS = [
@@ -408,14 +411,38 @@ function ManageView({
                                 const cfg = EVENT_TYPES[event.type] || { label: event.type, icon: Target, color: 'text-neutral-600' };
                                 const Icon = cfg.icon;
                                 return (
-                                    <div key={event.id} className="flex items-center justify-between py-2 border-b border-neutral-100 text-sm">
-                                        <div className="flex items-center gap-2">
-                                            <Icon className={`h-4 w-4 ${cfg.color}`} />
-                                            <span>
-                                                {event.player ? `${event.player.first_name} ${event.player.last_name}` : '-'} ({event.minute}&apos;)
+                                    <div key={event.id} className="flex items-center justify-between gap-2 py-2 border-b border-neutral-100 text-sm group">
+                                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                                            <Icon className={`h-4 w-4 shrink-0 ${cfg.color}`} />
+                                            <span className="truncate">
+                                                {event.type === 'substitution' && event.substituted_player
+                                                    ? `${event.substituted_player.first_name} ${event.substituted_player.last_name} → ${event.player ? `${event.player.first_name} ${event.player.last_name}` : '-'}`
+                                                    : event.player
+                                                      ? `${event.player.first_name} ${event.player.last_name}`
+                                                      : '-'}{' '}
+                                                ({event.minute}&apos;)
                                             </span>
                                         </div>
-                                        <Badge variant="outline">{cfg.label}</Badge>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            <Badge variant="outline">{cfg.label}</Badge>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                                                aria-label="Supprimer"
+                                                onClick={() => {
+                                                    if (window.confirm('Supprimer cet événement ?')) {
+                                                        router.delete(`/admin/matches/${matchId}/events/${event.id}`, {
+                                                            preserveScroll: true,
+                                                            onSuccess: () => refetchMatchData(),
+                                                        });
+                                                    }
+                                                }}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 );
                             })
@@ -527,28 +554,67 @@ function ManageView({
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div>
-                            <Label>Joueuse</Label>
-                            <Select value={eventForm.data.player_id} onValueChange={(v) => eventForm.setData('player_id', v)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Sélectionner" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {teamPlayers.map((p) => (
-                                        <SelectItem key={p.id} value={p.id.toString()}>
-                                            {p.first_name} {p.last_name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        {eventForm.data.type === 'substitution' && (
+                        {eventForm.data.type === 'substitution' ? (
+                            <div className="space-y-3 rounded-lg border border-neutral-200 bg-neutral-50/50 p-4">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                                    Remplacement
+                                </p>
+                                <div className="grid gap-3">
+                                    <div className="space-y-1.5">
+                                        <Label className="flex items-center gap-2 text-muted-foreground">
+                                            <ArrowDownToLine className="h-4 w-4" />
+                                            Sortante
+                                        </Label>
+                                        <Select
+                                            value={eventForm.data.substituted_player_id}
+                                            onValueChange={(v) => eventForm.setData('substituted_player_id', v)}
+                                        >
+                                            <SelectTrigger className="bg-background">
+                                                <SelectValue placeholder="Joueuse qui sort" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {teamPlayers.map((p) => (
+                                                    <SelectItem key={p.id} value={p.id.toString()}>
+                                                        {p.first_name} {p.last_name}
+                                                        {p.jersey_number != null ? ` #${p.jersey_number}` : ''}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="flex justify-center">
+                                        <div className="rounded-full bg-primary/10 p-1.5">
+                                            <ArrowDownToLine className="h-4 w-4 text-primary" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="flex items-center gap-2 text-muted-foreground">
+                                            <ArrowUpFromLine className="h-4 w-4" />
+                                            Entrante
+                                        </Label>
+                                        <Select
+                                            value={eventForm.data.player_id}
+                                            onValueChange={(v) => eventForm.setData('player_id', v)}
+                                        >
+                                            <SelectTrigger className="bg-background">
+                                                <SelectValue placeholder="Joueuse qui entre" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {teamPlayers.map((p) => (
+                                                    <SelectItem key={p.id} value={p.id.toString()}>
+                                                        {p.first_name} {p.last_name}
+                                                        {p.jersey_number != null ? ` #${p.jersey_number}` : ''}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
                             <div>
-                                <Label>Joueuse remplacée</Label>
-                                <Select
-                                    value={eventForm.data.substituted_player_id}
-                                    onValueChange={(v) => eventForm.setData('substituted_player_id', v)}
-                                >
+                                <Label>Joueuse</Label>
+                                <Select value={eventForm.data.player_id} onValueChange={(v) => eventForm.setData('player_id', v)}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Sélectionner" />
                                     </SelectTrigger>
