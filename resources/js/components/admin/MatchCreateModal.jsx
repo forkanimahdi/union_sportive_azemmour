@@ -67,10 +67,12 @@ export default function MatchCreateModal({
         );
     }, [activeSeasonTeams, data.category]);
 
+    const opponentCategories = (ot) => Array.isArray(ot.category) ? ot.category : (ot.category ? [ot.category] : []);
+
     const opponentsInCategory = useMemo(() => {
         if (!data.category) return [];
-        return opponentTeams.filter(
-            (ot) => (ot.category || '').toLowerCase() === (data.category || '').toLowerCase()
+        return opponentTeams.filter((ot) =>
+            opponentCategories(ot).some((c) => (c || '').toLowerCase() === (data.category || '').toLowerCase())
         );
     }, [opponentTeams, data.category]);
 
@@ -80,7 +82,7 @@ export default function MatchCreateModal({
         return opponentsInCategory.filter(
             (ot) =>
                 (ot.name || '').toLowerCase().includes(q) ||
-                (ot.category || '').toLowerCase().includes(q)
+                opponentCategories(ot).some((c) => (c || '').toLowerCase().includes(q))
         );
     }, [opponentsInCategory, opponentSearch]);
 
@@ -312,7 +314,7 @@ export default function MatchCreateModal({
                                         >
                                             <span className={selectedOpponent ? '' : 'text-muted-foreground'}>
                                                 {selectedOpponent
-                                                    ? `${selectedOpponent.name} (${selectedOpponent.category || '-'})`
+                                                    ? `${selectedOpponent.name} (${Array.isArray(selectedOpponent.category) ? selectedOpponent.category.join(', ') : (selectedOpponent.category || '-')})`
                                                     : 'Sélectionner une équipe adverse'}
                                             </span>
                                             <ChevronRight
@@ -363,7 +365,7 @@ export default function MatchCreateModal({
                                                                     />
                                                                 )}
                                                                 <span>
-                                                                    {ot.name} ({ot.category || '-'})
+                                                                    {ot.name} ({Array.isArray(ot.category) ? ot.category.join(', ') : (ot.category || '-')})
                                                                 </span>
                                                             </button>
                                                         ))

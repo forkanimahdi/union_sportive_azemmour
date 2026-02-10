@@ -9,15 +9,18 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Plus, MapPin, Pencil } from 'lucide-react';
-import AppLogoIcon from '@/components/app-logo-icon';
+import { Plus, MapPin, Pencil, FileText } from 'lucide-react';
 import MatchCreateModal from '@/components/admin/MatchCreateModal';
+import MatchEditModal from '@/components/admin/MatchEditModal';
+import MatchDetailsModal from '@/components/admin/MatchDetailsModal';
+
+const CLUB_LOGO = '/assets/images/logo.png';
 
 const CATEGORIES = [
-    { value: 'U13', label: 'U13' },
-    { value: 'U15', label: 'U15' },
-    { value: 'U17', label: 'U17' },
     { value: 'Senior', label: 'Équipe Senior' },
+    { value: 'U17', label: 'U17' },
+    { value: 'U15', label: 'U15' },
+    { value: 'U13', label: 'U13' },
 ];
 
 export default function FixturesIndex({
@@ -29,12 +32,14 @@ export default function FixturesIndex({
     opponentTeams = [],
     activeSeason,
 }) {
-    const [categoryTab, setCategoryTab] = useState('U13');
+    const [categoryTab, setCategoryTab] = useState('Senior');
     const [createModalOpen, setCreateModalOpen] = useState(false);
+    const [editModalMatch, setEditModalMatch] = useState(null);
+    const [detailsModalMatch, setDetailsModalMatch] = useState(null);
 
     const filteredMatches = useMemo(() => {
         let list = Array.isArray(matches) ? [...matches] : [];
-        list = list.filter((m) => (m.category || 'U13') === categoryTab);
+        list = list.filter((m) => (m.category || 'Senior') === categoryTab);
         list.sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
         return list;
     }, [matches, categoryTab]);
@@ -122,6 +127,25 @@ export default function FixturesIndex({
                         opponentTeams={opponentTeams}
                         activeSeason={activeSeason}
                         onSuccess={() => router.reload()}
+                    />
+                    <MatchEditModal
+                        key={editModalMatch?.id}
+                        open={!!editModalMatch}
+                        onOpenChange={(open) => !open && setEditModalMatch(null)}
+                        match={editModalMatch}
+                        teams={modalTeams.length ? modalTeams : teams}
+                        opponentTeams={opponentTeams}
+                        onSuccess={() => router.reload()}
+                    />
+                    <MatchDetailsModal
+                        key={detailsModalMatch?.id}
+                        open={!!detailsModalMatch}
+                        onOpenChange={(open) => !open && setDetailsModalMatch(null)}
+                        match={detailsModalMatch}
+                        onSuccess={() => {
+                            setDetailsModalMatch(null);
+                            router.reload();
+                        }}
                     />
 
                     {/* Category tabs */}
@@ -215,14 +239,14 @@ export default function FixturesIndex({
                                                 {/* Left team */}
                                                 <div className="flex min-w-0 flex-1 items-center gap-3">
                                                     <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-100">
-                                                        {leftTeam.logo ? (
-                                                            <img
-                                                                src={`/storage/${leftTeam.logo}`}
-                                                                alt=""
-                                                                className="h-12 w-12 object-cover"
-                                                            />
+                                                        {isHome ? (
+                                                            <img src={CLUB_LOGO} alt="" className="h-12 w-12 object-cover" />
+                                                        ) : leftTeam.logo ? (
+                                                            <img src={`/storage/${leftTeam.logo}`} alt="" className="h-12 w-12 object-cover" />
                                                         ) : (
-                                                            <AppLogoIcon className="h-7 w-7 text-primary" />
+                                                            <span className="text-sm font-bold text-neutral-600">
+                                                                {(leftTeam.name || '').slice(0, 2).toUpperCase()}
+                                                            </span>
                                                         )}
                                                     </div>
                                                     <span className="truncate font-semibold text-neutral-900">
@@ -265,14 +289,14 @@ export default function FixturesIndex({
                                                         {rightTeam.name}
                                                     </span>
                                                     <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-100">
-                                                        {rightTeam.logo ? (
-                                                            <img
-                                                                src={`/storage/${rightTeam.logo}`}
-                                                                alt=""
-                                                                className="h-12 w-12 object-cover"
-                                                            />
+                                                        {!isHome ? (
+                                                            <img src={CLUB_LOGO} alt="" className="h-12 w-12 object-cover" />
+                                                        ) : rightTeam.logo ? (
+                                                            <img src={`/storage/${rightTeam.logo}`} alt="" className="h-12 w-12 object-cover" />
                                                         ) : (
-                                                            <div className="h-6 w-6 rounded-full bg-neutral-300" />
+                                                            <span className="text-sm font-bold text-neutral-600">
+                                                                {(rightTeam.name || '').slice(0, 2).toUpperCase()}
+                                                            </span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -284,21 +308,24 @@ export default function FixturesIndex({
                                                     {getLocationLabel(match.venue, match.type)}
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <Link href={`/admin/matches/${match.id}`}>
-                                                        <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary/10">
-                                                            Détails
-                                                        </Button>
-                                                    </Link>
-                                                    <Link href={`/admin/matches/${match.id}/edit`}>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-9 w-9 text-neutral-600 hover:text-primary"
-                                                            aria-label="Modifier"
-                                                        >
-                                                            <Pencil className="h-4 w-4" />
-                                                        </Button>
-                                                    </Link>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="border-primary text-primary hover:bg-primary/10"
+                                                        onClick={() => setDetailsModalMatch(match)}
+                                                    >
+                                                        <FileText className="mr-1.5 h-4 w-4" />
+                                                        Détails
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-9 w-9 text-neutral-600 hover:text-primary"
+                                                        aria-label="Modifier"
+                                                        onClick={() => setEditModalMatch(match)}
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
                                                 </div>
                                             </div>
                                         </div>

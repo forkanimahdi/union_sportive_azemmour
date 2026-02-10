@@ -60,7 +60,7 @@ class GameMatch extends Model
 
     public function lineups(): HasMany
     {
-        return $this->hasMany(MatchLineup::class);
+        return $this->hasMany(MatchLineup::class, 'match_id');
     }
 
     public function convoctions(): HasMany

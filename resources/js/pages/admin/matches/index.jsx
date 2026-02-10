@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import MatchCreateModal from '@/components/admin/MatchCreateModal';
 
+const CLUB_LOGO = '/assets/images/logo.png';
+
 export default function MatchesIndex({ matches, seasons = [], teams = [], opponentTeams = [], activeSeason }) {
     const [search, setSearch] = useState('');
     const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -308,15 +310,15 @@ export default function MatchesIndex({ matches, seasons = [], teams = [], oppone
                                                             <div className="flex items-center justify-between mb-4">
                                                                 {/* Left Team */}
                                                                 <div className="flex-1 text-center">
-                                                                    <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-gray-200 flex items-center justify-center">
-                                                                        {leftTeam.logo ? (
-                                                                            <img 
-                                                                                src={`/storage/${leftTeam.logo}`} 
-                                                                                alt={leftTeam.name}
-                                                                                className="w-12 h-12 rounded-full object-cover"
-                                                                            />
+                                                                    <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                                                                        {isHome ? (
+                                                                            <img src={CLUB_LOGO} alt="" className="w-12 h-12 object-cover" />
+                                                                        ) : leftTeam.logo ? (
+                                                                            <img src={`/storage/${leftTeam.logo}`} alt="" className="w-12 h-12 object-cover" />
                                                                         ) : (
-                                                                            <Users className="w-6 h-6 text-gray-400" />
+                                                                            <span className="text-sm font-bold text-gray-600">
+                                                                                {(leftTeam.name || '').slice(0, 2).toUpperCase()}
+                                                                            </span>
                                                                         )}
                                                                     </div>
                                                                     <div className="font-bold text-sm text-gray-900">{leftTeam.name}</div>
@@ -334,15 +336,15 @@ export default function MatchesIndex({ matches, seasons = [], teams = [], oppone
 
                                                                 {/* Right Team */}
                                                                 <div className="flex-1 text-center">
-                                                                    <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-gray-200 flex items-center justify-center">
-                                                                        {rightTeam.logo ? (
-                                                                            <img 
-                                                                                src={`/storage/${rightTeam.logo}`} 
-                                                                                alt={rightTeam.name}
-                                                                                className="w-12 h-12 rounded-full object-cover"
-                                                                            />
+                                                                    <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                                                                        {!isHome ? (
+                                                                            <img src={CLUB_LOGO} alt="" className="w-12 h-12 object-cover" />
+                                                                        ) : rightTeam.logo ? (
+                                                                            <img src={`/storage/${rightTeam.logo}`} alt="" className="w-12 h-12 object-cover" />
                                                                         ) : (
-                                                                            <Users className="w-6 h-6 text-gray-400" />
+                                                                            <span className="text-sm font-bold text-gray-600">
+                                                                                {(rightTeam.name || '').slice(0, 2).toUpperCase()}
+                                                                            </span>
                                                                         )}
                                                                     </div>
                                                                     <div className="font-bold text-sm text-gray-900">{rightTeam.name}</div>

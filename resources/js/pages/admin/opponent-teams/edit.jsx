@@ -5,22 +5,43 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft } from 'lucide-react';
 import InputError from '@/components/input-error';
 
+const CATEGORY_OPTIONS = ['U13', 'U15', 'U17', 'Senior'];
+
 export default function OpponentTeamEdit({ team }) {
-    const { data, setData, post, processing, errors } = useForm({
+    const categoriesArray = Array.isArray(team.categories)
+        ? team.categories
+        : Array.isArray(team.category)
+          ? team.category
+          : team.category
+            ? [team.category]
+            : [];
+    const { data, setData, post, processing, errors, transform } = useForm({
         name: team.name || '',
-        category: team.category || '',
+        categories: categoriesArray,
         logo: null,
         _method: 'PUT',
     });
+
+    const toggleCategory = (value) => {
+        const arr = [...(data.categories || [])];
+        const idx = arr.indexOf(value);
+        if (idx >= 0) arr.splice(idx, 1);
+        else arr.push(value);
+        setData('categories', arr.sort());
+    };
 
     const [preview, setPreview] = useState(team.logo ? `/storage/${team.logo}` : null);
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        transform((data) => ({
+            ...data,
+            categories: JSON.stringify(data.categories || []),
+        }));
         post(`/admin/opponent-teams/${team.id}`, {
             forceFormData: true,
             onSuccess: () => router.visit('/admin/opponent-teams'),
@@ -72,23 +93,25 @@ export default function OpponentTeamEdit({ team }) {
                                     <InputError message={errors.name} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="category">Catégorie</Label>
-                                    <Select
-                                        value={data.category || 'none'}
-                                        onValueChange={(v) => setData('category', v === 'none' ? '' : v)}
-                                    >
-                                        <SelectTrigger id="category">
-                                            <SelectValue placeholder="Sélectionner une catégorie" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="none">Aucune</SelectItem>
-                                            <SelectItem value="U13">U13</SelectItem>
-                                            <SelectItem value="U15">U15</SelectItem>
-                                            <SelectItem value="U17">U17</SelectItem>
-                                            <SelectItem value="Senior">Senior</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <InputError message={errors.category} />
+                                    <Label>Catégories</Label>
+                                    <p className="text-xs text-muted-foreground">
+                                        Cochez toutes les catégories auxquelles cette équipe participe.
+                                    </p>
+                                    <div className="flex flex-wrap gap-4 rounded-md border p-3">
+                                        {CATEGORY_OPTIONS.map((opt) => (
+                                            <label
+                                                key={opt}
+                                                className="flex cursor-pointer items-center gap-2 text-sm"
+                                            >
+                                                <Checkbox
+                                                    checked={(data.categories || []).includes(opt)}
+                                                    onCheckedChange={() => toggleCategory(opt)}
+                                                />
+                                                <span>{opt}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <InputError message={errors.categories} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="logo">Logo (laisser vide pour conserver)</Label>

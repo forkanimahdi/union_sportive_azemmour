@@ -218,8 +218,7 @@ class MatchController extends Controller
 
         GameMatch::create($validated);
 
-        return redirect()->route('admin.matches.index')
-            ->with('success', 'Match programmé avec succès');
+        return redirect()->back()->with('success', 'Match programmé avec succès');
     }
 
     public function show(GameMatch $match)
@@ -258,52 +257,98 @@ class MatchController extends Controller
         $sortedEvents = $match->events->sortBy('minute')->values();
 
         return Inertia::render('admin/matches/show', [
-            'match' => [
-                'id' => $match->id,
-                'team' => $match->team ? [
-                    'id' => $match->team->id,
-                    'name' => $match->team->name,
-                    'category' => $match->team->category,
-                    'players' => $teamPlayers,
-                ] : null,
-                'opponent' => $match->opponent,
-                'opponent_team' => $match->opponentTeam ? [
-                    'id' => $match->opponentTeam->id,
-                    'name' => $match->opponentTeam->name,
-                    'logo' => $match->opponentTeam->logo,
-                ] : null,
-                'category' => $match->category,
-                'scheduled_at' => $match->scheduled_at?->format('Y-m-d H:i'),
-                'venue' => $match->venue,
-                'type' => $match->type,
-                'home_score' => $match->home_score,
-                'away_score' => $match->away_score,
-                'status' => $match->status,
-                'match_report' => $match->match_report,
-                'coach_notes' => $match->coach_notes,
-                'competition' => $match->competition ? $match->competition->name : null,
-                'events' => $sortedEvents->map(function($e) {
-                    return [
-                        'id' => $e->id,
-                        'type' => $e->type,
-                        'minute' => $e->minute,
-                        'description' => $e->description,
-                        'player' => $e->player ? [
-                            'id' => $e->player->id,
-                            'first_name' => $e->player->first_name,
-                            'last_name' => $e->player->last_name,
-                        ] : null,
-                        'substituted_player' => $e->substitutedPlayer ? [
-                            'id' => $e->substitutedPlayer->id,
-                            'first_name' => $e->substitutedPlayer->first_name,
-                            'last_name' => $e->substitutedPlayer->last_name,
-                        ] : null,
-                    ];
-                }),
-            ],
+            'match' => $this->matchToArray($match, $teamPlayers, $sortedEvents),
             'teamPlayers' => $teamPlayers,
             'existingLineup' => $existingLineup,
         ]);
+    }
+
+    /**
+     * Return match data as JSON for modal (lineup, events, team players).
+     */
+    public function matchData(GameMatch $match)
+    {
+        $match->load([
+            'team.players',
+            'opponentTeam',
+            'events.player',
+            'events.substitutedPlayer',
+            'lineups.player',
+        ]);
+
+        $teamPlayers = $match->team ? $match->team->players()->get()->map(function ($p) {
+            return [
+                'id' => $p->id,
+                'first_name' => $p->first_name,
+                'last_name' => $p->last_name,
+                'position' => $p->position,
+                'jersey_number' => $p->jersey_number,
+            ];
+        })->values() : collect();
+
+        $existingLineup = $match->lineups->map(function ($lineup) {
+            return [
+                'player_id' => $lineup->player_id,
+                'position' => $lineup->position,
+                'jersey_number' => $lineup->jersey_number,
+                'starting_position' => $lineup->starting_position,
+            ];
+        })->values();
+
+        $sortedEvents = $match->events->sortBy('minute')->values();
+
+        return response()->json([
+            'match' => $this->matchToArray($match, $teamPlayers, $sortedEvents),
+            'teamPlayers' => $teamPlayers,
+            'existingLineup' => $existingLineup,
+        ]);
+    }
+
+    private function matchToArray(GameMatch $match, $teamPlayers, $sortedEvents)
+    {
+        return [
+            'id' => $match->id,
+            'team' => $match->team ? [
+                'id' => $match->team->id,
+                'name' => $match->team->name,
+                'category' => $match->team->category,
+                'players' => $teamPlayers,
+            ] : null,
+            'opponent' => $match->opponent,
+            'opponent_team' => $match->opponentTeam ? [
+                'id' => $match->opponentTeam->id,
+                'name' => $match->opponentTeam->name,
+                'logo' => $match->opponentTeam->logo,
+            ] : null,
+            'category' => $match->category,
+            'scheduled_at' => $match->scheduled_at?->format('Y-m-d H:i'),
+            'venue' => $match->venue,
+            'type' => $match->type,
+            'home_score' => $match->home_score,
+            'away_score' => $match->away_score,
+            'status' => $match->status,
+            'match_report' => $match->match_report,
+            'coach_notes' => $match->coach_notes,
+            'competition' => $match->competition ? $match->competition->name : null,
+            'events' => $sortedEvents->map(function ($e) {
+                return [
+                    'id' => $e->id,
+                    'type' => $e->type,
+                    'minute' => $e->minute,
+                    'description' => $e->description,
+                    'player' => $e->player ? [
+                        'id' => $e->player->id,
+                        'first_name' => $e->player->first_name,
+                        'last_name' => $e->player->last_name,
+                    ] : null,
+                    'substituted_player' => $e->substitutedPlayer ? [
+                        'id' => $e->substitutedPlayer->id,
+                        'first_name' => $e->substitutedPlayer->first_name,
+                        'last_name' => $e->substitutedPlayer->last_name,
+                    ] : null,
+                ];
+            }),
+        ];
     }
 
     public function edit(GameMatch $match)
@@ -366,16 +411,14 @@ class MatchController extends Controller
 
         $match->update($validated);
 
-        return redirect()->route('admin.matches.index')
-            ->with('success', 'Match mis à jour avec succès');
+        return redirect()->back()->with('success', 'Match mis à jour avec succès');
     }
 
     public function destroy(GameMatch $match)
     {
         $match->delete();
 
-        return redirect()->route('admin.matches.index')
-            ->with('success', 'Match supprimé avec succès');
+        return redirect()->back()->with('success', 'Match supprimé avec succès');
     }
 
     public function updateLineup(Request $request, GameMatch $match)
@@ -448,6 +491,17 @@ class MatchController extends Controller
         // Standings are calculated dynamically, no need to store
 
         return redirect()->back()->with('success', 'Match terminé avec succès');
+    }
+
+    public function updateStatus(Request $request, GameMatch $match)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:scheduled,live,finished,postponed,cancelled',
+        ]);
+
+        $match->update(['status' => $validated['status']]);
+
+        return redirect()->back()->with('success', 'Statut mis à jour');
     }
 
     public function updateScore(Request $request, GameMatch $match)

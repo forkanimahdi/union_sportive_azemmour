@@ -6,10 +6,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Edit, Trash2, Search } from 'lucide-react';
 import DeleteModal from '@/components/DeleteModal';
 import InputError from '@/components/input-error';
 
+const CATEGORY_OPTIONS = ['U13', 'U15', 'U17', 'Senior'];
 const CATEGORY_LABELS = {
     Senior: 'SENIOR',
     U17: 'U17',
@@ -36,18 +38,22 @@ export default function OpponentTeamsIndex({
 
     const createForm = useForm({
         name: '',
-        category: '',
+        categories: [],
         logo: null,
     });
 
     const editForm = useForm({
         name: '',
-        category: '',
+        categories: [],
         logo: null,
     });
 
     const handleCreateSubmit = (e) => {
         e.preventDefault();
+        createForm.transform((data) => ({
+            ...data,
+            categories: JSON.stringify(data.categories || []),
+        }));
         createForm.post('/admin/opponent-teams', {
             forceFormData: true,
             onSuccess: () => {
@@ -79,9 +85,10 @@ export default function OpponentTeamsIndex({
 
     const openEditModal = (team) => {
         setTeamToEdit(team);
+        const cats = Array.isArray(team.category) ? team.category : (team.category ? [team.category] : []);
         editForm.setData({
             name: team.name || '',
-            category: team.category || '',
+            categories: [...cats],
             logo: null,
         });
         setEditLogoPreview(team.logo ? `/storage/${team.logo}` : null);
@@ -104,7 +111,12 @@ export default function OpponentTeamsIndex({
     const handleEditSubmit = (e) => {
         e.preventDefault();
         if (!teamToEdit) return;
-        editForm.transform((data) => ({ ...data, _method: 'PUT' })).post(`/admin/opponent-teams/${teamToEdit.id}`, {
+        editForm.transform((data) => ({
+            ...data,
+            _method: 'PUT',
+            categories: JSON.stringify(data.categories || []),
+        }));
+        editForm.post(`/admin/opponent-teams/${teamToEdit.id}`, {
             forceFormData: true,
             onSuccess: () => {
                 setEditModalOpen(false);
@@ -114,7 +126,15 @@ export default function OpponentTeamsIndex({
         });
     };
 
-    // Filter and group teams by category (no calendar, no standings)
+    const toggleCategory = (form, key, value) => {
+        const arr = Array.isArray(form.data.categories) ? [...form.data.categories] : [];
+        const idx = arr.indexOf(value);
+        if (idx >= 0) arr.splice(idx, 1);
+        else arr.push(value);
+        form.setData('categories', arr.sort());
+    };
+
+    // Filter and group teams by category (a team can appear in multiple categories)
     const teamsByCategory = useMemo(() => {
         let filtered = [...teams];
         const searchLower = search.trim().toLowerCase();
@@ -125,14 +145,22 @@ export default function OpponentTeamsIndex({
                     (t.short_code && t.short_code.toLowerCase().includes(searchLower))
             );
         }
+        const catArr = (t) => (Array.isArray(t.category) ? t.category : (t.category ? [t.category] : []));
         if (categoryFilter && categoryFilter !== 'all') {
-            filtered = filtered.filter((t) => (t.category || '') === categoryFilter);
+            filtered = filtered.filter((t) => catArr(t).includes(categoryFilter));
         }
         const grouped = {};
         filtered.forEach((team) => {
-            const cat = team.category || 'Autre';
-            if (!grouped[cat]) grouped[cat] = [];
-            grouped[cat].push(team);
+            const cats = catArr(team);
+            if (cats.length === 0) {
+                if (!grouped['Autre']) grouped['Autre'] = [];
+                grouped['Autre'].push(team);
+            } else {
+                cats.forEach((cat) => {
+                    if (!grouped[cat]) grouped[cat] = [];
+                    grouped[cat].push(team);
+                });
+            }
         });
         Object.keys(grouped).forEach((cat) => {
             grouped[cat].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
@@ -318,23 +346,25 @@ export default function OpponentTeamsIndex({
                                     <InputError message={editForm.errors.name} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="edit-category">Catégorie</Label>
-                                    <Select
-                                        value={editForm.data.category || 'none'}
-                                        onValueChange={(v) => editForm.setData('category', v === 'none' ? '' : v)}
-                                    >
-                                        <SelectTrigger id="edit-category">
-                                            <SelectValue placeholder="Sélectionner une catégorie" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="none">Aucune</SelectItem>
-                                            <SelectItem value="U13">U13</SelectItem>
-                                            <SelectItem value="U15">U15</SelectItem>
-                                            <SelectItem value="U17">U17</SelectItem>
-                                            <SelectItem value="Senior">Senior</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <InputError message={editForm.errors.category} />
+                                    <Label>Catégories</Label>
+                                    <p className="text-xs text-muted-foreground">
+                                        Cochez toutes les catégories auxquelles cette équipe participe.
+                                    </p>
+                                    <div className="flex flex-wrap gap-4 rounded-md border p-3">
+                                        {CATEGORY_OPTIONS.map((opt) => (
+                                            <label
+                                                key={opt}
+                                                className="flex cursor-pointer items-center gap-2 text-sm"
+                                            >
+                                                <Checkbox
+                                                    checked={(editForm.data.categories || []).includes(opt)}
+                                                    onCheckedChange={() => toggleCategory(editForm, 'categories', opt)}
+                                                />
+                                                <span>{opt}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <InputError message={editForm.errors.categories} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="edit-logo">Logo (laisser vide pour conserver)</Label>
@@ -392,23 +422,25 @@ export default function OpponentTeamsIndex({
                                     <InputError message={createForm.errors.name} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="create-category">Catégorie</Label>
-                                    <Select
-                                        value={createForm.data.category || 'none'}
-                                        onValueChange={(v) => createForm.setData('category', v === 'none' ? '' : v)}
-                                    >
-                                        <SelectTrigger id="create-category">
-                                            <SelectValue placeholder="Sélectionner une catégorie" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="none">Aucune</SelectItem>
-                                            <SelectItem value="U13">U13</SelectItem>
-                                            <SelectItem value="U15">U15</SelectItem>
-                                            <SelectItem value="U17">U17</SelectItem>
-                                            <SelectItem value="Senior">Senior</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <InputError message={createForm.errors.category} />
+                                    <Label>Catégories</Label>
+                                    <p className="text-xs text-muted-foreground">
+                                        Cochez toutes les catégories auxquelles cette équipe participe.
+                                    </p>
+                                    <div className="flex flex-wrap gap-4 rounded-md border p-3">
+                                        {CATEGORY_OPTIONS.map((opt) => (
+                                            <label
+                                                key={opt}
+                                                className="flex cursor-pointer items-center gap-2 text-sm"
+                                            >
+                                                <Checkbox
+                                                    checked={(createForm.data.categories || []).includes(opt)}
+                                                    onCheckedChange={() => toggleCategory(createForm, 'categories', opt)}
+                                                />
+                                                <span>{opt}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <InputError message={createForm.errors.categories} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="create-logo">Logo</Label>

@@ -20,7 +20,7 @@ class OpponentTeamController extends Controller
         ]);
         $categories = ['Senior', 'U17', 'U15', 'U13'];
 
-        $opponentTeams = OpponentTeam::orderBy('category')->orderBy('name')->get()->map(function ($team) {
+        $opponentTeams = OpponentTeam::orderBy('name')->get()->map(function ($team) {
             return [
                 'id' => $team->id,
                 'name' => $team->name,
@@ -54,11 +54,20 @@ class OpponentTeamController extends Controller
 
     public function store(Request $request)
     {
+        $cats = $request->input('categories');
+        if (is_string($cats)) {
+            $request->merge(['categories' => json_decode($cats, true) ?? []]);
+        }
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'category' => 'nullable|string|in:U13,U15,U17,Senior',
+            'categories' => 'nullable|array',
+            'categories.*' => 'string|in:U13,U15,U17,Senior',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
+        $cats = $validated['categories'] ?? [];
+        $validated['category'] = is_array($cats) ? array_values($cats) : ($cats ? [$cats] : []);
+        unset($validated['categories']);
 
         if ($request->hasFile('logo')) {
             $validated['logo'] = $request->file('logo')->store('opponent-teams', 'public');
@@ -115,11 +124,20 @@ class OpponentTeamController extends Controller
 
     public function update(Request $request, OpponentTeam $opponentTeam)
     {
+        $cats = $request->input('categories');
+        if (is_string($cats)) {
+            $request->merge(['categories' => json_decode($cats, true) ?? []]);
+        }
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'category' => 'nullable|string|in:U13,U15,U17,Senior',
+            'categories' => 'nullable|array',
+            'categories.*' => 'string|in:U13,U15,U17,Senior',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
+        $cats = $validated['categories'] ?? [];
+        $validated['category'] = is_array($cats) ? array_values($cats) : ($cats ? [$cats] : []);
+        unset($validated['categories']);
 
         if ($request->hasFile('logo')) {
             if ($opponentTeam->logo) {

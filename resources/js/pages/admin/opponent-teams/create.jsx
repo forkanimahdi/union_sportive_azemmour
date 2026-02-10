@@ -5,20 +5,34 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Trophy, Upload } from 'lucide-react';
 
+const CATEGORY_OPTIONS = ['U13', 'U15', 'U17', 'Senior'];
+
 export default function OpponentTeamCreate() {
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, transform } = useForm({
         name: '',
-        category: '',
+        categories: [],
         logo: null,
     });
+
+    const toggleCategory = (value) => {
+        const arr = [...(data.categories || [])];
+        const idx = arr.indexOf(value);
+        if (idx >= 0) arr.splice(idx, 1);
+        else arr.push(value);
+        setData('categories', arr.sort());
+    };
 
     const [preview, setPreview] = useState(null);
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        transform((data) => ({
+            ...data,
+            categories: JSON.stringify(data.categories || []),
+        }));
         post('/admin/opponent-teams', {
             forceFormData: true,
             onSuccess: () => {
@@ -71,19 +85,25 @@ export default function OpponentTeamCreate() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="category">Catégorie *</Label>
-                                <Select value={data.category} onValueChange={(value) => setData('category', value)}>
-                                    <SelectTrigger className="bg-white/50 backdrop-blur-sm">
-                                        <SelectValue placeholder="Sélectionner une catégorie" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="U13">U13</SelectItem>
-                                        <SelectItem value="U15">U15</SelectItem>
-                                        <SelectItem value="U17">U17</SelectItem>
-                                        <SelectItem value="Senior">Senior</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {errors.category && <p className="text-sm text-destructive">{errors.category}</p>}
+                                <Label>Catégories</Label>
+                                <p className="text-xs text-muted-foreground">
+                                    Cochez toutes les catégories auxquelles cette équipe participe.
+                                </p>
+                                <div className="flex flex-wrap gap-4 rounded-md border p-3 bg-white/50 backdrop-blur-sm">
+                                    {CATEGORY_OPTIONS.map((opt) => (
+                                        <label
+                                            key={opt}
+                                            className="flex cursor-pointer items-center gap-2 text-sm"
+                                        >
+                                            <Checkbox
+                                                checked={(data.categories || []).includes(opt)}
+                                                onCheckedChange={() => toggleCategory(opt)}
+                                            />
+                                            <span>{opt}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                                {errors.categories && <p className="text-sm text-destructive">{errors.categories}</p>}
                             </div>
 
                             <div className="space-y-2">

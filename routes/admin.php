@@ -72,10 +72,12 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::middleware('role:admin,technical_director,coach')->group(function () {
         Route::get('fixtures', [MatchController::class, 'fixtures'])->name('fixtures.index');
         Route::resource('matches', MatchController::class);
+        Route::get('matches/{match}/data', [MatchController::class, 'matchData'])->name('matches.data');
         Route::post('matches/{match}/lineup', [MatchController::class, 'updateLineup'])->name('matches.lineup');
         Route::post('matches/{match}/events', [MatchController::class, 'addEvent'])->name('matches.events');
         Route::post('matches/{match}/finish', [MatchController::class, 'finishMatch'])->name('matches.finish');
         Route::post('matches/{match}/update-score', [MatchController::class, 'updateScore'])->name('matches.update-score');
+        Route::post('matches/{match}/update-status', [MatchController::class, 'updateStatus'])->name('matches.update-status');
     });
     
     // Convocations - Admin, Technical Director & Coach

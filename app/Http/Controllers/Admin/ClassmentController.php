@@ -32,6 +32,7 @@ class ClassmentController extends Controller
 
         $standings = $season->teams->map(function ($team) {
             $matches = $team->matches()->where('status', 'finished')->get();
+            $last5 = $team->matches()->where('status', 'finished')->orderBy('scheduled_at', 'desc')->take(5)->get();
             $wins = $matches->filter(function ($m) {
                 if ($m->type === 'domicile') {
                     return $m->home_score > $m->away_score;
@@ -42,6 +43,15 @@ class ClassmentController extends Controller
             $losses = $matches->count() - $wins - $draws;
             $goalsFor = $matches->sum(fn ($m) => $m->type === 'domicile' ? $m->home_score : $m->away_score);
             $goalsAgainst = $matches->sum(fn ($m) => $m->type === 'domicile' ? $m->away_score : $m->home_score);
+            $points = ($wins * 3) + $draws;
+
+            $form = $last5->map(function ($m) use ($team) {
+                $ourScore = $m->type === 'domicile' ? $m->home_score : $m->away_score;
+                $theirScore = $m->type === 'domicile' ? $m->away_score : $m->home_score;
+                if ($ourScore > $theirScore) return 'W';
+                if ($ourScore < $theirScore) return 'L';
+                return 'D';
+            })->values()->all();
 
             return [
                 'id' => $team->id,
@@ -55,7 +65,8 @@ class ClassmentController extends Controller
                 'goals_for' => $goalsFor,
                 'goals_against' => $goalsAgainst,
                 'goal_difference' => $goalsFor - $goalsAgainst,
-                'points' => ($wins * 3) + $draws,
+                'points' => $points,
+                'form' => $form,
             ];
         });
 
@@ -80,6 +91,7 @@ class ClassmentController extends Controller
             ->first();
 
         $dataVerifiedAt = now()->format('H:i');
+        $lastUpdatedLabel = now()->locale('fr_FR')->translatedFormat("Aujourd'hui à H:i");
 
         return Inertia::render('admin/classment/index', [
             'activeSeason' => [
@@ -97,6 +109,7 @@ class ClassmentController extends Controller
                 'team_name' => $upcomingMatch->team->name ?? null,
             ] : null,
             'dataVerifiedAt' => $dataVerifiedAt,
+            'lastUpdatedLabel' => $lastUpdatedLabel,
         ]);
     }
 

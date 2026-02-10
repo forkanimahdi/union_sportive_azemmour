@@ -40,6 +40,27 @@ class OpponentTeam extends Model
         ];
     }
 
+    /** Categories as array (stored as JSON in category column). Legacy: single value "U13" becomes ["U13"]. */
+    protected function category(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: function ($value) {
+                if (is_array($value)) {
+                    return $value;
+                }
+                if (empty($value)) {
+                    return [];
+                }
+                $decoded = json_decode($value, true);
+                if (is_array($decoded)) {
+                    return $decoded;
+                }
+                return [$value];
+            },
+            set: fn ($value) => is_array($value) ? json_encode(array_values($value)) : $value,
+        );
+    }
+
     public function matches(): HasMany
     {
         return $this->hasMany(GameMatch::class, 'opponent_team_id');
