@@ -76,8 +76,8 @@ class MatchController extends Controller
             ->get()
             ->map(fn ($t) => ['id' => $t->id, 'name' => $t->name, 'category' => $t->category]);
 
-        $opponentTeams = OpponentTeam::orderBy('name')->get()
-            ->map(fn ($ot) => ['id' => $ot->id, 'name' => $ot->name, 'logo' => $ot->logo]);
+        $opponentTeams = OpponentTeam::orderBy('category')->orderBy('name')->get()
+            ->map(fn ($ot) => ['id' => $ot->id, 'name' => $ot->name, 'logo' => $ot->logo, 'category' => $ot->category]);
 
         return Inertia::render('admin/matches/index', [
             'matches' => $matches,
@@ -143,14 +143,24 @@ class MatchController extends Controller
             ->get()
             ->map(fn ($t) => ['id' => $t->id, 'name' => $t->name, 'category' => $t->category]);
 
-        $opponentTeams = OpponentTeam::orderBy('name')->get()
-            ->map(fn ($ot) => ['id' => $ot->id, 'name' => $ot->name, 'logo' => $ot->logo]);
+        $modalTeams = $activeSeason
+            ? Team::where('season_id', $activeSeason->id)
+                ->where('is_active', true)
+                ->orderBy('category')
+                ->orderBy('name')
+                ->get()
+                ->map(fn ($t) => ['id' => $t->id, 'name' => $t->name, 'category' => $t->category])
+            : [];
+
+        $opponentTeams = OpponentTeam::orderBy('category')->orderBy('name')->get()
+            ->map(fn ($ot) => ['id' => $ot->id, 'name' => $ot->name, 'logo' => $ot->logo, 'category' => $ot->category]);
 
         return Inertia::render('admin/fixtures/index', [
             'matches' => $matches,
             'seasons' => $seasons,
             'activeSeasonId' => $seasonId,
             'teams' => $teams,
+            'modalTeams' => $modalTeams,
             'opponentTeams' => $opponentTeams,
             'activeSeason' => $activeSeason ? ['id' => $activeSeason->id, 'name' => $activeSeason->name] : null,
         ]);
@@ -174,11 +184,12 @@ class MatchController extends Controller
                 'category' => $t->category,
             ]);
 
-        $opponentTeams = OpponentTeam::orderBy('name')->get()
-            ->map(fn($ot) => [
+        $opponentTeams = OpponentTeam::orderBy('category')->orderBy('name')->get()
+            ->map(fn ($ot) => [
                 'id' => $ot->id,
                 'name' => $ot->name,
                 'logo' => $ot->logo,
+                'category' => $ot->category,
             ]);
 
         return Inertia::render('admin/matches/create', [

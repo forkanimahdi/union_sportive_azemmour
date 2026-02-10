@@ -25,6 +25,7 @@ export default function FixturesIndex({
     seasons = [],
     activeSeasonId,
     teams = [],
+    modalTeams = [],
     opponentTeams = [],
     activeSeason,
 }) {
@@ -117,7 +118,7 @@ export default function FixturesIndex({
                     <MatchCreateModal
                         open={createModalOpen}
                         onOpenChange={setCreateModalOpen}
-                        teams={teams}
+                        teams={modalTeams.length ? modalTeams : teams}
                         opponentTeams={opponentTeams}
                         activeSeason={activeSeason}
                         onSuccess={() => router.reload()}
