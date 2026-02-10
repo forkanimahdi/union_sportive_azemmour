@@ -77,7 +77,7 @@ export default function Footer() {
                             <iframe
                                 title="Instagram - Tihad Azemmour Women"
                                 src="https://www.instagram.com/tihadazemmourwomen/embed"
-                                className="w-full h-[480px] max-h-[520px] border-0"
+                                className="w-full h-[400px] overflow-hidden bg-black border-0"
                                 allowFullScreen
                                 loading="lazy"
                             />

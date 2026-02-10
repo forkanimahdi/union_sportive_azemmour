@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import usaHero from '../../../../../public/assets/images/hero/usa_hero.webp';
 
 export default function Categories() {
     const categories = [
@@ -60,7 +61,7 @@ export default function Categories() {
                             >
                                 <div className="relative h-48 sm:h-56 lg:h-64 bg-gray-800 rounded-lg overflow-hidden hover:shadow-2xl transition-all">
                                     <img 
-                                        src={category.image} 
+                                        src={usaHero} 
                                         alt={category.name}
                                         className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
                                     />
