@@ -17,6 +17,8 @@ use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\EquipmentController;
 use App\Http\Controllers\Admin\OpponentTeamController;
 use App\Http\Controllers\Admin\ClassmentController;
+use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\ProductCategoryController;
 
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard - accessible to all authenticated users
@@ -113,5 +115,12 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::middleware('role:admin,technical_director')->group(function () {
         Route::resource('equipment', EquipmentController::class);
         Route::post('equipment/{equipment}/movement', [EquipmentController::class, 'addMovement'])->name('equipment.movement');
+    });
+
+    // Boutique (Products) - Admin
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('products', ProductController::class);
+        Route::get('product-categories', [ProductCategoryController::class, 'index'])->name('product-categories.index');
+        Route::post('product-categories', [ProductCategoryController::class, 'store'])->name('product-categories.store');
     });
 });

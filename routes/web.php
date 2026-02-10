@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ShopController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -12,11 +13,10 @@ Route::get('/about', function () {
 
 Route::get('/contact', function () {
     return Inertia::render('Contact/index');
-})->name('contact');        
+})->name('contact');
 
-Route::get('/shop', function () {
-    return Inertia::render('Shop/index');
-})->name('shop');
+Route::get('/shop', [ShopController::class, 'index'])->name('shop');
+Route::get('/shop/{product}', [ShopController::class, 'show'])->name('shop.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {

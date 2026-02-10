@@ -3,7 +3,7 @@ import { AppHeader } from '@/components/app-header';
 import { AppShell } from '@/components/app-shell';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem, type NavItem } from '@/types';
-import { LayoutGrid, Trophy, Users, UserCircle, Medal, Swords, CalendarDays } from 'lucide-react';
+import { LayoutGrid, Trophy, Users, UserCircle, Medal, Swords, CalendarDays, ShoppingBag } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 
 const mainNavItems: NavItem[] = [
@@ -41,6 +41,11 @@ const mainNavItems: NavItem[] = [
         title: 'Adversaires',
         href: '/admin/opponent-teams',
         icon: Swords,
+    },
+    {
+        title: 'Boutique',
+        href: '/admin/products',
+        icon: ShoppingBag,
     },
 ];
 
