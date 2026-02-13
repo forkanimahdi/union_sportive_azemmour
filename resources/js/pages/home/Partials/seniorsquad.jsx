@@ -95,7 +95,7 @@ export default function SeniorSquad({ players = [], activeSeason = null }) {
                     </h2>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
                     {list.map((player) => (
                         <PlayerCard key={player.id} player={player} />
                     ))}

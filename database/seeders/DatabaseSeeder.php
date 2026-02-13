@@ -24,5 +24,8 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
+
+        $this->call(ProductCategorySeeder::class);
+        $this->call(PlayerSeeder::class);
     }
 }
