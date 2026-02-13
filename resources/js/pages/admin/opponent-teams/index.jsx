@@ -269,8 +269,12 @@ export default function OpponentTeamsIndex({
                                                     key={team.id}
                                                     className="flex items-center gap-4 rounded-lg border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
                                                 >
-                                                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/90 text-base font-bold text-primary-foreground">
-                                                        {team.short_code || (team.name || '').slice(0, 2).toUpperCase() || '—'}
+                                                    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-base font-bold text-primary">
+                                                        {team.logo ? (
+                                                            <img src={`/storage/${team.logo}`} alt={team.name} className="h-full w-full object-contain" />
+                                                        ) : (
+                                                            (team.short_code || (team.name || '').slice(0, 2).toUpperCase() || '—')
+                                                        )}
                                                     </div>
                                                     <div className="min-w-0 flex-1">
                                                         <p className="font-semibold text-foreground truncate">

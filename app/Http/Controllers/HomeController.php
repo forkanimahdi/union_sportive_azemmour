@@ -14,31 +14,40 @@ class HomeController extends Controller
     {
         $activeSeason = Season::where('is_active', true)->first();
 
-        // Senior matches from active season only
+        // Senior matches from active season only — order: nearest to today first (upcoming soonest, then past most recent)
         $matches = collect();
         if ($activeSeason) {
-            $matches = GameMatch::with(['team', 'opponentTeam'])
+            $collection = GameMatch::with(['team', 'opponentTeam'])
                 ->whereHas('team', function ($q) use ($activeSeason) {
                     $q->where('season_id', $activeSeason->id)->where('category', 'Senior');
                 })
                 ->where('category', 'Senior')
                 ->whereIn('status', ['scheduled', 'live', 'finished'])
-                ->orderBy('scheduled_at')
-                ->get()
-                ->map(function ($m) {
-                    return [
-                        'id' => $m->id,
-                        'home_team' => $m->type === 'domicile' ? ($m->team?->name ?? 'USA') : ($m->opponentTeam?->name ?? $m->opponent ?? 'Adversaire'),
-                        'away_team' => $m->type === 'exterieur' ? ($m->team?->name ?? 'USA') : ($m->opponentTeam?->name ?? $m->opponent ?? 'Adversaire'),
-                        'home_score' => $m->home_score,
-                        'away_score' => $m->away_score,
-                        'scheduled_at' => $m->scheduled_at?->format('Y-m-d H:i'),
-                        'venue' => $m->venue,
-                        'type' => $m->type,
-                        'status' => $m->status,
-                        'opponent_name' => $m->opponentTeam?->name ?? $m->opponent,
-                    ];
-                });
+                ->get();
+
+            $now = now();
+            $future = $collection->filter(fn ($m) => $m->scheduled_at && $m->scheduled_at->gte($now))->sortBy('scheduled_at')->values();
+            $past = $collection->filter(fn ($m) => !$m->scheduled_at || $m->scheduled_at->lt($now))->sortByDesc('scheduled_at')->values();
+            $ordered = $future->concat($past);
+
+            $matches = $ordered->map(function ($m) {
+                $weAreHome = $m->type === 'domicile';
+                $opponentLogo = $m->opponentTeam?->logo;
+                return [
+                    'id' => $m->id,
+                    'home_team' => $weAreHome ? ($m->team?->name ?? 'USA') : ($m->opponentTeam?->name ?? $m->opponent ?? 'Adversaire'),
+                    'away_team' => !$weAreHome ? ($m->team?->name ?? 'USA') : ($m->opponentTeam?->name ?? $m->opponent ?? 'Adversaire'),
+                    'home_team_logo' => $weAreHome ? null : $opponentLogo,
+                    'away_team_logo' => !$weAreHome ? null : $opponentLogo,
+                    'home_score' => $m->home_score,
+                    'away_score' => $m->away_score,
+                    'scheduled_at' => $m->scheduled_at?->format('Y-m-d H:i'),
+                    'venue' => $m->venue,
+                    'type' => $m->type,
+                    'status' => $m->status,
+                    'opponent_name' => $m->opponentTeam?->name ?? $m->opponent,
+                ];
+            });
         }
 
         // Senior squad players (active season, Senior team only)

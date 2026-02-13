@@ -33,6 +33,11 @@ export default function MatchSchedule({ matches = [], activeSeason = null }) {
         if (m.status === 'finished' && m.home_score != null && m.away_score != null) {
             return `${m.home_score} - ${m.away_score}`;
         }
+        const hasResult = m.home_score != null && m.away_score != null;
+        const isFuture = m.scheduled_at && new Date(m.scheduled_at) > new Date();
+        if (isFuture && !hasResult) {
+            return 'VS';
+        }
         return '0-0';
     };
 
@@ -74,9 +79,9 @@ export default function MatchSchedule({ matches = [], activeSeason = null }) {
                         >
                             {list.map((match) => {
                                 const weAreHome = match.type === 'domicile';
-                                const homeLogo = weAreHome ? CLUB_LOGO : null;
+                                const homeLogo = weAreHome ? CLUB_LOGO : (match.home_team_logo ? `/storage/${match.home_team_logo}` : null);
                                 const homeName = weAreHome ? CLUB_NAME : match.home_team;
-                                const awayLogo = !weAreHome ? CLUB_LOGO : null;
+                                const awayLogo = !weAreHome ? CLUB_LOGO : (match.away_team_logo ? `/storage/${match.away_team_logo}` : null);
                                 const awayName = !weAreHome ? CLUB_NAME : match.away_team;
                                 return (
                                 <div
