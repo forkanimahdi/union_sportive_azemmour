@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Article;
 use App\Models\GameMatch;
 use App\Models\Season;
 use App\Models\Team;
@@ -76,9 +77,25 @@ class HomeController extends Controller
             }
         }
 
+        // Latest articles for Recent News (latest first)
+        $articles = Article::with('user:id,name')
+            ->latest()
+            ->limit(8)
+            ->get()
+            ->map(fn ($a) => [
+                'id' => $a->id,
+                'title' => $a->title,
+                'author' => $a->user?->name ?? '–',
+                'views' => $a->views,
+                'image' => $a->image,
+                'created_at' => $a->created_at?->toISOString(),
+                'category' => 'Actualités',
+            ]);
+
         return Inertia::render('welcome', [
             'matches' => $matches->values()->all(),
             'players' => $players->values()->all(),
+            'articles' => $articles->values()->all(),
             'activeSeason' => $activeSeason ? ['id' => $activeSeason->id, 'name' => $activeSeason->name] : null,
         ]);
     }

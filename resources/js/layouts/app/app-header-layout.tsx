@@ -3,13 +3,13 @@ import { AppHeader } from '@/components/app-header';
 import { AppShell } from '@/components/app-shell';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem, type NavItem } from '@/types';
-import { LayoutGrid, Trophy, Users, UserCircle, Medal, Swords, CalendarDays, ShoppingBag } from 'lucide-react';
+import { LayoutGrid, Trophy, Users, UserCircle, CalendarDays, ShoppingBag, Megaphone } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: dashboard(),
+        href: "/admin/dashboard",
         icon: LayoutGrid,
     },
     {
@@ -19,8 +19,12 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Équipes',
-        href: '/admin/teams',
+        href: '#',
         icon: Users,
+        children: [
+            { title: 'Nos équipes', href: '/admin/teams' },
+            { title: 'Adversaires', href: '/admin/opponent-teams' },
+        ],
     },
     {
         title: 'Joueuses',
@@ -28,24 +32,31 @@ const mainNavItems: NavItem[] = [
         icon: UserCircle,
     },
     {
-        title: 'Classement',
-        href: '/admin/classment',
-        icon: Medal,
-    },
-    {
-        title: 'Calendrier',
-        href: '/admin/fixtures',
+        title: 'Compétition',
+        href: '#',
         icon: CalendarDays,
-    },
-    {
-        title: 'Adversaires',
-        href: '/admin/opponent-teams',
-        icon: Swords,
+        children: [
+            { title: 'Classement', href: '/admin/classment' },
+            { title: 'Calendrier', href: '/admin/fixtures' },
+        ],
     },
     {
         title: 'Boutique',
-        href: '/admin/products',
+        href: '#',
         icon: ShoppingBag,
+        children: [
+            { title: 'Boutique', href: '/admin/products' },
+            { title: 'Commandes', href: '/admin/orders' },
+        ],
+    },
+    {
+        title: 'Communications',
+        href: '#',
+        icon: Megaphone,
+        children: [
+            { title: 'Articles', href: '/admin/articles' },
+            { title: 'Histoires', href: '/admin/histoires' },
+        ],
     },
 ];
 

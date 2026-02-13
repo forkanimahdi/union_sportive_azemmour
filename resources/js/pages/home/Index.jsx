@@ -13,15 +13,15 @@ import Champions from './partials/champions';
 import Merchandise from './partials/merchandise';
 import Footer from './partials/footer';
 
-export default function Index({ matches = [], players = [], activeSeason = null }) {
+export default function Index({ matches = [], players = [], articles = [], activeSeason = null }) {
     return (
         <div className="font-sans antialiased text-dark bg-white">
             <Navbar />
             <Hero />
             <Categories />
             <MatchSchedule matches={matches} activeSeason={activeSeason} />
-            <RecentNews />
-            <Blogs />
+            <RecentNews articles={articles} />
+            {/* <Blogs /> */}
             <LeagueTable />
             <HighlightVideo />
             <TicketCTA />

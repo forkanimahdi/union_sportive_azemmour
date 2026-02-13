@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ShopController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', HomeController::class)->name('home');
+
+Route::get('/articles/{article}', [ArticleController::class, 'show'])->name('articles.show');
 
 Route::get('/about', function () {
     return Inertia::render('About/index');

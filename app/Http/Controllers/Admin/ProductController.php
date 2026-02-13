@@ -46,8 +46,7 @@ class ProductController extends Controller
 
     public function create()
     {
-        $categories = ProductCategory::orderBy('name')->get(['id', 'name']);
-        return Inertia::render('admin/products/create', ['categories' => $categories]);
+        return redirect()->route('admin.products.index');
     }
 
     public function store(Request $request)

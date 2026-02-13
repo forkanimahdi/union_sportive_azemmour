@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\OpponentTeamController;
 use App\Http\Controllers\Admin\ClassmentController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ProductCategoryController;
+use App\Http\Controllers\Admin\ArticleController;
 
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard - accessible to all authenticated users
@@ -117,10 +118,17 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         Route::post('equipment/{equipment}/movement', [EquipmentController::class, 'addMovement'])->name('equipment.movement');
     });
 
-    // Boutique (Products) - Admin
+    // Boutique (Products & Orders) - Admin
     Route::middleware('role:admin')->group(function () {
         Route::resource('products', ProductController::class);
         Route::get('product-categories', [ProductCategoryController::class, 'index'])->name('product-categories.index');
         Route::post('product-categories', [ProductCategoryController::class, 'store'])->name('product-categories.store');
+        Route::get('orders', fn () => Inertia::render('admin/orders/index'))->name('orders.index');
+    });
+
+    // Communications - Articles & Histoires
+    Route::middleware('role:admin,communication')->group(function () {
+        Route::resource('articles', ArticleController::class);
+        Route::get('histoires', fn () => Inertia::render('admin/histoires/index'))->name('histoires.index');
     });
 });

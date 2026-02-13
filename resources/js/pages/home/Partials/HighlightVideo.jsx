@@ -5,35 +5,35 @@ export default function HighlightVideo() {
     const videos = [
         {
             id: 1,
-            title: "Résumé: Union Sportive Azemmour vs Raja Casablanca",
-            duration: "7:45",
-            date: "05 Janvier, 2025",
-            thumbnail: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1000&auto=format&fit=crop",
-            videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ" // Replace with actual video URL
+            title: "تصريح ما بعد المباراة أمام فريق سنتر سبورتينغ الدروة",
+            duration: "1:26",
+            date: "09 fevrier, 2025",
+            thumbnail: "https://i.ytimg.com/vi/dpHRuwYr270/hqdefault.jpg?sqp=-oaymwFBCNACELwBSFryq4qpAzMIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB8AEB-AHOBoAC4AOKAgwIABABGE8gXShlMA8=&rs=AOn4CLB-vwyNO1H_lV8AeIRQLJRl69Sp5Q",
+            videoUrl: "https://www.youtube.com/embed/dpHRuwYr270" // Replace with actual video URL
         },
         {
             id: 2,
             title: "Entraînement: Préparation pour le prochain match",
             duration: "5:23",
             date: "04 Janvier, 2025",
-            thumbnail: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=1000&auto=format&fit=crop",
-            videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ"
+            thumbnail: "https://i.ytimg.com/vi/mkpN5JRvnuQ/hqdefault.jpg?sqp=-oaymwFBCNACELwBSFryq4qpAzMIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB8AEB-AH-CYAC0AWKAgwIABABGD0gZSgnMA8=&rs=AOn4CLDnpvX8fScAU2BffSL796UviutJBQ",
+            videoUrl: "https://www.youtube.com/embed/mkpN5JRvnuQ"
         },
         {
             id: 3,
             title: "Interview avec le coach après la victoire",
             duration: "12:15",
             date: "03 Janvier, 2025",
-            thumbnail: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=1000&auto=format&fit=crop",
-            videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ"
+            thumbnail: "https://i.ytimg.com/vi/gDxr8YZq55Q/hqdefault.jpg?sqp=-oaymwFBCNACELwBSFryq4qpAzMIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB8AEB-AHOBoAC4AOKAgwIABABGD8gZShUMA8=&rs=AOn4CLBPZNdFF4cKlKzmAldqCIBymRxJvg",
+            videoUrl: "https://www.youtube.com/embed/gDxr8YZq55Q"
         },
         {
             id: 4,
             title: "Académie U17: Match de la semaine",
             duration: "8:30",
             date: "02 Janvier, 2025",
-            thumbnail: "https://images.unsplash.com/photo-1560272564-c83b66b1ad12?q=80&w=1000&auto=format&fit=crop",
-            videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ"
+            thumbnail: "https://i.ytimg.com/vi/Yye-HT16yoo/hqdefault.jpg?sqp=-oaymwFBCNACELwBSFryq4qpAzMIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB8AEB-AHOBoAC4AOKAgwIABABGDQgZShYMA8=&rs=AOn4CLCSMn6-SYYKHxCZAkxdCsVLQQfJkA",
+            videoUrl: "https://www.youtube.com/embed/Yye-HT16yoo"
         }
     ];
 

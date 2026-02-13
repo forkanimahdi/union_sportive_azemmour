@@ -2,7 +2,7 @@ import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Icon } from '@/components/icon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList, navigationMenuTriggerStyle } from '@/components/ui/navigation-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -12,14 +12,14 @@ import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-react';
+import { BookOpen, ChevronDownIcon, Folder, LayoutGrid, Menu, Search } from 'lucide-react';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
 
 const defaultNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: dashboard(),
+        href: "/admin/dashboard",
         icon: LayoutGrid,
     },
 ];
@@ -56,10 +56,26 @@ export function AppHeader({ breadcrumbs = [], mainNavItems = defaultNavItems }: 
                                     <div className="flex h-full flex-col justify-between text-sm">
                                         <div className="flex flex-col space-y-4">
                                             {mainNavItems.map((item) => (
-                                                <Link key={item.title} href={item.href} className="flex items-center space-x-2 font-medium">
-                                                    {item.icon && <Icon iconNode={item.icon} className="h-5 w-5" />}
-                                                    <span>{item.title}</span>
-                                                </Link>
+                                                item.children?.length ? (
+                                                    <div key={item.title}>
+                                                        <p className="flex items-center space-x-2 font-medium text-muted-foreground mb-2">
+                                                            {item.icon && <Icon iconNode={item.icon} className="h-5 w-5" />}
+                                                            <span>{item.title}</span>
+                                                        </p>
+                                                        <div className="pl-6 flex flex-col space-y-2">
+                                                            {item.children.map((child) => (
+                                                                <Link key={child.href} href={child.href} className="text-sm font-medium">
+                                                                    {child.title}
+                                                                </Link>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <Link key={item.title} href={typeof item.href === 'string' ? item.href : (item.href as { url: string }).url} className="flex items-center space-x-2 font-medium">
+                                                        {item.icon && <Icon iconNode={item.icon} className="h-5 w-5" />}
+                                                        <span>{item.title}</span>
+                                                    </Link>
+                                                )
                                             ))}
                                         </div>
 
@@ -80,19 +96,52 @@ export function AppHeader({ breadcrumbs = [], mainNavItems = defaultNavItems }: 
                             <NavigationMenuList className="flex h-full items-stretch space-x-2">
                                 {mainNavItems.map((item, index) => (
                                     <NavigationMenuItem key={index} className="relative flex h-full items-center">
-                                        <Link
-                                            href={item.href}
-                                            className={cn(
-                                                navigationMenuTriggerStyle(),
-                                                page.url === (typeof item.href === 'string' ? item.href : item.href.url) && activeItemStyles,
-                                                'h-9 cursor-pointer px-3',
-                                            )}
-                                        >
-                                            {item.icon && <Icon iconNode={item.icon} className="mr-2 h-4 w-4" />}
-                                            {item.title}
-                                        </Link>
-                                        {page.url === (typeof item.href === 'string' ? item.href : item.href.url) && (
-                                            <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"></div>
+                                        {item.children?.length ? (
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger
+                                                    className={cn(
+                                                        navigationMenuTriggerStyle(),
+                                                        'h-9 cursor-pointer px-3 data-[state=open]:bg-accent',
+                                                        item.children.some((c) => page.url === c.href || page.url.startsWith(c.href + '/')) && activeItemStyles,
+                                                    )}
+                                                >
+                                                    {item.icon && <Icon iconNode={item.icon} className="mr-2 h-4 w-4" />}
+                                                    {item.title}
+                                                    <ChevronDownIcon className="ml-1 h-4 w-4 opacity-50" />
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="start" className="w-[200px]">
+                                                    {item.children.map((child) => (
+                                                        <DropdownMenuItem key={child.href} asChild>
+                                                            <Link
+                                                                href={child.href}
+                                                                className={cn(
+                                                                    'flex w-full cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground',
+                                                                    page.url === child.href && 'bg-accent',
+                                                                )}
+                                                            >
+                                                                {child.title}
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                    ))}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        ) : (
+                                            <>
+                                                <Link
+                                                    href={typeof item.href === 'string' ? item.href : (item.href as { url: string }).url}
+                                                    className={cn(
+                                                        navigationMenuTriggerStyle(),
+                                                        page.url === (typeof item.href === 'string' ? item.href : (item.href as { url: string }).url) && activeItemStyles,
+                                                        'h-9 cursor-pointer px-3',
+                                                    )}
+                                                >
+                                                    {item.icon && <Icon iconNode={item.icon} className="mr-2 h-4 w-4" />}
+                                                    {item.title}
+                                                </Link>
+                                                {page.url === (typeof item.href === 'string' ? item.href : (item.href as { url: string }).url) && (
+                                                    <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"></div>
+                                                )}
+                                            </>
                                         )}
                                     </NavigationMenuItem>
                                 ))}
