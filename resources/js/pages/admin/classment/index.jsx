@@ -26,7 +26,7 @@ export default function ClassmentIndex({
     activeSeason,
     standingsByCategory = {},
     categories = [],
-    upcomingMatch = null,
+    upcomingMatchByCategory = {},
     dataVerifiedAt = null,
     lastUpdatedLabel = null,
 }) {
@@ -52,6 +52,8 @@ export default function ClassmentIndex({
         summaryTeam && summaryTeam.played > 0
             ? (summaryTeam.points / summaryTeam.played).toFixed(2)
             : '0.00';
+
+    const upcomingMatch = upcomingMatchByCategory?.[selectedCategory] ?? null;
 
     const formatNextMatchShort = (dateStr) => {
         if (!dateStr) return '—';

@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from '@inertiajs/react';
 import Navbar from '../home/partials/navbar';
 import Footer from '../home/partials/footer';
-import { Target, Globe, BookOpen, TrendingUp, MapPin } from 'lucide-react';
+import { Target, Globe, BookOpen, TrendingUp, MapPin, ChevronRight } from 'lucide-react';
 
 export default function Partners({ sponsors = [] }) {
     const list = Array.isArray(sponsors) ? sponsors : [];
@@ -15,56 +15,82 @@ export default function Partners({ sponsors = [] }) {
         { icon: MapPin, title: 'Renforcer votre ancrage territorial', desc: "Soutenir l'Union Sportif d'Azemmour, c'est investir dans la jeunesse locale et affirmer votre engagement envers la communauté." },
     ];
 
+    const contributions = [
+        'À la structuration du club',
+        "À l'amélioration des conditions d'entraînement",
+        "À l'accompagnement scolaire et éducatif des joueuses",
+        'Au développement durable du football féminin à Azemmour',
+    ];
+
     return (
         <div className="font-sans antialiased bg-white">
             <Navbar />
 
             {/* Hero */}
-            <div className="relative min-h-[50vh] bg-alpha overflow-hidden pt-24 lg:pt-28">
-                <div className="absolute inset-0 bg-alpha/90" />
-                <div className="relative z-10 container mx-auto px-6 sm:px-8 lg:px-12 py-16 sm:py-20 max-w-7xl">
-                    <h4 className="text-white/90 font-bold text-xs sm:text-sm uppercase mb-3 tracking-wider">Partenaires & Sponsors</h4>
-                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase italic leading-tight text-white px-0">
+            <header className="relative min-h-[55vh] overflow-hidden pt-24 lg:pt-28">
+                <div
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                    style={{ backgroundImage: "url('/assets/images/banner/banner-1.png')" }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-dark/90 via-dark/50 to-transparent" />
+                <div className="relative z-10 container mx-auto px-6 sm:px-8 lg:px-12 py-20 sm:py-28 max-w-7xl">
+                    <span className="inline-block text-alpha font-bold text-xs sm:text-sm uppercase tracking-[0.2em] mb-4">Partenaires</span>
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase italic leading-tight text-white max-w-4xl">
                         Partenaires & Sponsors
                     </h1>
                 </div>
-            </div>
+                <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent" />
+            </header>
 
-            <div className="py-16 sm:py-20 lg:py-24">
-                <div className="container mx-auto px-6 sm:px-8 lg:px-12l">
-                    {/* Intro */}
-                    <section className="mb-16 p-8 sm:p-10 bg-alpha text-white rounded-2xl">
-                        <h2 className="text-2xl sm:text-3xl font-black uppercase italic mb-6 text-white">Union Sportif d&apos;Azemmour – Football Féminin</h2>
-                        <p className="text-white/95 leading-relaxed mb-4">
-                            Le développement du projet sportif et éducatif de l&apos;Union Sportif d&apos;Azemmour – Football Féminin repose sur des partenariats solides, fondés sur la confiance, l&apos;engagement et une vision commune en faveur du sport féminin.
-                        </p>
-                        <p className="text-white/95 leading-relaxed mb-4">Nos partenaires contribuent activement :</p>
-                        <ul className="list-disc list-inside space-y-2 text-white/95 mb-4">
-                            <li>À la structuration du club</li>
-                            <li>À l&apos;amélioration des conditions d&apos;entraînement</li>
-                            <li>À l&apos;accompagnement scolaire et éducatif des joueuses</li>
-                            <li>Au développement durable du football féminin à Azemmour</li>
-                        </ul>
-                        <p className="text-white font-semibold">Nous leur adressons nos sincères remerciements.</p>
+            <main className="relative -mt-8 z-10">
+                <div className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-7xl space-y-16 sm:space-y-24 pb-24">
+                    {/* Intro - Bento grid */}
+                    <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+                        <div className="lg:col-span-8 p-8 sm:p-10 bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100">
+                            <span className="text-alpha font-bold text-xs uppercase tracking-wider">Union Sportif d&apos;Azemmour</span>
+                            <h2 className="text-2xl sm:text-3xl font-black uppercase italic mt-2 mb-6 text-dark">Des partenariats solides</h2>
+                            <p className="text-gray-600 leading-relaxed mb-6">
+                                Le développement du projet sportif et éducatif repose sur des partenariats fondés sur la confiance, l&apos;engagement et une vision commune en faveur du sport féminin.
+                            </p>
+                            <p className="text-gray-600 font-semibold mb-4">Nos partenaires contribuent activement :</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {contributions.map((c, i) => (
+                                    <div key={i} className="flex gap-3 items-center">
+                                        <ChevronRight className="w-5 h-5 text-alpha shrink-0" />
+                                        <span className="text-gray-700 text-sm">{c}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="text-dark font-semibold mt-6">Nous leur adressons nos sincères remerciements.</p>
+                        </div>
+                        <div className="lg:col-span-4 flex flex-col gap-4">
+                            <div className="flex-1 rounded-2xl bg-alpha/10 border-2 border-alpha/20 p-6 flex flex-col justify-center">
+                                <span className="text-4xl font-black text-alpha">🤝</span>
+                                <p className="text-dark font-bold mt-3">Ensemble pour le football féminin</p>
+                            </div>
+                        </div>
                     </section>
 
-                    {/* Sponsors logos */}
+                    {/* Sponsors logos - Grid showcase */}
                     {list.length > 0 && (
-                        <section className="mb-16 p-8 sm:p-10 bg-alpha text-white rounded-2xl">
-                            <h2 className="text-xl sm:text-2xl font-black uppercase italic mb-8 text-white">Nos Partenaires</h2>
-                            <div className="flex flex-wrap justify-center gap-8 sm:gap-12 items-center">
+                        <section className="bg-gray-50 rounded-3xl p-8 sm:p-12">
+                            <div className="text-center mb-10">
+                                <span className="text-alpha font-bold text-xs uppercase tracking-wider">Nos Partenaires</span>
+                                <h2 className="text-2xl sm:text-3xl font-black uppercase italic mt-2 text-dark">Ils nous soutiennent</h2>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                                 {list.map((s) => (
                                     <a
                                         key={s.id}
                                         href={s.url || '#'}
                                         target={s.url ? '_blank' : undefined}
                                         rel={s.url ? 'noopener noreferrer' : undefined}
-                                        className="w-32 sm:w-40 h-20 flex items-center justify-center opacity-90 hover:opacity-100 transition-all bg-white/10 rounded-xl p-4"
+                                        className="group flex items-center justify-center h-28 p-4 rounded-xl bg-white border border-gray-100 hover:border-alpha/40 hover:shadow-lg transition-all grayscale hover:grayscale-0"
                                     >
                                         {s.logo ? (
                                             <img src={'/storage/' + s.logo} alt={s.name} className="max-h-full max-w-full object-contain" />
                                         ) : (
-                                            <span className="text-center font-bold text-white text-sm">{s.name}</span>
+                                            <span className="text-center font-bold text-gray-500 text-sm group-hover:text-alpha transition-colors">{s.name}</span>
                                         )}
                                     </a>
                                 ))}
@@ -72,55 +98,66 @@ export default function Partners({ sponsors = [] }) {
                         </section>
                     )}
 
-                    {/* Pourquoi devenir sponsor */}
-                    <section className="mb-16">
-                        <h2 className="text-2xl sm:text-3xl font-black uppercase italic mb-8 p-6 bg-alpha text-white rounded-t-2xl">Pourquoi devenir sponsor ?</h2>
-                        <p className="text-white/95 leading-relaxed mb-8 p-6 bg-alpha/95 text-white -mt-2 rounded-b-2xl">
-                            S&apos;associer à l&apos;Union Sportif d&apos;Azemmour – Football Féminin, c&apos;est investir dans un projet structuré, ambitieux et porteur de sens.
-                        </p>
-                        <div className="space-y-6">
+                    {/* Pourquoi devenir sponsor - Bento cards */}
+                    <section>
+                        <div className="text-center mb-12">
+                            <span className="text-alpha font-bold text-xs uppercase tracking-wider">Pourquoi sponsoriser ?</span>
+                            <h2 className="text-2xl sm:text-3xl font-black uppercase italic mt-2 text-dark">5 bonnes raisons</h2>
+                            <p className="text-gray-600 mt-4 max-w-2xl mx-auto">
+                                S&apos;associer à l&apos;Union Sportif d&apos;Azemmour – Football Féminin, c&apos;est investir dans un projet structuré, ambitieux et porteur de sens.
+                            </p>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {benefits.map((b, i) => {
                                 const Icon = b.icon;
                                 return (
-                                    <div key={i} className="flex gap-6 p-8 bg-alpha text-white rounded-2xl">
-                                        <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
-                                            <Icon className="w-7 h-7 text-white" />
+                                    <div
+                                        key={i}
+                                        className="group p-8 rounded-2xl bg-white border border-gray-100 hover:border-alpha/30 hover:shadow-xl transition-all duration-300"
+                                    >
+                                        <div className="w-14 h-14 rounded-xl bg-alpha/10 flex items-center justify-center mb-6 group-hover:bg-alpha/20 transition-colors">
+                                            <Icon className="w-7 h-7 text-alpha" />
                                         </div>
-                                        <div>
-                                            <h3 className="font-bold text-lg text-white mb-2">{i + 1}. {b.title}</h3>
-                                            {b.desc && <p className="text-white/95 leading-relaxed">{b.desc}</p>}
-                                            {b.items && (
-                                                <ul className="list-disc list-inside space-y-1 text-white/95 mt-2">
-                                                    {b.items.map((item, j) => (
-                                                        <li key={j}>{item}</li>
-                                                    ))}
-                                                </ul>
-                                            )}
-                                        </div>
+                                        <span className="text-alpha font-bold text-xs uppercase tracking-wider">{i + 1}</span>
+                                        <h3 className="font-bold text-lg text-dark mt-1 mb-3">{b.title}</h3>
+                                        {b.desc && <p className="text-gray-600 text-sm leading-relaxed">{b.desc}</p>}
+                                        {b.items && (
+                                            <ul className="space-y-2 mt-3 text-gray-600 text-sm">
+                                                {b.items.map((item, j) => (
+                                                    <li key={j} className="flex gap-2">
+                                                        <ChevronRight className="w-4 h-4 text-alpha shrink-0 mt-0.5" />
+                                                        {item}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
                                     </div>
                                 );
                             })}
                         </div>
                     </section>
 
-                    {/* Devenir partenaire CTA */}
-                    <section className="p-8 sm:p-12 bg-alpha text-white rounded-2xl text-center border-2 border-white/20">
-                        <h2 className="text-2xl sm:text-3xl font-black uppercase italic mb-4 text-white">Devenir partenaire</h2>
-                        <p className="text-white/95 leading-relaxed mb-6 max-w-2xl mx-auto">
-                            Nous construisons des partenariats personnalisés et durables, adaptés aux objectifs de chaque entreprise.
-                        </p>
-                        <p className="text-white/95 mb-8">
-                            Pour toute demande d&apos;information ou de collaboration, merci de nous contacter via la page Contact.
-                        </p>
-                        <Link
-                            href="/contact"
-                            className="inline-block bg-white text-alpha font-bold px-8 py-4 uppercase tracking-wider transition-colors rounded-xl hover:bg-white/90"
-                        >
-                            Nous contacter
-                        </Link>
+                    {/* CTA - Devenir partenaire */}
+                    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-dark to-dark/95 text-white p-8 sm:p-12 lg:p-16">
+                        <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "url('/assets/images/banner/banner-1.png')", backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                        <div className="relative z-10 max-w-2xl mx-auto text-center">
+                            <h2 className="text-2xl sm:text-3xl font-black uppercase italic mb-4">Devenir partenaire</h2>
+                            <p className="text-gray-300 leading-relaxed mb-8 max-w-xl mx-auto">
+                                Nous construisons des partenariats personnalisés et durables, adaptés aux objectifs de chaque entreprise.
+                            </p>
+                            <p className="text-gray-400 text-sm mb-8">
+                                Pour toute demande d&apos;information ou de collaboration, contactez-nous.
+                            </p>
+                            <Link
+                                href="/contact"
+                                className="inline-flex items-center gap-2 bg-alpha hover:bg-red-700 text-white font-bold px-8 py-4 rounded-xl transition-colors"
+                            >
+                                Nous contacter <ChevronRight className="w-5 h-5" />
+                            </Link>
+                        </div>
                     </section>
                 </div>
-            </div>
+            </main>
 
             <Footer />
         </div>

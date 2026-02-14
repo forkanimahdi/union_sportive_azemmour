@@ -23,7 +23,7 @@ class ClassmentController extends Controller
                 'activeSeason' => null,
                 'standingsByCategory' => [],
                 'categories' => [],
-                'upcomingMatch' => null,
+                'upcomingMatchByCategory' => [],
                 'dataVerifiedAt' => null,
             ]);
         }
@@ -85,10 +85,30 @@ class ClassmentController extends Controller
 
         $categories = $season->teams->pluck('category')->unique()->filter()->sort()->values()->all();
 
-        $upcomingMatch = $season->teams->flatMap->matches
-            ->filter(fn ($m) => $m->status === 'scheduled' && $m->scheduled_at && $m->scheduled_at->isFuture())
-            ->sortBy('scheduled_at')
-            ->first();
+        // Prochain match par catégorie (adapté à chaque compétition)
+        $upcomingMatchByCategory = collect($categories)->mapWithKeys(function ($cat) use ($season) {
+            $teamIds = $season->teams->where('category', $cat)->pluck('id')->all();
+            $match = \App\Models\GameMatch::whereIn('team_id', $teamIds)
+                ->where('status', 'scheduled')
+                ->whereNotNull('scheduled_at')
+                ->where('scheduled_at', '>=', now())
+                ->orderBy('scheduled_at')
+                ->with('team', 'opponentTeam')
+                ->first();
+
+            $data = null;
+            if ($match) {
+                $opponent = $match->opponentTeam?->name ?? $match->opponent ?? 'Adversaire';
+                $data = [
+                    'id' => $match->id,
+                    'opponent' => $opponent,
+                    'scheduled_at' => $match->scheduled_at->format('Y-m-d H:i'),
+                    'venue' => $match->venue,
+                    'team_name' => $match->team?->name ?? null,
+                ];
+            }
+            return [$cat => $data];
+        })->all();
 
         $dataVerifiedAt = now()->format('H:i');
         $lastUpdatedLabel = now()->locale('fr_FR')->translatedFormat("Aujourd'hui à H:i");
@@ -101,13 +121,7 @@ class ClassmentController extends Controller
             ],
             'standingsByCategory' => $standingsByCategory,
             'categories' => $categories,
-            'upcomingMatch' => $upcomingMatch ? [
-                'id' => $upcomingMatch->id,
-                'opponent' => $upcomingMatch->opponent,
-                'scheduled_at' => $upcomingMatch->scheduled_at->format('Y-m-d H:i'),
-                'venue' => $upcomingMatch->venue,
-                'team_name' => $upcomingMatch->team->name ?? null,
-            ] : null,
+            'upcomingMatchByCategory' => $upcomingMatchByCategory,
             'dataVerifiedAt' => $dataVerifiedAt,
             'lastUpdatedLabel' => $lastUpdatedLabel,
         ]);
