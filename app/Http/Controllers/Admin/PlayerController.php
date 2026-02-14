@@ -415,6 +415,8 @@ class PlayerController extends Controller
                 Storage::disk('public')->delete($player->photo);
             }
             $validated['photo'] = $request->file('photo')->store('players/photos', 'public');
+        } else {
+            unset($validated['photo']);
         }
 
         $player->update($validated);

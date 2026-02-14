@@ -5,22 +5,19 @@ import usaHero from '../../../../../public/assets/images/hero/usa_hero.webp';
 export default function Categories() {
     const categories = [
         { id: 'senior', name: 'Senior', image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1000&auto=format&fit=crop' },
-        { id: 'u20', name: 'U20', image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1000&auto=format&fit=crop' },
         { id: 'u17', name: 'U17', image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1000&auto=format&fit=crop' },
         { id: 'u15', name: 'U15', image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1000&auto=format&fit=crop' },
-        { id: 'u13', name: 'U13', image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1000&auto=format&fit=crop' },
-        { id: 'women', name: 'Féminines', image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1000&auto=format&fit=crop' },
     ];
 
     const [currentIndex, setCurrentIndex] = useState(0);
-    const itemsPerView = 4;
+    const itemsPerView = Math.min(4, categories.length);
 
     const next = () => {
-        setCurrentIndex((prev) => (prev + itemsPerView >= categories.length ? 0 : prev + 1));
+        setCurrentIndex((prev) => (prev + 1 >= categories.length ? 0 : prev + 1));
     };
 
     const prev = () => {
-        setCurrentIndex((prev) => (prev === 0 ? categories.length - itemsPerView : prev - 1));
+        setCurrentIndex((prev) => (prev === 0 ? categories.length - 1 : prev - 1));
     };
 
     return (
