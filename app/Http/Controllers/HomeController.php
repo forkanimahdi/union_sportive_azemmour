@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Article;
 use App\Models\GameMatch;
 use App\Models\Season;
+use App\Models\Sponsor;
 use App\Models\Team;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -77,6 +78,18 @@ class HomeController extends Controller
             }
         }
 
+        // Sponsors for home page carousel
+        $sponsors = Sponsor::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($s) => [
+                'id' => $s->id,
+                'name' => $s->name,
+                'logo' => $s->logo,
+                'url' => $s->url,
+            ]);
+
         // Latest articles for Recent News (latest first)
         $articles = Article::with('user:id,name')
             ->latest()
@@ -96,6 +109,7 @@ class HomeController extends Controller
             'matches' => $matches->values()->all(),
             'players' => $players->values()->all(),
             'articles' => $articles->values()->all(),
+            'sponsors' => $sponsors->values()->all(),
             'activeSeason' => $activeSeason ? ['id' => $activeSeason->id, 'name' => $activeSeason->name] : null,
         ]);
     }

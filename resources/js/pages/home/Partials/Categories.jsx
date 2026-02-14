@@ -25,7 +25,7 @@ export default function Categories() {
 
     return (
         <div className="py-16 sm:py-20 lg:py-24 bg-alpha text-white">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="container mx-auto px-6 sm:px-8 lg:px-12l">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 sm:mb-12 gap-4">
                     <div>
                         <h4 className="text-white font-bold text-xs sm:text-sm uppercase mb-2">Équipes</h4>

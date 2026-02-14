@@ -22,7 +22,7 @@ export default function LeagueTable() {
 
     return (
         <div className="py-16 sm:py-20 lg:py-24 bg-white">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="container mx-auto px-6 sm:px-8 lg:px-12l">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-12">
                     {/* Achievements Column */}
                     <div className="lg:col-span-1">

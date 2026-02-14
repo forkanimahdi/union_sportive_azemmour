@@ -20,6 +20,7 @@ export default function Navbar() {
                     <div className="hidden lg:flex items-center space-x-6 xl:space-x-8 text-sm font-medium tracking-wide uppercase">
                         <Link href="/" className="hover:text-alpha transition-colors px-2 py-1">Accueil</Link>
                         <Link href="/about" className="hover:text-alpha transition-colors px-2 py-1">À Propos</Link>
+                        <Link href="/partenaires" className="hover:text-alpha transition-colors px-2 py-1">Partenaires</Link>
                         <Link href="/shop" className="hover:text-alpha transition-colors px-2 py-1">Boutique</Link>
                         <Link href="/contact" className="hover:text-alpha transition-colors px-2 py-1">Contact</Link>
                     </div>
@@ -65,6 +66,13 @@ export default function Navbar() {
                                 onClick={() => setIsMenuOpen(false)}
                             >
                                 À Propos
+                            </Link>
+                            <Link 
+                                href="/partenaires" 
+                                className="block hover:text-alpha transition-colors uppercase font-medium py-2"
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                Partenaires
                             </Link>
                             <Link 
                                 href="/shop" 

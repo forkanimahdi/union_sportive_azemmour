@@ -55,6 +55,7 @@ const mainNavItems: NavItem[] = [
         icon: Megaphone,
         children: [
             { title: 'Articles', href: '/admin/articles' },
+            { title: 'Partenaires & Sponsors', href: '/admin/sponsors' },
             { title: 'Histoires', href: '/admin/histoires' },
         ],
     },

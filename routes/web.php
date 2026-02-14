@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PartnersController;
 use App\Http\Controllers\ShopController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -13,6 +14,8 @@ Route::get('/articles/{article}', [ArticleController::class, 'show'])->name('art
 Route::get('/about', function () {
     return Inertia::render('About/index');
 })->name('about');
+
+Route::get('/partenaires', [PartnersController::class, 'index'])->name('partners');
 
 Route::get('/contact', function () {
     return Inertia::render('Contact/index');

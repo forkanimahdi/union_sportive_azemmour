@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\ClassmentController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ArticleController;
+use App\Http\Controllers\Admin\SponsorController;
 
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard - accessible to all authenticated users
@@ -126,9 +127,10 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         Route::get('orders', fn () => Inertia::render('admin/orders/index'))->name('orders.index');
     });
 
-    // Communications - Articles & Histoires
+    // Communications - Articles, Sponsors & Histoires
     Route::middleware('role:admin,communication')->group(function () {
         Route::resource('articles', ArticleController::class);
+        Route::resource('sponsors', SponsorController::class)->only(['index', 'store', 'edit', 'update', 'destroy']);
         Route::get('histoires', fn () => Inertia::render('admin/histoires/index'))->name('histoires.index');
     });
 });

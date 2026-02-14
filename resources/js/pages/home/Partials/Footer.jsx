@@ -5,7 +5,7 @@ export default function Footer() {
     return (
         <footer className="bg-dark text-white pt-12 sm:pt-16 lg:pt-20 border-t-4 border-alpha">
             {/* Newsletter Section */}
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12 sm:mb-16 lg:mb-20">
+            <div className="container mx-auto px-6 sm:px-8 lg:px-12l mb-12 sm:mb-16 lg:mb-20">
                 <div className="bg-[url('https://images.unsplash.com/photo-1551958219-acbc608c6377?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center rounded-2xl p-6 sm:p-10 md:p-16 relative overflow-hidden">
                     <div className="absolute inset-0 bg-dark/80"></div>
                     <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-8">
@@ -24,7 +24,7 @@ export default function Footer() {
             </div>
 
             {/* Main Footer Links */}
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12">
+            <div className="container mx-auto px-6 sm:px-8 lg:px-12l pb-8 sm:pb-12">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12">
                     {/* Brand */}
                     <div>

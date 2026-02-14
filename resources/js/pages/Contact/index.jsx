@@ -52,10 +52,9 @@ export default function Contact() {
             <Navbar />
             
             {/* Hero Section */}
-            <div className="relative h-64 sm:h-80 lg:h-96 bg-dark overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-dark/90 to-alpha/40 z-10"></div>
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center"></div>
-                <div className="relative z-20 h-full container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-center text-center text-white">
+            <div className="relative min-h-[50vh] bg-alpha overflow-hidden pt-24 lg:pt-28">
+                <div className="absolute inset-0 bg-alpha/90" />
+                <div className="relative z-20 h-full container mx-auto px-6 sm:px-8 lg:px-12 py-16 sm:py-20 max-w-7xl flex flex-col justify-center items-center text-center text-white">
                     <h4 className="text-alpha font-bold text-xs sm:text-sm uppercase mb-3 sm:mb-4 tracking-wider">Contact</h4>
                     <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black uppercase italic leading-tight px-4">
                         Restons en <span className="text-alpha">Contact</span>
@@ -65,7 +64,7 @@ export default function Contact() {
 
             {/* Contact Content */}
             <div className="py-16 sm:py-20 lg:py-24 bg-white">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="container mx-auto px-6 sm:px-8 lg:px-12l">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-12">
                         {/* Contact Info */}
                         <div className="lg:col-span-1">
