@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\OrderConfirmationMail;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 
 class ShopController extends Controller
@@ -84,7 +86,13 @@ class ShopController extends Controller
         $validated['quantity'] = $validated['quantity'] ?? 1;
         $validated['status'] = Order::STATUS_PENDING;
 
-        \App\Models\Order::create($validated);
+        $order = Order::create($validated);
+
+        try {
+            Mail::to($order->email)->send(new OrderConfirmationMail($order));
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return back()->with('orderSuccess', true);
     }
