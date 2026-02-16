@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Article;
 use App\Models\GameMatch;
+use App\Models\Product;
 use App\Models\Season;
 use App\Models\Sponsor;
 use App\Models\Team;
@@ -90,6 +91,21 @@ class HomeController extends Controller
                 'url' => $s->url,
             ]);
 
+        // Products for Fan Shop / Merchandise section (active only, limit for carousel)
+        $products = Product::with('category')
+            // ->where('is_active', true)
+            ->orderBy('name')
+            ->limit(12)
+            ->get()
+            ->map(fn ($p) => [
+                'id' => $p->id,
+                'name' => $p->name,
+                'image' => $p->image,
+                'old_price' => $p->old_price,
+                'new_price' => $p->new_price,
+                'category' => $p->category ? ['id' => $p->category->id, 'name' => $p->category->name] : null,
+            ]);
+
         // Latest articles for Recent News (latest first)
         $articles = Article::with('user:id,name')
             ->latest()
@@ -110,6 +126,7 @@ class HomeController extends Controller
             'players' => $players->values()->all(),
             'articles' => $articles->values()->all(),
             'sponsors' => $sponsors->values()->all(),
+            'products' => $products->values()->all(),
             'activeSeason' => $activeSeason ? ['id' => $activeSeason->id, 'name' => $activeSeason->name] : null,
         ]);
     }

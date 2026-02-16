@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use Illuminate\Http\Request;
@@ -62,5 +63,29 @@ class ShopController extends Controller
                 'category' => $product->category ? ['id' => $product->category->id, 'name' => $product->category->name] : null,
             ],
         ]);
+    }
+
+    public function storeOrder(Request $request, Product $product)
+    {
+        if (!$product->is_active) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'customer_name' => 'nullable|string|max:255',
+            'email'          => 'required|email',
+            'phone'          => 'required|string|max:30',
+            'size'           => 'required|string|in:XS,S,M,L,XL,XXL',
+            'quantity'       => 'nullable|integer|min:1|max:10',
+            'notes'          => 'nullable|string|max:1000',
+        ]);
+
+        $validated['product_id'] = $product->id;
+        $validated['quantity'] = $validated['quantity'] ?? 1;
+        $validated['status'] = Order::STATUS_PENDING;
+
+        \App\Models\Order::create($validated);
+
+        return back()->with('orderSuccess', true);
     }
 }

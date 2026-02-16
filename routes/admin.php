@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\ClassmentController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ArticleController;
+use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\SponsorController;
 
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
@@ -124,7 +125,8 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         Route::resource('products', ProductController::class);
         Route::get('product-categories', [ProductCategoryController::class, 'index'])->name('product-categories.index');
         Route::post('product-categories', [ProductCategoryController::class, 'store'])->name('product-categories.store');
-        Route::get('orders', fn () => Inertia::render('admin/orders/index'))->name('orders.index');
+        Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
     });
 
     // Communications - Articles, Sponsors & Histoires

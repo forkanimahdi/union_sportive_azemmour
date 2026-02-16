@@ -14,7 +14,7 @@ import Champions from './partials/champions';
 import Merchandise from './partials/merchandise';
 import Footer from './partials/footer';
 
-export default function Index({ matches = [], players = [], articles = [], sponsors = [], activeSeason = null }) {
+export default function Index({ matches = [], players = [], articles = [], sponsors = [], products = [], activeSeason = null }) {
     return (
         <div className="font-sans antialiased text-dark bg-white">
             <Navbar />
@@ -29,7 +29,7 @@ export default function Index({ matches = [], players = [], articles = [], spons
             {/* <Champions /> */}
             <SeniorSquad players={players} activeSeason={activeSeason} />
             <Sponsors sponsors={sponsors} />
-            <Merchandise />
+            <Merchandise products={products} />
             <Footer />
         </div>
     );

@@ -20,7 +20,7 @@ const CATEGORIES = [
     { value: 'Senior', label: 'Équipe Senior' },
     { value: 'U17', label: 'U17' },
     { value: 'U15', label: 'U15' },
-    { value: 'U13', label: 'U13' },
+    // { value: 'U13', label: 'U13' },
 ];
 
 export default function FixturesIndex({

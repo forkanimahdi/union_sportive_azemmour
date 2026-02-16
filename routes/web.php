@@ -23,6 +23,7 @@ Route::get('/contact', function () {
 
 Route::get('/shop', [ShopController::class, 'index'])->name('shop');
 Route::get('/shop/{product}', [ShopController::class, 'show'])->name('shop.show');
+Route::post('/shop/{product}/order', [ShopController::class, 'storeOrder'])->name('shop.order.store');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {

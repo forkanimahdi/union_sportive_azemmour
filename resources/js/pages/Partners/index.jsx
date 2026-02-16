@@ -12,7 +12,7 @@ export default function Partners({ sponsors = [] }) {
         { icon: Globe, title: 'Soutenir le développement du sport féminin', desc: 'Le football féminin est en pleine croissance. En devenant sponsor, vous contribuez activement à son développement local et régional.' },
         { icon: BookOpen, title: 'Participer à un projet éducatif et social', desc: "Au-delà du terrain, le club développe des actions d'accompagnement scolaire et de développement personnel des joueuses." },
         { icon: TrendingUp, title: 'Bénéficier d\'une visibilité stratégique', items: ['Présence sur les maillots', 'Visibilité sur les supports de communication', 'Mise en avant sur les réseaux sociaux', 'Présence lors des événements et compétitions'] },
-        { icon: MapPin, title: 'Renforcer votre ancrage territorial', desc: "Soutenir l'Union Sportif d'Azemmour, c'est investir dans la jeunesse locale et affirmer votre engagement envers la communauté." },
+        { icon: MapPin, title: 'Renforcer votre ancrage territorial', desc: "Soutenir l'Union Sportive d'Azemmour, c'est investir dans la jeunesse locale et affirmer votre engagement envers la communauté." },
     ];
 
     const contributions = [
@@ -47,7 +47,7 @@ export default function Partners({ sponsors = [] }) {
                     {/* Intro - Bento grid */}
                     <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
                         <div className="lg:col-span-8 p-8 sm:p-10 bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100">
-                            <span className="text-alpha font-bold text-xs uppercase tracking-wider">Union Sportif d&apos;Azemmour</span>
+                            <span className="text-alpha font-bold text-xs uppercase tracking-wider">Union Sportive d&apos;Azemmour</span>
                             <h2 className="text-2xl sm:text-3xl font-black uppercase italic mt-2 mb-6 text-dark">Des partenariats solides</h2>
                             <p className="text-gray-600 leading-relaxed mb-6">
                                 Le développement du projet sportif et éducatif repose sur des partenariats fondés sur la confiance, l&apos;engagement et une vision commune en faveur du sport féminin.
@@ -65,8 +65,7 @@ export default function Partners({ sponsors = [] }) {
                         </div>
                         <div className="lg:col-span-4 flex flex-col gap-4">
                             <div className="flex-1 rounded-2xl bg-alpha/10 border-2 border-alpha/20 p-6 flex flex-col justify-center">
-                                <span className="text-4xl font-black text-alpha">🤝</span>
-                                <p className="text-dark font-bold mt-3">Ensemble pour le football féminin</p>
+                                <img src="/assets/images/sponsors/eurog.png" alt="eurog" className="w-full h-full object-contain" />
                             </div>
                         </div>
                     </section>
@@ -104,7 +103,7 @@ export default function Partners({ sponsors = [] }) {
                             <span className="text-alpha font-bold text-xs uppercase tracking-wider">Pourquoi sponsoriser ?</span>
                             <h2 className="text-2xl sm:text-3xl font-black uppercase italic mt-2 text-dark">5 bonnes raisons</h2>
                             <p className="text-gray-600 mt-4 max-w-2xl mx-auto">
-                                S&apos;associer à l&apos;Union Sportif d&apos;Azemmour – Football Féminin, c&apos;est investir dans un projet structuré, ambitieux et porteur de sens.
+                                S&apos;associer à l&apos;Union Sportive d&apos;Azemmour – Football Féminin, c&apos;est investir dans un projet structuré, ambitieux et porteur de sens.
                             </p>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
