@@ -43,4 +43,9 @@ class Season extends Model
     {
         return $this->hasMany(Media::class);
     }
+
+    public function standings(): HasMany
+    {
+        return $this->hasMany(Standing::class);
+    }
 }

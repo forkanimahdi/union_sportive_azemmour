@@ -30,6 +30,9 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     // Classment (standings) - Admin, Technical Director & Coach
     Route::middleware('role:admin,technical_director,coach')->group(function () {
         Route::get('/classment', [ClassmentController::class, 'index'])->name('classment.index');
+        Route::patch('/classment/standings/{standing}', [ClassmentController::class, 'update'])->name('classment.standings.update');
+        Route::post('/classment/standings', [ClassmentController::class, 'store'])->name('classment.standings.store');
+        Route::post('/classment/seed-from-matches', [ClassmentController::class, 'seedFromMatches'])->name('classment.seed-from-matches');
     });
     
     // Seasons - Admin & Technical Director
