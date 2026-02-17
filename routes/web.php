@@ -11,9 +11,7 @@ Route::get('/', HomeController::class)->name('home');
 
 Route::get('/articles/{article}', [ArticleController::class, 'show'])->name('articles.show');
 
-Route::get('/about', function () {
-    return Inertia::render('About/index');
-})->name('about');
+Route::get('/about', App\Http\Controllers\AboutController::class)->name('about');
 
 Route::get('/partenaires', [PartnersController::class, 'index'])->name('partners');
 

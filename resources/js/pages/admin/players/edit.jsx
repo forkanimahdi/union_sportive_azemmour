@@ -11,7 +11,7 @@ import InputError from '@/components/input-error';
 
 export default function PlayersEdit({ player, teams }) {
     const { data, setData, post, processing, errors } = useForm({
-        team_id: player.team_id || '',
+        team_ids: player.team_ids || [],
         first_name: player.first_name,
         last_name: player.last_name,
         date_of_birth: player.date_of_birth,
@@ -119,21 +119,30 @@ export default function PlayersEdit({ player, teams }) {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="team_id">Équipe</Label>
-                                <Select value={data.team_id || 'none'} onValueChange={(value) => setData('team_id', value === 'none' ? '' : value)}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Sélectionner une équipe" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="none">Aucune équipe</SelectItem>
-                                        {teams.map((team) => (
-                                            <SelectItem key={team.id} value={team.id}>
-                                                {team.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <InputError message={errors.team_id} />
+                                <Label>Équipes (une joueuse peut être U17 et Senior)</Label>
+                                <div className="flex flex-wrap gap-4 pt-2">
+                                    {teams.map((team) => {
+                                        const checked = (data.team_ids || []).includes(team.id);
+                                        return (
+                                            <div key={team.id} className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id={`team-${team.id}`}
+                                                    checked={checked}
+                                                    onCheckedChange={(c) => {
+                                                        const ids = [...(data.team_ids || [])];
+                                                        if (c) ids.push(team.id);
+                                                        else ids.splice(ids.indexOf(team.id), 1);
+                                                        setData('team_ids', ids);
+                                                    }}
+                                                />
+                                                <Label htmlFor={`team-${team.id}`} className="cursor-pointer text-sm font-normal">
+                                                    {team.name} ({team.category})
+                                                </Label>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <InputError message={errors.team_ids} />
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -14,15 +14,15 @@ class PlayerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Player::with(['team.season'])
+        $query = Player::with(['team.season', 'teams.season'])
             ->orderBy('last_name')
             ->orderBy('first_name');
 
         if ($request->filled('season_id')) {
-            $query->whereHas('team', fn($q) => $q->where('season_id', $request->season_id));
+            $query->whereHas('teams', fn($q) => $q->where('season_id', $request->season_id));
         }
         if ($request->filled('category')) {
-            $query->whereHas('team', fn($q) => $q->where('category', $request->category));
+            $query->whereHas('teams', fn($q) => $q->where('category', $request->category));
         }
         if ($request->filled('status') && $request->status === 'active') {
             $query->where('is_active', true);
@@ -47,6 +47,13 @@ class PlayerController extends Controller
             $canPlay = $player->canPlay();
             $isInjured = $player->isInjured();
 
+            $teamsList = $player->teams->map(fn($t) => [
+                'id' => $t->id,
+                'name' => $t->name,
+                'category' => $t->category,
+                'season' => $t->season ? ['id' => $t->season->id, 'name' => $t->season->name] : null,
+            ])->values()->all();
+
             return [
                 'id' => $player->id,
                 'first_name' => $player->first_name,
@@ -64,6 +71,7 @@ class PlayerController extends Controller
                         'name' => $player->team->season->name,
                     ] : null,
                 ] : null,
+                'teams' => $teamsList,
                 'is_active' => $player->is_active,
                 'can_play' => $canPlay,
                 'is_injured' => $isInjured,
@@ -116,7 +124,8 @@ class PlayerController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'team_id' => 'nullable|exists:teams,id',
+            'team_ids' => 'nullable|array',
+            'team_ids.*' => 'uuid|exists:teams,id',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'date_of_birth' => 'required|date',
@@ -138,7 +147,15 @@ class PlayerController extends Controller
             $validated['photo'] = $request->file('photo')->store('players/photos', 'public');
         }
 
-        Player::create($validated);
+        $teamIds = $validated['team_ids'] ?? [];
+        unset($validated['team_ids']);
+        $validated['team_id'] = $teamIds[0] ?? null;
+
+        $player = Player::create($validated);
+        if (!empty($teamIds)) {
+            $sync = collect($teamIds)->mapWithKeys(fn($id, $i) => [$id => ['is_primary' => $i === 0]])->all();
+            $player->teams()->sync($sync);
+        }
 
         return redirect()->route('admin.players.index')
             ->with('success', 'Joueuse créée avec succès');
@@ -147,11 +164,12 @@ class PlayerController extends Controller
     public function show(Player $player)
     {
         $player->load([
-            'team.season', 
-            'team.players', 
-            'team.matches', 
-            'injuries', 
-            'disciplinaryActions', 
+            'team.season',
+            'teams.season',
+            'team.players',
+            'team.matches',
+            'injuries',
+            'disciplinaryActions',
             'imageRight',
             'matchLineups.match',
             'matchEvents.match',
@@ -278,6 +296,12 @@ class PlayerController extends Controller
                     'name' => $player->team->name,
                     'category' => $player->team->category,
                 ] : null,
+                'teams' => $player->teams->map(fn($t) => [
+                    'id' => $t->id,
+                    'name' => $t->name,
+                    'category' => $t->category,
+                    'season' => $t->season ? ['id' => $t->season->id, 'name' => $t->season->name] : null,
+                ])->values()->all(),
                 'is_active' => $player->is_active,
                 'can_play' => $player->canPlay(),
                 'is_injured' => $player->isInjured(),
@@ -359,6 +383,7 @@ class PlayerController extends Controller
 
     public function edit(Player $player)
     {
+        $player->load('teams');
         $teams = Team::where('is_active', true)->get()->map(fn($t) => [
             'id' => $t->id,
             'name' => $t->name,
@@ -369,6 +394,7 @@ class PlayerController extends Controller
             'player' => [
                 'id' => $player->id,
                 'team_id' => $player->team_id,
+                'team_ids' => $player->teams->pluck('id')->values()->all(),
                 'first_name' => $player->first_name,
                 'last_name' => $player->last_name,
                 'date_of_birth' => $player->date_of_birth?->format('Y-m-d'),
@@ -392,7 +418,8 @@ class PlayerController extends Controller
     public function update(Request $request, Player $player)
     {
         $validated = $request->validate([
-            'team_id' => 'nullable|exists:teams,id',
+            'team_ids' => 'nullable|array',
+            'team_ids.*' => 'uuid|exists:teams,id',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'date_of_birth' => 'required|date',
@@ -419,7 +446,13 @@ class PlayerController extends Controller
             unset($validated['photo']);
         }
 
+        $teamIds = $validated['team_ids'] ?? [];
+        unset($validated['team_ids']);
+        $validated['team_id'] = $teamIds[0] ?? null;
+
         $player->update($validated);
+        $sync = collect($teamIds)->mapWithKeys(fn($id, $i) => [$id => ['is_primary' => $i === 0]])->all();
+        $player->teams()->sync($sync);
 
         if ($request->input('redirect') === 'show') {
             return redirect()->route('admin.players.show', $player)

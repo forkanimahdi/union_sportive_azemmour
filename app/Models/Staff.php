@@ -14,13 +14,48 @@ class Staff extends Model
 {
     use HasFactory, HasUuids, SoftDeletes;
 
+    /** Display section for About page (bureau = administrative). */
+    public const SECTIONS = [
+        'bureau' => 'Bureau / Administratif',
+        'coach' => 'Encadrement technique',
+        'soigneur' => 'Soigneurs & Médical',
+        'other' => 'Autre',
+    ];
+
+    public const SECTION_KEYS = ['bureau', 'coach', 'soigneur', 'other'];
+
+    /** Staff technique + bureau roles (DB + pivot team_staff). */
+    public const ROLES = [
+        'president' => 'Président(e)',
+        'vice_president' => 'Vice-Président(e)',
+        'secretary' => 'Secrétaire',
+        'treasurer' => 'Trésorier(ère)',
+        'technical_director' => 'Directeur technique',
+        'head_coach' => 'Coach',
+        'assistant_coach' => 'Assistant coach',
+        'goalkeeper_coach' => 'Coach Gardiennes',
+        'physiotherapist' => 'Soigneur',
+        'doctor' => 'Médecin',
+        'communication' => 'Communication',
+        'equipment_manager' => 'Gestionnaire équipement',
+    ];
+
+    public const ROLE_KEYS = [
+        'president', 'vice_president', 'secretary', 'treasurer',
+        'technical_director', 'head_coach', 'assistant_coach', 'goalkeeper_coach',
+        'physiotherapist', 'doctor', 'communication', 'equipment_manager',
+    ];
+
     protected $fillable = [
         'user_id',
         'first_name',
         'last_name',
         'email',
         'phone',
+        'image',
         'role',
+        'section',
+        'priority',
         'specialization',
         'license_number',
         'hire_date',
@@ -45,6 +80,11 @@ class Staff extends Model
         return $this->belongsToMany(Team::class, 'team_staff')
             ->withPivot('role', 'is_primary', 'assigned_from', 'assigned_until')
             ->withTimestamps();
+    }
+
+    public function getRoleLabelAttribute(): string
+    {
+        return self::ROLES[$this->role] ?? $this->role;
     }
 
     public function trainings(): HasMany

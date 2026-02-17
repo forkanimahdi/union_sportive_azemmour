@@ -51,6 +51,8 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         Route::get('teams/{team}/export', [TeamController::class, 'exportRoster'])->name('teams.export');
         Route::post('teams/{team}/assign-player', [TeamController::class, 'assignPlayer'])->name('teams.assign-player');
         Route::delete('teams/{team}/players/{player}', [TeamController::class, 'removePlayer'])->name('teams.remove-player');
+        Route::post('teams/{team}/assign-staff', [TeamController::class, 'assignStaff'])->name('teams.assign-staff');
+        Route::delete('teams/{team}/staff/{staff}', [TeamController::class, 'removeStaff'])->name('teams.remove-staff');
     });
     
     // Opponent Teams & Leaderboard - Admin & Technical Director

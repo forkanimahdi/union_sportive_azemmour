@@ -48,9 +48,18 @@ class Player extends Model
         ];
     }
 
+    /** Primary team (for display / backward compatibility). */
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
+    }
+
+    /** All teams this player is assigned to (e.g. U17 + Senior). */
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(Team::class, 'player_team')
+            ->withPivot('is_primary')
+            ->withTimestamps();
     }
 
     public function trainingAttendances(): HasMany

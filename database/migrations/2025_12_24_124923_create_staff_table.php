@@ -24,6 +24,9 @@ return new class extends Migration
                 'communication',
                 'equipment_manager',
             ]);
+            $table->string('image')->nullable();
+            $table->string('section')->nullable();
+            $table->unsignedInteger('priority')->nullable();
             $table->text('specialization')->nullable();
             $table->string('license_number')->nullable();
             $table->date('hire_date')->nullable();

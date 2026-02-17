@@ -1,9 +1,10 @@
 import React from 'react';
 import Navbar from '../home/partials/navbar';
 import Footer from '../home/partials/footer';
+import StaffSlider from './StaffSlider';
 import { Trophy, Users, Target, Award, Heart, BookOpen, Zap, ChevronRight, Shield, LayoutDashboard, Activity, Stethoscope, GraduationCap, Megaphone, Wallet, UserPlus, FileCheck } from 'lucide-react';
 
-export default function About() {
+export default function About({ staffBySection = {} }) {
     const values = [
         { icon: Heart, title: 'Passion' },
         { icon: Users, title: 'Unité' },
@@ -241,6 +242,41 @@ export default function About() {
                             <p className="text-sm text-gray-500 mt-6">Chaque catégorie bénéficie d&apos;un programme adapté.</p>
                         </div>
                     </section>
+
+                    {/* Notre équipe – Bureau, Coaches, Soigneurs (sliders) */}
+                    {(staffBySection.bureau?.length > 0 || staffBySection.coach?.length > 0 || staffBySection.soigneur?.length > 0) && (
+                        <section className="bg-white rounded-3xl border border-gray-100 p-8 sm:p-12">
+                            <div className="mb-10">
+                                <span className="text-alpha font-bold text-xs uppercase tracking-wider">Notre équipe</span>
+                                <h2 className="text-2xl sm:text-3xl font-black uppercase italic mt-2 mb-2 text-dark">Bureau, encadrement & soigneurs</h2>
+                                <p className="text-gray-600 max-w-2xl">
+                                    Les membres du bureau, l&apos;encadrement technique et les soigneurs qui font vivre le club.
+                                </p>
+                            </div>
+
+                            {staffBySection.bureau?.length > 0 && (
+                                <StaffSlider
+                                    title="Bureau / Administratif"
+                                    subtitle="Gouvernance"
+                                    members={staffBySection.bureau}
+                                />
+                            )}
+                            {staffBySection.coach?.length > 0 && (
+                                <StaffSlider
+                                    title="Encadrement technique"
+                                    subtitle="Coaches"
+                                    members={staffBySection.coach}
+                                />
+                            )}
+                            {staffBySection.soigneur?.length > 0 && (
+                                <StaffSlider
+                                    title="Soigneurs & Médical"
+                                    subtitle="Santé"
+                                    members={staffBySection.soigneur}
+                                />
+                            )}
+                        </section>
+                    )}
 
                     {/* Gouvernance */}
                     <section className="bg-gray-50 rounded-3xl p-8 sm:p-12 lg:p-16">

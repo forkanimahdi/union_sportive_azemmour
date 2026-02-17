@@ -27,9 +27,13 @@ const mainNavItems: NavItem[] = [
         ],
     },
     {
-        title: 'Joueuses',
-        href: '/admin/players',
+        title: 'Effectif',
+        href: '#',
         icon: UserCircle,
+        children: [
+            { title: 'Joueuses', href: '/admin/players' },
+            { title: 'Staff', href: '/admin/staff' },
+        ],
     },
     {
         title: 'Compétition',

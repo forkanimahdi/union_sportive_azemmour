@@ -36,9 +36,11 @@ class Team extends Model
         return $this->belongsTo(Season::class);
     }
 
-    public function players(): HasMany
+    public function players(): BelongsToMany
     {
-        return $this->hasMany(Player::class);
+        return $this->belongsToMany(Player::class, 'player_team')
+            ->withPivot('is_primary')
+            ->withTimestamps();
     }
 
     public function staff(): BelongsToMany

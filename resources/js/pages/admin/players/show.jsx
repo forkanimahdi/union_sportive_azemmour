@@ -54,7 +54,7 @@ export default function PlayersShow({ player, teams = [] }) {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
     const editForm = useForm({
-        team_id: player.team_id ? String(player.team_id) : '',
+        team_ids: player.teams?.map((t) => t.id) || [],
         first_name: player.first_name,
         last_name: player.last_name,
         date_of_birth: player.date_of_birth || '',
@@ -76,7 +76,7 @@ export default function PlayersShow({ player, teams = [] }) {
 
     const openEditModal = () => {
         editForm.setData({
-            team_id: player.team_id ? String(player.team_id) : '',
+            team_ids: player.teams?.map((t) => t.id) || [],
             first_name: player.first_name,
             last_name: player.last_name,
             date_of_birth: player.date_of_birth || '',
@@ -206,7 +206,7 @@ export default function PlayersShow({ player, teams = [] }) {
                                                 {player.jersey_number && ` • #${player.jersey_number}`}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
-                                                {player.team?.name ?? 'Sans équipe'}
+                                                {(player.teams?.length > 0 ? player.teams.map((t) => t.name).join(', ') : null) ?? player.team?.name ?? 'Sans équipe'}
                                             </p>
                                             {player.form != null && (
                                                 <p className="mt-1 flex items-center gap-1 text-sm font-medium text-foreground">
@@ -554,17 +554,28 @@ export default function PlayersShow({ player, teams = [] }) {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label>Équipe</Label>
-                            <Select value={editForm.data.team_id || 'none'} onValueChange={(v) => editForm.setData('team_id', v === 'none' ? '' : v)}>
-                                <SelectTrigger><SelectValue placeholder="Sélectionner une équipe" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="none">Aucune équipe</SelectItem>
-                                    {teams.map((t) => (
-                                        <SelectItem key={t.id} value={String(t.id)}>{t.name} {t.category ? `(${t.category})` : ''}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <InputError message={editForm.errors.team_id} />
+                            <Label>Équipes (U17 + Senior possible)</Label>
+                            <div className="flex flex-wrap gap-4 pt-2">
+                                {teams.map((t) => {
+                                    const checked = (editForm.data.team_ids || []).includes(t.id);
+                                    return (
+                                        <div key={t.id} className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id={`edit-team-${t.id}`}
+                                                checked={checked}
+                                                onCheckedChange={(c) => {
+                                                    const ids = [...(editForm.data.team_ids || [])];
+                                                    if (c) ids.push(t.id);
+                                                    else ids.splice(ids.indexOf(t.id), 1);
+                                                    editForm.setData('team_ids', ids);
+                                                }}
+                                            />
+                                            <Label htmlFor={`edit-team-${t.id}`} className="cursor-pointer text-sm font-normal">{t.name} ({t.category})</Label>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <InputError message={editForm.errors.team_ids} />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">

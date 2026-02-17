@@ -14,6 +14,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
     ArrowLeft,
     Download,
@@ -30,6 +31,7 @@ import {
     CalendarDays,
     MapPin,
     FileText,
+    UserCog,
 } from 'lucide-react';
 import DeleteModal from '@/components/DeleteModal';
 
@@ -66,7 +68,7 @@ function playerStatus(player) {
     return { label: 'En attente', variant: 'pending' };
 }
 
-export default function TeamsShow({ team, availablePlayers = [] }) {
+export default function TeamsShow({ team, availablePlayers = [], availableStaff = [], staffRoleOptions = {} }) {
     const [assignDialogOpen, setAssignDialogOpen] = useState(false);
     const [selectedPlayerId, setSelectedPlayerId] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
@@ -74,6 +76,10 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
     const [playerToRemove, setPlayerToRemove] = useState(null);
     const [positionFilter, setPositionFilter] = useState('all');
     const [squadSort, setSquadSort] = useState('number');
+    const [staffDialogOpen, setStaffDialogOpen] = useState(false);
+    const [selectedStaffId, setSelectedStaffId] = useState('');
+    const [selectedStaffRole, setSelectedStaffRole] = useState('');
+    const [staffSubmitting, setStaffSubmitting] = useState(false);
 
     const stats = team.stats || {
         total_players: team.players?.length || 0,
@@ -114,12 +120,29 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
         }
     };
 
+    const handleAssignStaff = () => {
+        if (!selectedStaffId || !selectedStaffRole) return;
+        setStaffSubmitting(true);
+        router.post(`/admin/teams/${team.id}/assign-staff`, { staff_id: selectedStaffId, role: selectedStaffRole }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setStaffDialogOpen(false);
+                setSelectedStaffId('');
+                setSelectedStaffRole('');
+            },
+            onFinish: () => setStaffSubmitting(false),
+        });
+    };
+
+    const handleRemoveStaff = (staffId) => {
+        router.delete(`/admin/teams/${team.id}/staff/${staffId}`, { preserveScroll: true });
+    };
+
     const filteredAvailablePlayers = availablePlayers.filter(
         (p) =>
             searchTerm === '' ||
             `${p.first_name} ${p.last_name}`.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    const canAssignPlayer = (player) => player != null && player.team_id == null;
 
     const activeSquad = team.players || [];
     const filteredSquad =
@@ -205,23 +228,19 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
                                     </div>
                                     <div className="max-h-60 overflow-y-auto space-y-2">
                                         {filteredAvailablePlayers.length > 0 ? (
-                                            filteredAvailablePlayers.map((player) => {
-                                                const assignable = canAssignPlayer(player);
-                                                return (
+                                            filteredAvailablePlayers.map((player) => (
                                                     <div
                                                         key={player.id}
-                                                        onClick={() => assignable && setSelectedPlayerId(player.id)}
-                                                        className={`p-3 rounded-lg border transition-colors ${
-                                                            !assignable
-                                                                ? 'cursor-not-allowed border-neutral-200 bg-neutral-100/80 opacity-75'
-                                                                : selectedPlayerId === player.id
-                                                                    ? 'cursor-pointer border-primary bg-primary/5'
-                                                                    : 'cursor-pointer border-border hover:bg-muted/50'
+                                                        onClick={() => setSelectedPlayerId(selectedPlayerId === player.id ? '' : player.id)}
+                                                        className={`p-3 rounded-lg border transition-colors cursor-pointer ${
+                                                            selectedPlayerId === player.id
+                                                                ? 'border-primary bg-primary/5'
+                                                                : 'border-border hover:bg-muted/50'
                                                         }`}
                                                     >
                                                         <div className="flex items-center justify-between">
                                                             <div>
-                                                                <p className={`font-medium ${!assignable ? 'text-muted-foreground' : ''}`}>
+                                                                <p className="font-medium">
                                                                     {player.first_name} {player.last_name}
                                                                 </p>
                                                                 {player.position && (
@@ -229,26 +248,20 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
                                                                         {player.position}
                                                                     </p>
                                                                 )}
-                                                                {!assignable && (
-                                                                    <p className="text-xs text-amber-600 mt-1 font-medium">
-                                                                        Déjà dans {player.team_name || 'une équipe'} — non assignable
+                                                                {player.teams?.length > 0 && (
+                                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                                        Aussi dans : {player.teams.join(', ')}
                                                                     </p>
                                                                 )}
                                                             </div>
-                                                            {assignable && selectedPlayerId === player.id && (
+                                                            {selectedPlayerId === player.id && (
                                                                 <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
                                                                     <div className="w-2 h-2 rounded-full bg-primary-foreground" />
                                                                 </div>
                                                             )}
-                                                            {!assignable && (
-                                                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600" title="Assignation interdite">
-                                                                    <AlertTriangle className="h-4 w-4" />
-                                                                </div>
-                                                            )}
                                                         </div>
                                                     </div>
-                                                );
-                                            })
+                                                ))
                                         ) : (
                                             <p className="text-center text-muted-foreground py-4">
                                                 Aucune joueuse trouvée
@@ -261,7 +274,7 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
                                         </Button>
                                         <Button
                                             onClick={handleAssignPlayer}
-                                            disabled={!selectedPlayerId || processing || !canAssignPlayer(availablePlayers.find((p) => p.id === selectedPlayerId))}
+                                            disabled={!selectedPlayerId || processing}
                                         >
                                             {processing ? 'Assignation...' : 'Assigner'}
                                         </Button>
@@ -271,6 +284,88 @@ export default function TeamsShow({ team, availablePlayers = [] }) {
                         </Dialog>
                     </div>
                 </div>
+
+                {/* Staff technique */}
+                <Card className="border bg-card">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                            <UserCog className="w-5 h-5" />
+                            Staff technique
+                        </CardTitle>
+                        <Dialog open={staffDialogOpen} onOpenChange={setStaffDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Affecter un membre
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-md">
+                                <DialogHeader>
+                                    <DialogTitle>Affecter un membre du staff</DialogTitle>
+                                    <DialogDescription>
+                                        Choisir un membre et son rôle pour cette équipe (ex. Coach Gardiennes pour toutes les catégories).
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4 mt-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Membre</label>
+                                        <Select value={selectedStaffId || 'none'} onValueChange={(v) => setSelectedStaffId(v === 'none' ? '' : v)}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Choisir" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="none">—</SelectItem>
+                                                {(availableStaff || []).filter((s) => !s.already_in_team).map((s) => (
+                                                    <SelectItem key={s.id} value={s.id}>
+                                                        {s.first_name} {s.last_name} ({s.role_label ?? s.role})
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Rôle pour cette équipe</label>
+                                        <Select value={selectedStaffRole || ''} onValueChange={setSelectedStaffRole}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Choisir le rôle" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {Object.entries(staffRoleOptions || {}).map(([key, label]) => (
+                                                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="flex justify-end gap-2 pt-2 border-t">
+                                        <Button variant="outline" onClick={() => setStaffDialogOpen(false)}>Annuler</Button>
+                                        <Button onClick={handleAssignStaff} disabled={!selectedStaffId || !selectedStaffRole || staffSubmitting}>
+                                            {staffSubmitting ? 'Affectation…' : 'Affecter'}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    </CardHeader>
+                    <CardContent>
+                        {team.staff?.length > 0 ? (
+                            <ul className="space-y-2">
+                                {team.staff.map((s) => (
+                                    <li key={s.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                                        <span className="font-medium">{s.first_name} {s.last_name}</span>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant="secondary">{s.role_label ?? s.role}</Badge>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleRemoveStaff(s.id)}>
+                                                <X className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-muted-foreground text-sm py-2">Aucun membre du staff affecté. Utilisez « Affecter un membre ».</p>
+                        )}
+                    </CardContent>
+                </Card>
 
                 {/* Stats cards */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

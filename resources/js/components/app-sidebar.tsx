@@ -100,6 +100,12 @@ export function AppSidebar() {
             roles: ['admin', 'technical_director', 'communication'],
         },
         {
+            title: 'Joueuses',
+            href: '/admin/players',
+            icon: UserCog,
+            roles: ['admin', 'technical_director', 'coach'],
+        },
+        {
             title: 'Staff',
             href: '/admin/staff',
             icon: UserCog,

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Team;
 use App\Models\Season;
+use App\Models\Staff;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -164,12 +165,15 @@ class TeamController extends Controller
             'avg_age' => $avgAge,
         ];
 
-        // All active players for "Add New Player" dialog (with team info: only those without team are assignable)
-        $availablePlayers = \App\Models\Player::with('team')
+        // All active players for "Add New Player" dialog: not yet in this team (can be in other teams)
+        $teamPlayerIds = $team->players()->pluck('players.id')->toArray();
+        $availablePlayers = \App\Models\Player::with(['team', 'teams'])
             ->where('is_active', true)
+            ->whereNotIn('id', $teamPlayerIds)
             ->orderBy('last_name')
             ->get()
             ->map(function ($p) {
+                $teamNames = $p->teams->pluck('name')->toArray();
                 return [
                     'id' => $p->id,
                     'first_name' => $p->first_name,
@@ -177,6 +181,7 @@ class TeamController extends Controller
                     'position' => $p->position,
                     'team_id' => $p->team_id,
                     'team_name' => $p->team ? $p->team->name : null,
+                    'teams' => $teamNames,
                 ];
             });
 
@@ -200,6 +205,7 @@ class TeamController extends Controller
                         'first_name' => $s->first_name,
                         'last_name' => $s->last_name,
                         'role' => $s->pivot->role,
+                        'role_label' => Staff::ROLES[$s->pivot->role] ?? $s->pivot->role,
                     ];
                 }),
                 'former_players' => [], // Reserved for future (e.g. left_team_at, status)
@@ -220,7 +226,45 @@ class TeamController extends Controller
                 })->values()->all(),
             ],
             'availablePlayers' => $availablePlayers,
+            'availableStaff' => Staff::with('teams')->orderBy('last_name')->get()->map(fn($s) => [
+                'id' => $s->id,
+                'first_name' => $s->first_name,
+                'last_name' => $s->last_name,
+                'role' => $s->role,
+                'role_label' => Staff::ROLES[$s->role] ?? $s->role,
+                'already_in_team' => $team->staff->contains('id', $s->id),
+            ])->values()->all(),
+            'staffRoleOptions' => Staff::ROLES,
         ]);
+    }
+
+    public function assignStaff(Request $request, Team $team)
+    {
+        $validated = $request->validate([
+            'staff_id' => 'required|uuid|exists:staff,id',
+            'role' => 'required|string|in:' . implode(',', Staff::ROLE_KEYS),
+        ]);
+
+        $staff = Staff::findOrFail($validated['staff_id']);
+        if ($team->staff()->where('staff.id', $staff->id)->exists()) {
+            return redirect()->back()->with('error', 'Ce membre du staff est déjà affecté à cette équipe.');
+        }
+
+        $team->staff()->attach($staff->id, [
+            'role' => $validated['role'],
+            'is_primary' => false,
+        ]);
+
+        return redirect()->back()->with('success', 'Staff affecté à l\'équipe.');
+    }
+
+    public function removeStaff(Team $team, $staffId)
+    {
+        if (!$team->staff()->where('staff.id', $staffId)->exists()) {
+            return redirect()->back()->with('error', 'Ce membre n\'est pas affecté à cette équipe.');
+        }
+        $team->staff()->detach($staffId);
+        return redirect()->back()->with('success', 'Staff retiré de l\'équipe.');
     }
 
     public function exportRoster(Team $team)
@@ -257,11 +301,15 @@ class TeamController extends Controller
         ]);
 
         $player = \App\Models\Player::findOrFail($validated['player_id']);
-        if ($player->team_id !== null) {
-            return redirect()->back()->with('error', 'Cette joueuse est déjà assignée à une équipe. Seules les joueuses sans équipe peuvent être assignées.');
+        if ($team->players()->where('players.id', $player->id)->exists()) {
+            return redirect()->back()->with('error', 'Cette joueuse est déjà dans cette équipe.');
         }
-        $player->team_id = $team->id;
-        $player->save();
+
+        $isPrimary = $player->team_id === null;
+        $team->players()->attach($player->id, ['is_primary' => $isPrimary]);
+        if ($isPrimary) {
+            $player->update(['team_id' => $team->id]);
+        }
 
         return redirect()->back()->with('success', 'Joueuse assignée avec succès');
     }
@@ -269,13 +317,16 @@ class TeamController extends Controller
     public function removePlayer(Team $team, $playerId)
     {
         $player = \App\Models\Player::findOrFail($playerId);
-        
-        if ($player->team_id !== $team->id) {
+        if (!$team->players()->where('players.id', $player->id)->exists()) {
             return redirect()->back()->with('error', 'Cette joueuse n\'appartient pas à cette équipe');
         }
 
-        $player->team_id = null;
-        $player->save();
+        $team->players()->detach($player->id);
+        if ($player->team_id === $team->id) {
+            $primary = $player->teams()->wherePivot('is_primary', true)->first();
+            $fallback = $player->teams()->first();
+            $player->update(['team_id' => $primary?->id ?? $fallback?->id]);
+        }
 
         return redirect()->back()->with('success', 'Joueuse retirée de l\'équipe avec succès');
     }
