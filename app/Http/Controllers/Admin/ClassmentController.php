@@ -264,7 +264,7 @@ class ClassmentController extends Controller
 
         $mp = $wins + $draws + $losses;
 
-        // Create or update USA row
+        // Create or update only the USA row from match results. Opponents are managed manually.
         Standing::updateOrCreate(
             [
                 'season_id' => $season->id,
@@ -282,30 +282,6 @@ class ClassmentController extends Controller
             ]
         );
 
-        // Create or update opponent rows (only those with opponent_team_id)
-        foreach ($opponentStats as $oppKey => $stats) {
-            if (str_starts_with($oppKey, 'name:')) {
-                continue;
-            }
-            $opponentTeamId = $oppKey;
-            Standing::updateOrCreate(
-                [
-                    'season_id' => $season->id,
-                    'category' => $category,
-                    'opponent_team_id' => $opponentTeamId,
-                ],
-                [
-                    'team_id' => null,
-                    'matches_played' => $stats['w'] + $stats['d'] + $stats['l'],
-                    'wins' => $stats['w'],
-                    'draws' => $stats['d'],
-                    'losses' => $stats['l'],
-                    'goals_for' => $stats['gf'],
-                    'goals_against' => $stats['ga'],
-                ]
-            );
-        }
-
-        return back()->with('success', 'Classement initialisé à partir des matchs.');
+        return back()->with('success', 'Classement de votre équipe mis à jour à partir des matchs. Les adversaires ne sont pas modifiés.');
     }
 }

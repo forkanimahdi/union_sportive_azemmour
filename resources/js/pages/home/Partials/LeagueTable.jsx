@@ -1,8 +1,17 @@
-import React from 'react';
-import { Trophy, Users, Calendar, Target } from 'lucide-react';
+import React, { useState } from 'react';
+import { Trophy, Users, Calendar, Target, ChevronLeft, ChevronRight } from 'lucide-react';
 
-export default function LeagueTable({ seniorStandings = [], activeSeason = null }) {
-    const tableData = Array.isArray(seniorStandings) ? seniorStandings : [];
+const CATEGORY_LABELS = {
+    Senior: 'Senior',
+    U17: 'U17',
+    U15: 'U15',
+};
+
+export default function LeagueTable({ standingsByCategory = {}, activeSeason = null }) {
+    const categories = ['Senior', 'U17', 'U15'];
+    const [activeIndex, setActiveIndex] = useState(0);
+    const activeCategory = categories[activeIndex];
+    const tableData = Array.isArray(standingsByCategory[activeCategory]) ? standingsByCategory[activeCategory] : [];
 
     const achievements = [
         { icon: Trophy, label: 'Championnats', value: '12', description: 'Titres remportés' },
@@ -10,6 +19,9 @@ export default function LeagueTable({ seniorStandings = [], activeSeason = null 
         { icon: Calendar, label: 'Saison', value: activeSeason?.name ?? '–', description: 'En cours' },
         { icon: Target, label: 'Objectif', value: 'Top 3', description: 'Cette saison' },
     ];
+
+    const goPrev = () => setActiveIndex((i) => (i <= 0 ? categories.length - 1 : i - 1));
+    const goNext = () => setActiveIndex((i) => (i >= categories.length - 1 ? 0 : i + 1));
 
     return (
         <div className="py-16 sm:py-20 lg:py-24 bg-white">
@@ -40,12 +52,46 @@ export default function LeagueTable({ seniorStandings = [], activeSeason = null 
                         </div>
                     </div>
 
-                    {/* Table Column – Senior classment, active season only */}
+                    {/* Table Column – Carousel: Senior, U17, U15 */}
                     <div className="lg:col-span-2">
-                        <h4 className="text-alpha font-bold text-xs sm:text-sm uppercase mb-2">Classement</h4>
-                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic mb-6 sm:mb-8">
-                            Senior {activeSeason?.name ? `– ${activeSeason.name}` : ''}
-                        </h2>
+                        <div className="flex items-center justify-between gap-4 mb-4 sm:mb-6">
+                            <div>
+                                <h4 className="text-alpha font-bold text-xs sm:text-sm uppercase mb-2">Classement</h4>
+                                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic">
+                                    {CATEGORY_LABELS[activeCategory] || activeCategory} {activeSeason?.name ? `– ${activeSeason.name}` : ''}
+                                </h2>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={goPrev}
+                                    className="p-2 rounded-full bg-alpha/10 text-alpha hover:bg-alpha hover:text-white transition-colors"
+                                    aria-label="Catégorie précédente"
+                                >
+                                    <ChevronLeft className="w-5 h-5" />
+                                </button>
+                                <div className="flex gap-1.5">
+                                    {categories.map((cat, i) => (
+                                        <button
+                                            key={cat}
+                                            type="button"
+                                            onClick={() => setActiveIndex(i)}
+                                            className={`w-2.5 h-2.5 rounded-full transition-colors ${i === activeIndex ? 'bg-alpha scale-110' : 'bg-gray-300 hover:bg-alpha/60'}`}
+                                            aria-label={`Voir ${cat}`}
+                                            aria-current={i === activeIndex ? 'true' : undefined}
+                                        />
+                                    ))}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={goNext}
+                                    className="p-2 rounded-full bg-alpha/10 text-alpha hover:bg-alpha hover:text-white transition-colors"
+                                    aria-label="Catégorie suivante"
+                                >
+                                    <ChevronRight className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
                         {tableData.length > 0 ? (
                             <div className="overflow-x-auto -mx-4 sm:mx-0">
                                 <div className="inline-block min-w-full align-middle px-4 sm:px-0">
@@ -64,16 +110,24 @@ export default function LeagueTable({ seniorStandings = [], activeSeason = null 
                                         <tbody>
                                             {tableData.map((row) => (
                                                 <tr
-                                                    key={`${row.rank}-${row.name}`}
+                                                    key={`${row.rank}-${row.name}-${activeCategory}`}
                                                     className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${row.is_usa ? 'bg-alpha/5 font-bold' : ''}`}
                                                 >
                                                     <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 font-bold text-alpha">
                                                         {row.rank}
                                                     </td>
                                                     <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 font-bold flex items-center gap-2 sm:gap-3">
-                                                        <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold ${row.is_usa ? 'bg-alpha text-white' : 'bg-gray-200 text-dark'}`}>
-                                                            {row.short_code || row.name?.slice(0, 2)?.toUpperCase() || '–'}
-                                                        </div>
+                                                        {row.logo ? (
+                                                            <img
+                                                                src={row.logo}
+                                                                alt=""
+                                                                className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover flex-shrink-0 bg-gray-100"
+                                                            />
+                                                        ) : (
+                                                            <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold ${row.is_usa ? 'bg-alpha text-white' : 'bg-gray-200 text-dark'}`}>
+                                                                {row.short_code || row.name?.slice(0, 2)?.toUpperCase() || '–'}
+                                                            </div>
+                                                        )}
                                                         <span className="truncate">{row.name}</span>
                                                     </td>
                                                     <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4">{row.played ?? 0}</td>
@@ -90,7 +144,7 @@ export default function LeagueTable({ seniorStandings = [], activeSeason = null 
                         ) : (
                             <div className="rounded-xl border border-gray-100 bg-gray-50 p-8 text-center">
                                 <p className="text-gray-500">
-                                    Aucun classement Senior pour la saison en cours. Le classement est géré dans l’espace admin.
+                                    Aucun classement {CATEGORY_LABELS[activeCategory] || activeCategory} pour la saison en cours. Le classement est géré dans l’espace admin.
                                 </p>
                             </div>
                         )}

@@ -107,40 +107,43 @@ class HomeController extends Controller
                 'category' => $p->category ? ['id' => $p->category->id, 'name' => $p->category->name] : null,
             ]);
 
-        // Senior classment (standings) for active season only – from standings table
-        $seniorStandings = collect();
+        // Standings by category (Senior, U17, U15) for active season – with opponent logo when available
+        $standingsByCategory = ['Senior' => [], 'U17' => [], 'U15' => []];
         if ($activeSeason) {
-            $rows = Standing::with(['team', 'opponentTeam'])
-                ->where('season_id', $activeSeason->id)
-                ->where('category', 'Senior')
-                ->get();
+            foreach (['Senior', 'U17', 'U15'] as $category) {
+                $rows = Standing::with(['team', 'opponentTeam'])
+                    ->where('season_id', $activeSeason->id)
+                    ->where('category', $category)
+                    ->get();
 
-            $mapped = $rows->map(fn ($s) => [
-                'rank' => 0, // filled below
-                'name' => $s->display_name,
-                'short_code' => $s->short_code,
-                'is_usa' => $s->is_usa,
-                'played' => $s->matches_played,
-                'wins' => $s->wins,
-                'draws' => $s->draws,
-                'losses' => $s->losses,
-                'goals_for' => $s->goals_for,
-                'goals_against' => $s->goals_against,
-                'goal_difference' => $s->goal_difference,
-                'points' => $s->points,
-            ]);
+                $mapped = $rows->map(fn ($s) => [
+                    'rank' => 0,
+                    'name' => $s->display_name,
+                    'short_code' => $s->short_code,
+                    'is_usa' => $s->is_usa,
+                    'played' => $s->matches_played,
+                    'wins' => $s->wins,
+                    'draws' => $s->draws,
+                    'losses' => $s->losses,
+                    'goals_for' => $s->goals_for,
+                    'goals_against' => $s->goals_against,
+                    'goal_difference' => $s->goal_difference,
+                    'points' => $s->points,
+                    'logo' => $s->opponentTeam?->logo ? '/storage/' . $s->opponentTeam->logo : null,
+                ]);
 
-            $sorted = $mapped->sort(function ($a, $b) {
-                if ($a['points'] !== $b['points']) {
-                    return $b['points'] <=> $a['points'];
-                }
-                return $b['goal_difference'] <=> $a['goal_difference'];
-            })->values();
+                $sorted = $mapped->sort(function ($a, $b) {
+                    if ($a['points'] !== $b['points']) {
+                        return $b['points'] <=> $a['points'];
+                    }
+                    return $b['goal_difference'] <=> $a['goal_difference'];
+                })->values();
 
-            $seniorStandings = $sorted->map(function ($r, $i) {
-                $r['rank'] = $i + 1;
-                return $r;
-            })->all();
+                $standingsByCategory[$category] = $sorted->map(function ($r, $i) {
+                    $r['rank'] = $i + 1;
+                    return $r;
+                })->values()->all();
+            }
         }
 
         // Latest articles for Recent News (latest first)
@@ -164,7 +167,7 @@ class HomeController extends Controller
             'articles' => $articles->values()->all(),
             'sponsors' => $sponsors->values()->all(),
             'products' => $products->values()->all(),
-            'seniorStandings' => $seniorStandings,
+            'standingsByCategory' => $standingsByCategory,
             'activeSeason' => $activeSeason ? ['id' => $activeSeason->id, 'name' => $activeSeason->name] : null,
         ]);
     }
