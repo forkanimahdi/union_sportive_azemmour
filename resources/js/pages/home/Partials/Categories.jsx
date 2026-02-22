@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import usaHero from '../../../../../public/assets/images/hero/usa_hero.webp';
 
@@ -52,9 +53,10 @@ export default function Categories() {
                         style={{ transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)` }}
                     >
                         {categories.map((category) => (
-                            <div 
-                                key={category.id} 
-                                className="min-w-[calc(50%-8px)] sm:min-w-[calc(33.333%-16px)] lg:min-w-[calc(25%-18px)] cursor-pointer group"
+                            <Link
+                                key={category.id}
+                                href={`/category/${category.id}`}
+                                className="min-w-[calc(50%-8px)] sm:min-w-[calc(33.333%-16px)] lg:min-w-[calc(25%-18px)] cursor-pointer group block"
                             >
                                 <div className="relative h-48 sm:h-56 lg:h-64 bg-gray-800 rounded-lg overflow-hidden hover:shadow-2xl transition-all">
                                     <img 
@@ -66,12 +68,12 @@ export default function Categories() {
                                     <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
                                         <h3 className="text-xl sm:text-2xl font-black uppercase italic">{category.name}</h3>
                                         <div className="mt-2 flex items-center gap-2 text-xs sm:text-sm text-gray-400">
-                                            <span>Voir l'équipe</span>
+                                            <span>Voir l&apos;équipe</span>
                                             <span className="text-alpha">→</span>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 </div>

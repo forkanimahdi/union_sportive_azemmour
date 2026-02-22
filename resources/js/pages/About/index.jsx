@@ -15,9 +15,10 @@ export default function About({ staffBySection = {} }) {
     ];
 
     const history = [
-        { year: 'Années 1980', event: 'Premières pratiques informelles du football féminin à Azemmour' },
-        { year: '2003', event: "Création officielle de l'Union Sportive d'Azemmour – Football Féminin" },
-        { year: "Aujourd'hui", event: 'Structuration en trois catégories : Seniors, U17, U15' },
+        { year: '2020', event: "Fondation de l'Union Sportive d'Azemmour – Football Féminin" },
+        { year: '2021–22', event: 'Première saison complète avec U13, U15 et Séniors – Podium U13 et U15 au championnat régional' },
+        { year: '2023–24', event: "Qualification des Séniors en Division Excellence Régionale" },
+        { year: '2025–26', event: 'Division d\'Honneur Régionale – Objectif : Excellence puis Amateur Nationale' },
     ];
 
     const missions = [
@@ -35,9 +36,9 @@ export default function About({ staffBySection = {} }) {
     ];
 
     const ambitions = [
-        "Accéder à la division d'excellence régionale",
+        "Atteindre la Division d'Excellence Régionale",
+        "Accéder à l'Amateur Nationale",
         'Renforcer la formation des jeunes catégories',
-        "Structurer davantage son organisation",
         'Développer des partenariats durables',
     ];
 
@@ -107,18 +108,18 @@ export default function About({ staffBySection = {} }) {
                             <span className="text-alpha font-bold text-xs uppercase tracking-wider">Notre Club</span>
                             <h2 className="text-2xl sm:text-3xl font-black uppercase italic mt-2 mb-6 text-dark">Une histoire, une ambition</h2>
                             <p className="text-gray-600 leading-relaxed mb-4">
-                                Fondé en <strong className="text-dark">2003</strong>, l&apos;Union Sportive d&apos;Azemmour – Football Féminin est un club engagé dans le développement du football féminin à Azemmour et dans l&apos;accompagnement des jeunes filles à travers un projet sportif, éducatif et social structuré.
+                                Fondé en <strong className="text-dark">2020</strong>, l&apos;Union Sportive d&apos;Azemmour – Football Féminin est un club engagé dans le développement du football féminin à Azemmour et dans l&apos;accompagnement des jeunes filles à travers un projet sportif, éducatif et social structuré.
                             </p>
                             <p className="text-gray-600 leading-relaxed mb-4">
-                                Le club œuvre depuis plus de vingt ans pour offrir aux joueuses un cadre sécurisé, formateur et exigeant, favorisant à la fois la performance sportive, l&apos;épanouissement personnel et l&apos;égalité des chances.
+                                Membre de la Ligue Régionale Chaouia Doukkala, le club a disputé sa première saison complète en <strong className="text-dark">2021–22</strong> avec trois équipes : U13, U15 et Séniors. Dès cette première année, les équipes U13 et U15 ont décroché le podium du championnat régional. En <strong className="text-dark">2023–24</strong>, les Séniors se sont qualifiées en Division Excellence Régionale, et le club aborde la saison <strong className="text-dark">2025–26</strong> en Division d&apos;Honneur Régionale avec pour objectif d&apos;atteindre la Division Excellence puis l&apos;Amateur Nationale.
                             </p>
                             <p className="text-gray-600 leading-relaxed">
-                                Ancré dans son territoire, l&apos;Union Sportive d&apos;Azemmour représente fièrement la ville d&apos;Azemmour dans les compétitions régionales.
+                                Avec plus de <strong className="text-dark">60 joueuses</strong> réparties sur 3 catégories (Séniors, U17 et U15), l&apos;Union Sportive d&apos;Azemmour représente fièrement la ville dans les compétitions régionales et poursuit son ambition de grandir sportivement tout en offrant aux joueuses un cadre sécurisé, formateur et exigeant.
                             </p>
                         </div>
                         <div className="lg:col-span-4 grid grid-cols-2 lg:grid-cols-1 gap-4 auto-rows-fr">
                             <div className="bg-alpha rounded-2xl p-6 flex flex-col justify-end text-white">
-                                <span className="text-5xl font-black opacity-30">2003</span>
+                                <span className="text-5xl font-black opacity-30">2020</span>
                                 <p className="text-sm font-semibold mt-2">Année de création</p>
                             </div>
                             <div className="bg-gray-100 rounded-2xl p-6 flex flex-col justify-end border-l-4 border-alpha">
@@ -133,12 +134,12 @@ export default function About({ staffBySection = {} }) {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
                             <div>
                                 <span className="text-alpha font-bold text-xs uppercase tracking-wider">Notre Histoire</span>
-                                <h2 className="text-2xl sm:text-3xl font-black uppercase italic mt-2 mb-6 text-dark">Un héritage pionnier</h2>
+                                <h2 className="text-2xl sm:text-3xl font-black uppercase italic mt-2 mb-6 text-dark">Un héritage en construction</h2>
                                 <p className="text-gray-600 leading-relaxed mb-4">
-                                    L&apos;histoire du football féminin à Azemmour trouve ses premières expressions dès les <strong className="text-dark">années 1980</strong>, lorsque des jeunes filles de la ville ont initié des pratiques informelles de football.
+                                    Fondé en <strong className="text-dark">2020</strong>, l&apos;Union Sportive d&apos;Azemmour – Football Féminin s&apos;est structurée dès sa première saison complète en 2021–22 autour de trois équipes : U13, U15 et Séniors.
                                 </p>
                                 <p className="text-gray-600 leading-relaxed">
-                                    Cet héritage a conduit à la création officielle du club en <strong className="text-dark">2003</strong>, marquant une étape majeure dans l&apos;organisation du football féminin à Azemmour.
+                                    Les équipes U13 et U15 ont décroché le podium dès 2021–22. Les Séniors se sont qualifiées en Division Excellence Régionale en 2023–24. Le club aborde la saison 2025–26 en Division d&apos;Honneur Régionale, avec pour ambition la Division Excellence puis l&apos;Amateur Nationale.
                                 </p>
                             </div>
                             <div className="grid gap-4">

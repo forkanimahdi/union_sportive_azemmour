@@ -9,8 +9,16 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Cleanup from any previous failed attempt
+        Schema::dropIfExists('team_staff_tmp');
+
         if (!Schema::hasTable('team_staff') || !Schema::hasColumn('team_staff', 'id')) {
             return;
+        }
+
+        $driver = Schema::getConnection()->getDriverName();
+        if ($driver === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys=OFF');
         }
 
         Schema::create('team_staff_tmp', function (Blueprint $table) {
@@ -34,6 +42,10 @@ return new class extends Migration
 
         Schema::drop('team_staff');
         Schema::rename('team_staff_tmp', 'team_staff');
+
+        if ($driver === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys=ON');
+        }
     }
 
     public function down(): void

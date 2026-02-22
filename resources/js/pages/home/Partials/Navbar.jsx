@@ -3,12 +3,15 @@ import { Link } from '@inertiajs/react';
 import { Search, ShoppingCart, User, Menu, X } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 
-export default function Navbar() {
+export default function Navbar({ variant = 'dark' }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    
+    const isLight = variant === 'light';
+    const navClasses = isLight
+        ? 'absolute top-0 left-0 w-full z-50 text-dark bg-white/95 backdrop-blur-sm border-b border-gray-200'
+        : 'absolute top-0 left-0 w-full z-50 text-white border-b border-white/10';
 
     return (
-        <nav className="absolute top-0 left-0 w-full z-50 text-white border-b border-white/10">
+        <nav className={navClasses}>
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center py-2 ">
                     {/* Logo */}
@@ -30,19 +33,19 @@ export default function Navbar() {
                         <button className="hover:text-alpha transition-colors p-2" aria-label="Search">
                             <Search className="w-5 h-5" />
                         </button>
-                        <button className="hover:text-alpha transition-colors p-2 relative" aria-label="Cart">
+                        {/* <button className="hover:text-alpha transition-colors p-2 relative" aria-label="Cart">
                             <ShoppingCart className="w-5 h-5" />
                             <span className="absolute -top-1 -right-1 bg-alpha text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
-                        </button>
-                        <button className="hover:text-alpha transition-colors p-2" aria-label="User">
+                        </button> */}
+                        {/* <button className="hover:text-alpha transition-colors p-2" aria-label="User">
                             <User className="w-5 h-5" />
-                        </button>
+                        </button> */}
                     </div>
 
                     {/* Mobile Menu Button */}
-                    <button 
+                        <button 
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className="lg:hidden text-white hover:text-alpha transition-colors p-2"
+                        className={`lg:hidden hover:text-alpha transition-colors p-2 ${isLight ? 'text-dark' : 'text-white'}`}
                         aria-label="Menu"
                     >
                         {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
