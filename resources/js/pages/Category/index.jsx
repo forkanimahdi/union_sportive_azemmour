@@ -5,7 +5,7 @@ import Footer from '../home/partials/footer';
 import { ChevronRight } from 'lucide-react';
 
 const CLUB_LOGO = '/assets/images/logo.png';
-const USA_HERO_BG = '/assets/images/hero/usa_hero.webp';
+const DEFAULT_HERO = '/assets/images/hero/usa_hero.webp';
 
 // Fallback when no dynamic data
 const CATEGORY_DATA = {
@@ -159,6 +159,7 @@ export default function CategoryIndex({
     category,
     displayName = 'Senior',
     heroNumber = '01',
+    heroImage = DEFAULT_HERO,
     division = '',
     seasonName = '2025–2026',
     stats = { rank: '–', points: 0, players: 0, goalDiff: '–' },
@@ -170,6 +171,7 @@ export default function CategoryIndex({
 }) {
     const [positionFilter, setPositionFilter] = useState('Toutes');
     const fallback = CATEGORY_DATA[category] ?? CATEGORY_DATA.senior;
+    const heroBg = heroImage || DEFAULT_HERO;
     const data = {
         displayName,
         heroNumber,
@@ -219,12 +221,20 @@ export default function CategoryIndex({
 
             <Navbar />
 
-            {/* Hero - Dark gradient (reference design) */}
+            {/* Hero - Photo + dark overlay */}
             <header className="relative min-h-[70vh] flex items-end overflow-hidden pt-24">
+                {/* Background photo - one per category */}
+                <div
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                    style={{ backgroundImage: `url(${heroBg})` }}
+                    role="img"
+                    aria-label={`Équipe ${data.displayName}`}
+                />
+                {/* Dark overlay so photo is visible but text stays readable */}
                 <div
                     className="absolute inset-0"
                     style={{
-                        background: 'linear-gradient(135deg, #0D0D0D 0%, #4A0E22 50%, #1a0810 100%)',
+                        background: 'linear-gradient(135deg, rgba(13,13,13,0.85) 0%, rgba(74,14,34,0.8) 50%, rgba(26,8,16,0.9) 100%)',
                     }}
                 />
                 <div
@@ -432,7 +442,7 @@ export default function CategoryIndex({
                                     const hasPhoto = !!(p.photo);
                                     const bgStyle = hasPhoto
                                         ? { backgroundImage: `url(${p.photo.startsWith('/') ? p.photo : '/storage/' + p.photo})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-                                        : { backgroundImage: `url(${USA_HERO_BG})`, backgroundSize: 'cover', backgroundPosition: 'center' };
+                                        : { backgroundImage: `url(${heroBg})`, backgroundSize: 'cover', backgroundPosition: 'center' };
                                     return (
                                         <div
                                             key={p.id || i}
@@ -480,7 +490,7 @@ export default function CategoryIndex({
                                     const hasStaffPhoto = !!(s.image);
                                     const staffBg = hasStaffPhoto
                                         ? { backgroundImage: `url(${s.image.startsWith('/') ? s.image : '/storage/' + s.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-                                        : { backgroundImage: `url(${USA_HERO_BG})`, backgroundSize: 'cover', backgroundPosition: 'center' };
+                                        : { backgroundImage: `url(${heroBg})`, backgroundSize: 'cover', backgroundPosition: 'center' };
                                     return (
                                         <div key={i} className="p-6 rounded-2xl bg-white border border-gray-200 hover:border-alpha/30 transition-colors text-center">
                                             <div

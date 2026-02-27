@@ -218,6 +218,17 @@ class CategoryController extends Controller
             'u7' => 'U7',
         ];
         $heroNumbers = ['senior' => '01', 'u17' => '02', 'u15' => '03', 'u13' => '04', 'u7' => '05'];
+        $defaultHero = '/assets/images/hero/usa_hero.webp';
+        $heroImages = [
+            'senior' => '/assets/images/hero/hero_senior.webp',
+            'u17' => '/assets/images/hero/hero_u17.webp',
+            'u15' => '/assets/images/hero/hero_u15.webp',
+            'u13' => '/assets/images/hero/hero_u13.webp',
+            'u7' => '/assets/images/hero/hero_u7.webp',
+        ];
+        $categoryHero = $heroImages[$slug] ?? $defaultHero;
+        $heroPath = public_path(ltrim($categoryHero, '/'));
+        $heroImage = file_exists($heroPath) ? $categoryHero : $defaultHero;
         $divisions = [
             'senior' => "Division d'Honneur Régionale — Ligue Chaouia Doukkala",
             'u17' => 'Championnat Régional U17 — Ligue Chaouia Doukkala',
@@ -230,6 +241,7 @@ class CategoryController extends Controller
             'category' => $slug,
             'displayName' => $displayNames[$slug] ?? 'Senior',
             'heroNumber' => $heroNumbers[$slug] ?? '01',
+            'heroImage' => $heroImage,
             'division' => $divisions[$slug] ?? '',
             'seasonName' => $activeSeason?->name ?? '2025–2026',
             'stats' => $stats,
