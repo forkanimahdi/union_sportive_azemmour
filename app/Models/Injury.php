@@ -14,6 +14,9 @@ class Injury extends Model
 
     protected $fillable = [
         'player_id',
+        'match_id',
+        'training_id',
+        'concentration_day_id',
         'reported_by',
         'type',
         'description',
@@ -42,6 +45,21 @@ class Injury extends Model
     public function player(): BelongsTo
     {
         return $this->belongsTo(Player::class);
+    }
+
+    public function match(): BelongsTo
+    {
+        return $this->belongsTo(GameMatch::class, 'match_id');
+    }
+
+    public function training(): BelongsTo
+    {
+        return $this->belongsTo(Training::class);
+    }
+
+    public function concentrationDay(): BelongsTo
+    {
+        return $this->belongsTo(ConcentrationDay::class);
     }
 
     public function reporter(): BelongsTo

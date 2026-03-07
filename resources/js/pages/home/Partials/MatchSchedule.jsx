@@ -118,9 +118,9 @@ export default function MatchSchedule({ matches = [], activeSeason = null }) {
                                         {formatDate(match.scheduled_at)}{match.venue ? `, ${match.venue}` : ''}
                                     </p>
                                     <p className="text-xs text-alpha font-bold mt-1">{formatTime(match.scheduled_at)}</p>
-                                    <button className="mt-4 bg-alpha text-white text-xs font-bold px-4 sm:px-6 py-2 uppercase hover:bg-red-700 transition-colors w-full sm:w-auto">
+                                    {/* <button className="mt-4 bg-alpha text-white text-xs font-bold px-4 sm:px-6 py-2 uppercase hover:bg-red-700 transition-colors w-full sm:w-auto">
                                         Acheter des billets
-                                    </button>
+                                    </button> */}
                                 </div>
                                 );
                             })}

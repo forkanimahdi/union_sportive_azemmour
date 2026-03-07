@@ -40,8 +40,10 @@ const mainNavItems: NavItem[] = [
         href: '#',
         icon: CalendarDays,
         children: [
+            { title: 'Entraînements', href: '/admin/trainings' },
             { title: 'Classement', href: '/admin/classment' },
             { title: 'Calendrier', href: '/admin/fixtures' },
+            { title: 'Matchs', href: '/admin/matches' },
         ],
     },
     {

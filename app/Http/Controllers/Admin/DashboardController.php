@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Concentration;
 use App\Models\Player;
 use App\Models\Training;
 use App\Models\GameMatch;
@@ -22,7 +23,9 @@ class DashboardController extends Controller
             'total_players' => Player::where('is_active', true)->count(),
             'upcoming_trainings' => Training::where('status', 'scheduled')
                 ->where('scheduled_at', '>=', now())
-                ->count(),
+                ->whereNull('concentration_day_id')
+                ->count()
+                + Concentration::where('end_date', '>=', now()->toDateString())->count(),
             'upcoming_matches' => GameMatch::where('status', 'scheduled')
                 ->where('scheduled_at', '>=', now())
                 ->count(),

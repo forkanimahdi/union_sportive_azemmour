@@ -55,6 +55,11 @@ class Team extends Model
         return $this->hasMany(Training::class);
     }
 
+    public function concentrations(): BelongsToMany
+    {
+        return $this->belongsToMany(Concentration::class, 'concentration_team')->withTimestamps();
+    }
+
     public function matches(): HasMany
     {
         return $this->hasMany(GameMatch::class);

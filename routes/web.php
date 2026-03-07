@@ -13,6 +13,8 @@ Route::get('/articles/{article}', [ArticleController::class, 'show'])->name('art
 
 Route::get('/about', App\Http\Controllers\AboutController::class)->name('about');
 
+Route::get('/development', fn () => \Inertia\Inertia::render('Development/index'))->name('development');
+
 Route::get('/category/{category}', [App\Http\Controllers\CategoryController::class, 'show'])->name('category.show');
 
 Route::get('/partenaires', [PartnersController::class, 'index'])->name('partners');

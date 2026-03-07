@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\SeasonController;
 use App\Http\Controllers\Admin\TeamController;
 use App\Http\Controllers\Admin\PlayerController;
 use App\Http\Controllers\Admin\TrainingController;
+use App\Http\Controllers\Admin\ConcentrationController;
 use App\Http\Controllers\Admin\MatchController;
 use App\Http\Controllers\Admin\ConvocationController;
 use App\Http\Controllers\Admin\InjuryController;
@@ -76,6 +77,16 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::middleware('role:admin,technical_director,coach')->group(function () {
         Route::resource('trainings', TrainingController::class);
         Route::post('trainings/{training}/attendance', [TrainingController::class, 'updateAttendance'])->name('trainings.attendance');
+    });
+
+    // Concentrations (camps multi-jours) - Admin, Technical Director & Coach
+    Route::middleware('role:admin,technical_director,coach')->group(function () {
+        Route::resource('concentrations', ConcentrationController::class);
+        Route::post('concentrations/{concentration}/convocation', [ConcentrationController::class, 'updateConvocation'])->name('concentrations.convocation');
+        Route::post('concentrations/{concentration}/convocation/sync', [ConcentrationController::class, 'syncConvocation'])->name('concentrations.convocation.sync');
+        Route::patch('concentrations/{concentration}/days/{day}', [ConcentrationController::class, 'updateDayNotes'])->name('concentrations.days.notes');
+        Route::post('concentrations/{concentration}/days/{day}/sessions', [ConcentrationController::class, 'addSessionToDay'])->name('concentrations.days.sessions');
+        Route::post('concentrations/{concentration}/days/{day}/meals', [ConcentrationController::class, 'addMealToDay'])->name('concentrations.days.meals');
     });
     
     // Matches - Admin, Technical Director & Coach

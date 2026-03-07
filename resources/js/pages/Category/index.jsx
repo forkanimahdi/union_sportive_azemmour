@@ -346,7 +346,7 @@ export default function CategoryIndex({
                                     <span>Score</span>
                                 </div>
                                 <div className="divide-y divide-gray-100">
-                                    {data.results.length > 0 ? data.results.map((r, i) => (
+                                    {data.results.length > 0 ? data.results.reverse().map((r, i) => (
                                         <div key={i} className={`grid grid-cols-[60px_36px_1fr_auto] gap-3 px-4 py-3 items-center hover:bg-gray-50 transition-colors border-l-4 ${getBorderClass(r.type)}`}>
                                             <span className="text-xs text-gray-500">{r.date}</span>
                                             <div className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden shrink-0">

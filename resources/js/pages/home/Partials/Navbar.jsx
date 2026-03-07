@@ -1,10 +1,27 @@
-import React, { useState } from 'react';
-import { Link } from '@inertiajs/react';
-import { Search, ShoppingCart, User, Menu, X } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, usePage } from '@inertiajs/react';
+import { Search, ShoppingCart, User, Menu, X, ChevronDown } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
+
+const TEAMS = [
+    { slug: 'senior', label: 'Senior' },
+    { slug: 'u17', label: 'U17' },
+    { slug: 'u15', label: 'U15' },
+];
 
 export default function Navbar({ variant = 'dark' }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [teamsOpen, setTeamsOpen] = useState(false);
+    const teamsRef = useRef(null);
+
+    useEffect(() => {
+        if (!teamsOpen) return;
+        const close = (e) => {
+            if (teamsRef.current && !teamsRef.current.contains(e.target)) setTeamsOpen(false);
+        };
+        document.addEventListener('click', close);
+        return () => document.removeEventListener('click', close);
+    }, [teamsOpen]);
     const isLight = variant === 'light';
     const navClasses = isLight
         ? 'absolute top-0 left-0 w-full z-50 text-dark bg-white/95 backdrop-blur-sm border-b border-gray-200'
@@ -23,6 +40,30 @@ export default function Navbar({ variant = 'dark' }) {
                     <div className="hidden lg:flex items-center space-x-6 xl:space-x-8 text-sm font-medium tracking-wide uppercase">
                         <Link href="/" className="hover:text-alpha transition-colors px-2 py-1">Accueil</Link>
                         <Link href="/about" className="hover:text-alpha transition-colors px-2 py-1">À Propos</Link>
+                        <Link href="/development" className="hover:text-alpha transition-colors px-2 py-1">Développement</Link>
+                        <div className="relative group">
+                            <button
+                                className="hover:text-alpha transition-colors px-2 py-1 flex items-center gap-1"
+                                aria-haspopup="listbox"
+                                aria-expanded={teamsOpen}
+                            >
+                                Nos Équipes
+                                <ChevronDown className="w-4 h-4" />
+                            </button>
+                            <div className="absolute top-full left-0 pt-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                                <div className={`py-1 rounded-lg shadow-lg min-w-[140px] ${isLight ? 'bg-white border border-gray-200' : 'bg-dark/95 border border-white/10'}`}>
+                                    {TEAMS.map((t) => (
+                                        <Link
+                                            key={t.slug}
+                                            href={`/category/${t.slug}`}
+                                            className={`block px-4 py-2.5 text-sm whitespace-nowrap hover:bg-alpha hover:text-white transition-colors first:rounded-t-lg last:rounded-b-lg ${isLight ? 'text-dark' : 'text-white'}`}
+                                        >
+                                            {t.label}
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
                         <Link href="/partenaires" className="hover:text-alpha transition-colors px-2 py-1">Partenaires</Link>
                         <Link href="/shop" className="hover:text-alpha transition-colors px-2 py-1">Boutique</Link>
                         <Link href="/contact" className="hover:text-alpha transition-colors px-2 py-1">Contact</Link>
@@ -70,6 +111,24 @@ export default function Navbar({ variant = 'dark' }) {
                             >
                                 À Propos
                             </Link>
+                            <Link 
+                                href="/development" 
+                                className="block hover:text-alpha transition-colors uppercase font-medium py-2"
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                Développement
+                            </Link>
+                            <span className="block text-gray-400 uppercase text-xs font-semibold pt-2 pb-1">Nos Équipes</span>
+                            {TEAMS.map((t) => (
+                                <Link
+                                    key={t.slug}
+                                    href={`/category/${t.slug}`}
+                                    className="block hover:text-alpha transition-colors uppercase font-medium py-2 pl-4"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    {t.label}
+                                </Link>
+                            ))}
                             <Link 
                                 href="/partenaires" 
                                 className="block hover:text-alpha transition-colors uppercase font-medium py-2"
