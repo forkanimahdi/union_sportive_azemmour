@@ -173,7 +173,32 @@ class PlayerController extends Controller
             'imageRight',
             'matchLineups.match',
             'matchEvents.match',
+            'trainingAttendances.training.team',
         ]);
+
+        $trainingLog = $player->trainingAttendances()
+            ->with('training.team')
+            ->get()
+            ->sortByDesc(fn ($att) => $att->training?->scheduled_at)
+            ->values()
+            ->map(function ($att) {
+                $t = $att->training;
+                return [
+                    'id' => $att->id,
+                    'training_id' => $t?->id,
+                    'scheduled_at' => $t?->scheduled_at?->format('Y-m-d H:i'),
+                    'date' => $t?->scheduled_at?->format('Y-m-d'),
+                    'time' => $t?->scheduled_at?->format('H:i'),
+                    'team_name' => $t?->team?->name,
+                    'team_category' => $t?->team?->category,
+                    'location' => $t?->location,
+                    'status' => $att->status,
+                    'arrival_time' => $att->arrival_time?->format('H:i'),
+                    'notes' => $att->notes,
+                ];
+            })
+            ->values()
+            ->all();
 
         // Calculate statistics
         $appearances = $player->matchLineups()->whereHas('match', function($q) {
@@ -351,6 +376,7 @@ class PlayerController extends Controller
                         'suspension_end_date' => $d->suspension_end_date ? $d->suspension_end_date->format('Y-m-d') : null,
                     ];
                 }),
+                'training_log' => $trainingLog,
             ],
             'teams' => $teams,
         ]);

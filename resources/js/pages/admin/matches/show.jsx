@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import AdminLayout from '../../../layouts/AdminLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
+import MatchEditModal from '@/components/admin/MatchEditModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -40,11 +41,12 @@ function positionPillClass(position) {
     return 'bg-neutral-500/10 text-neutral-700 border-neutral-500/20';
 }
 
-export default function MatchShow({ match, teamPlayers, existingLineup = [] }) {
+export default function MatchShow({ match, teamPlayers, existingLineup = [], teams = [], opponentTeams = [] }) {
     const [activeTab, setActiveTab] = useState('overview');
     const [isEditingScores, setIsEditingScores] = useState(false);
     const [lineupDialogOpen, setLineupDialogOpen] = useState(false);
     const [eventDialogOpen, setEventDialogOpen] = useState(false);
+    const [editModalOpen, setEditModalOpen] = useState(false);
 
     const { data: scoreData, setData: setScoreData, put: updateMatch } = useForm({
         home_score: match.home_score || null,
@@ -160,12 +162,10 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [] }) {
                                 Retour
                             </Button>
                         </Link>
-                        <Link href={`/admin/matches/${match.id}/edit`}>
-                            <Button variant="outline" size="sm">
-                                <Edit className="w-4 h-4 mr-2" />
-                                Modifier
-                            </Button>
-                        </Link>
+                        <Button variant="outline" size="sm" onClick={() => setEditModalOpen(true)}>
+                            <Edit className="w-4 h-4 mr-2" />
+                            Modifier
+                        </Button>
                     </div>
                 </div>
 
@@ -234,6 +234,11 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [] }) {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <Badge>{match.category}</Badge>
+                                {match.game_type === 'amical' && (
+                                    <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50">
+                                        Amical
+                                    </Badge>
+                                )}
                                 <Badge variant={match.status === 'finished' ? 'default' : 'outline'}>
                                     {match.status}
                                 </Badge>
@@ -788,6 +793,15 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [] }) {
                     </DialogContent>
                 </Dialog>
             </div>
+
+            <MatchEditModal
+                open={editModalOpen}
+                onOpenChange={setEditModalOpen}
+                match={match}
+                teams={teams}
+                opponentTeams={opponentTeams}
+                onSuccess={() => router.reload()}
+            />
         </AdminLayout>
     );
 }

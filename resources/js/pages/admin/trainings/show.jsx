@@ -9,6 +9,26 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, User, Dumbbell, Link as LinkIcon } from 'lucide-react';
 
 const statusLabels = { present: 'Présent', absent: 'Absent', late: 'Retard', excused: 'Excusé' };
+const attendanceRowClass = (status) => {
+    switch (status) {
+        case 'present': return 'bg-emerald-50/50 border-emerald-100';
+        case 'absent': return 'bg-red-50/50 border-red-100';
+        case 'late': return 'bg-amber-50/50 border-amber-100';
+        case 'excused': return 'bg-slate-50/50 border-slate-100';
+        default: return '';
+    }
+};
+
+const getStatusConfig = (status) => {
+    switch (status) {
+        case 'completed':
+            return { label: 'Réalisée', bg: 'bg-emerald-600', light: 'bg-emerald-50', border: 'border-emerald-200', badge: 'bg-emerald-100 text-emerald-800' };
+        case 'cancelled':
+            return { label: 'Annulée', bg: 'bg-red-600', light: 'bg-red-50', border: 'border-red-200', badge: 'bg-red-100 text-red-800' };
+        default:
+            return { label: 'Programmée', bg: 'bg-alpha', light: 'bg-alpha', border: 'border-alpha', badge: 'bg-alpha text-alpha' };
+    }
+};
 
 export default function TrainingShow({ training, players = [], sessionTypes = {} }) {
     const [saving, setSaving] = useState(false);
@@ -35,31 +55,39 @@ export default function TrainingShow({ training, players = [], sessionTypes = {}
         post(`/admin/trainings/${training.id}/attendance`, { onFinish: () => setSaving(false) });
     };
 
+    const statusConfig = getStatusConfig(training.status);
+
     return (
         <AdminLayout>
             <Head title={`Séance ${formatDate(training.scheduled_at)}`} />
             <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <h1 className="text-3xl font-black uppercase italic text-dark">Séance · {training.team?.name}</h1>
-                            <Badge variant={training.status === 'scheduled' ? 'default' : training.status === 'completed' ? 'secondary' : 'outline'}>
-                                {training.status === 'scheduled' ? 'Programmée' : training.status === 'completed' ? 'Réalisée' : 'Annulée'}
-                            </Badge>
-                            {training.concentration && (
-                                <Link href={`/admin/concentrations/${training.concentration.id}`}>
-                                    <Badge variant="outline" className="cursor-pointer"><LinkIcon className="w-3 h-3 mr-1" />{training.concentration.name}</Badge>
-                                </Link>
-                            )}
+                <div className={`rounded-xl ${statusConfig.bg} text-white px-5 py-5 sm:px-6 shadow-lg`}>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h1 className="text-2xl font-black uppercase italic text-white">Séance · {training.team?.name}</h1>
+                                <span className="inline-flex items-center rounded-md px-2.5 py-1 text-sm font-semibold bg-white/20 text-white">
+                                    {statusConfig.label}
+                                </span>
+                                {training.concentration && (
+                                    <Link href={`/admin/concentrations/${training.concentration.id}`}>
+                                        <span className="inline-flex items-center rounded-md px-2.5 py-1 text-sm font-medium bg-white/20 text-white hover:bg-white/30 cursor-pointer">
+                                            <LinkIcon className="w-3 h-3 mr-1" />{training.concentration.name}
+                                        </span>
+                                    </Link>
+                                )}
+                            </div>
+                            <p className="text-white/90 mt-1">{formatDate(training.scheduled_at)} · {formatTime(training.scheduled_at)}</p>
                         </div>
-                        <p className="text-muted-foreground mt-1">{formatDate(training.scheduled_at)} · {formatTime(training.scheduled_at)}</p>
+                        {!training.concentration && (
+                            <Link href={`/admin/trainings/${training.id}/edit`}>
+                                <Button variant="secondary" className="bg-white text-gray-900 hover:bg-white/90">Modifier</Button>
+                            </Link>
+                        )}
                     </div>
-                    {!training.concentration && (
-                        <Link href={`/admin/trainings/${training.id}/edit`}><Button variant="outline">Modifier</Button></Link>
-                    )}
                 </div>
 
-                <Card>
+                <Card className={`border-l-4 ${training.status === 'completed' ? 'border-l-emerald-500' : training.status === 'cancelled' ? 'border-l-red-400' : 'border-l-alpha'}`}>
                     <CardHeader><CardTitle>Détails</CardTitle></CardHeader>
                     <CardContent className="space-y-3">
                         <div className="flex items-center gap-2"><Calendar className="w-5 h-5 text-muted-foreground" /><span>{formatDate(training.scheduled_at)} à {formatTime(training.scheduled_at)}</span></div>
@@ -87,9 +115,13 @@ export default function TrainingShow({ training, players = [], sessionTypes = {}
                                             {players.map((p) => {
                                                 const att = data.attendances.find((a) => a.player_id === p.id) || {};
                                                 return (
-                                                    <tr key={p.id} className="border-b border-border/50">
+                                                    <tr key={p.id} className={`border-b border-border/50 ${attendanceRowClass(att.status || 'present')}`}>
                                                         <td className="py-2 font-medium">{p.number}</td>
-                                                        <td className="py-2">{p.first_name} {p.last_name}</td>
+                                                        <td className="py-2">
+                                                            <Link href={`/admin/players/${p.id}`} className="font-medium text-primary hover:underline">
+                                                                {p.first_name} {p.last_name}
+                                                            </Link>
+                                                        </td>
                                                         <td className="py-2">
                                                             <Select value={att.status || 'present'} onValueChange={(v) => updateAttendance(p.id, 'status', v)}>
                                                                 <SelectTrigger className="w-[130px] h-9"><SelectValue /></SelectTrigger>

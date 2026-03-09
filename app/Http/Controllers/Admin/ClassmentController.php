@@ -227,6 +227,10 @@ class ClassmentController extends Controller
 
         $finished = GameMatch::where('team_id', $ourTeam->id)
             ->where('status', 'finished')
+            ->where(function ($q) {
+                $q->where('game_type', GameMatch::GAME_TYPE_OFFICIAL)
+                    ->orWhereNull('game_type');
+            })
             ->get();
 
         $wins = $draws = $losses = 0;

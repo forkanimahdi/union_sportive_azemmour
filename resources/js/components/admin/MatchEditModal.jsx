@@ -39,6 +39,7 @@ export default function MatchEditModal({
         scheduled_at: match?.scheduled_at ? match.scheduled_at.replace(' ', 'T').slice(0, 16) : '',
         venue: match?.venue || '',
         type: match?.type || 'domicile',
+        game_type: match?.game_type || 'official',
         status: match?.status || 'scheduled',
         home_score: match?.home_score ?? '',
         away_score: match?.away_score ?? '',
@@ -157,7 +158,7 @@ export default function MatchEditModal({
                                 {errors.scheduled_at && <p className="text-sm text-destructive">{errors.scheduled_at}</p>}
                             </div>
                             <div className="space-y-2">
-                                <Label>Type</Label>
+                                <Label>Domicile / Extérieur</Label>
                                 <Select value={data.type} onValueChange={(v) => setData('type', v)}>
                                     <SelectTrigger>
                                         <SelectValue />
@@ -168,6 +169,18 @@ export default function MatchEditModal({
                                     </SelectContent>
                                 </Select>
                             </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Type de rencontre</Label>
+                            <Select value={data.game_type} onValueChange={(v) => setData('game_type', v)}>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="official">Officiel (compte pour le classement)</SelectItem>
+                                    <SelectItem value="amical">Amical (hors classement)</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label>Lieu</Label>

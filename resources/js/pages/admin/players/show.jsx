@@ -30,6 +30,8 @@ import {
     Upload,
     Badge,
     Trash2,
+    Dumbbell,
+    MapPin,
 } from 'lucide-react';
 import InputError from '@/components/input-error';
 import DeleteModal from '@/components/DeleteModal';
@@ -484,6 +486,56 @@ export default function PlayersShow({ player, teams = [] }) {
                                     </div>
                                 </CardContent>
                             </Card>
+
+                            {/* Training log */}
+                            {(player.training_log?.length ?? 0) > 0 && (
+                                <Card className="border shadow-sm">
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                                            <Dumbbell className="h-4 w-4" />
+                                            Journal d&apos;entraînement
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="space-y-2 max-h-[320px] overflow-y-auto">
+                                            {(player.training_log || []).map((log) => {
+                                                const statusStyles = {
+                                                    present: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                                                    absent: 'bg-red-100 text-red-800 border-red-200',
+                                                    late: 'bg-amber-100 text-amber-800 border-amber-200',
+                                                    excused: 'bg-slate-100 text-slate-700 border-slate-200',
+                                                };
+                                                const statusLabels = { present: 'Présent', absent: 'Absent', late: 'Retard', excused: 'Excusé' };
+                                                const style = statusStyles[log.status] || statusStyles.present;
+                                                return (
+                                                    <Link
+                                                        key={log.id}
+                                                        href={`/admin/trainings/${log.training_id}`}
+                                                        className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm hover:bg-muted/50 transition-colors"
+                                                    >
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <span className="font-medium text-foreground">{log.date}</span>
+                                                            <span className="text-muted-foreground">{log.time}</span>
+                                                            {log.team_name && (
+                                                                <span className="text-muted-foreground">· {log.team_name}</span>
+                                                            )}
+                                                            {log.location && (
+                                                                <span className="flex items-center gap-1 text-muted-foreground">
+                                                                    <MapPin className="h-3.5 w-3.5" />
+                                                                    {log.location}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${style}`}>
+                                                            {statusLabels[log.status] || log.status}
+                                                        </span>
+                                                    </Link>
+                                                );
+                                            })}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
                         </div>
                     </div>
                 </div>

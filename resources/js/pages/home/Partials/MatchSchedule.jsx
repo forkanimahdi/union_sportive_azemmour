@@ -89,6 +89,11 @@ export default function MatchSchedule({ matches = [], activeSeason = null }) {
                                     className="min-w-[calc(100%-16px)] sm:min-w-[calc(50%-12px)] lg:min-w-[calc(33.333%-21.33px)] border border-gray-200 p-4 sm:p-6 flex flex-col items-center hover:shadow-xl transition-shadow group relative overflow-hidden bg-white"
                                 >
                                     <div className="absolute top-0 left-0 w-1 h-full bg-alpha opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                    {match.game_type === 'amical' && (
+                                        <span className="absolute top-2 right-2 text-[10px] sm:text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
+                                            Amical
+                                        </span>
+                                    )}
                                     <div className="flex justify-between w-full items-center mb-4 gap-2">
                                         <div className="text-center flex-1">
                                             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full mb-2 mx-auto overflow-hidden bg-gray-100 flex items-center justify-center shrink-0">

@@ -15,6 +15,9 @@ class GameMatch extends Model
 
     protected $table = 'matches';
 
+    public const GAME_TYPE_OFFICIAL = 'official';
+    public const GAME_TYPE_AMICAL = 'amical';
+
     protected $fillable = [
         'competition_id',
         'team_id',
@@ -24,6 +27,7 @@ class GameMatch extends Model
         'scheduled_at',
         'venue',
         'type',
+        'game_type',
         'home_score',
         'away_score',
         'status',

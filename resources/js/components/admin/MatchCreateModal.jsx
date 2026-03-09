@@ -51,6 +51,7 @@ export default function MatchCreateModal({
         scheduled_at: '',
         venue: '',
         type: 'domicile',
+        game_type: 'official',
     });
 
     const [step, setStep] = useState(1);
@@ -423,6 +424,30 @@ export default function MatchCreateModal({
                                 {errors.venue && (
                                     <p className="text-sm text-destructive">{errors.venue}</p>
                                 )}
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Type de rencontre</Label>
+                                <div className="flex gap-2">
+                                    <Button
+                                        type="button"
+                                        variant={data.game_type === 'official' ? 'default' : 'outline'}
+                                        size="sm"
+                                        onClick={() => setData('game_type', 'official')}
+                                    >
+                                        Officiel
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant={data.game_type === 'amical' ? 'default' : 'outline'}
+                                        size="sm"
+                                        onClick={() => setData('game_type', 'amical')}
+                                    >
+                                        Amical
+                                    </Button>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Les matchs amicaux ne comptent pas pour le classement.
+                                </p>
                             </div>
                         </div>
                     )}

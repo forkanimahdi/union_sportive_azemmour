@@ -48,6 +48,7 @@ class HomeController extends Controller
                     'scheduled_at' => $m->scheduled_at?->format('Y-m-d H:i'),
                     'venue' => $m->venue,
                     'type' => $m->type,
+                    'game_type' => $m->game_type ?? 'official',
                     'status' => $m->status,
                     'opponent_name' => $m->opponentTeam?->name ?? $m->opponent,
                 ];

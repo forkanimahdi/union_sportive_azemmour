@@ -56,6 +56,7 @@ class MatchController extends Controller
                     'scheduled_at' => $match->scheduled_at?->format('Y-m-d H:i'),
                     'venue' => $match->venue,
                     'type' => $match->type,
+                    'game_type' => $match->game_type ?? 'official',
                     'home_score' => $match->home_score,
                     'away_score' => $match->away_score,
                     'status' => $match->status,
@@ -101,7 +102,7 @@ class MatchController extends Controller
             });
         }
 
-        $matches = $query->orderBy('scheduled_at', 'asc')
+        $matches = $query->orderBy('scheduled_at', 'desc')
             ->get()
             ->map(function ($match) {
                 return [
@@ -121,6 +122,7 @@ class MatchController extends Controller
                     'scheduled_at' => $match->scheduled_at?->format('Y-m-d H:i'),
                     'venue' => $match->venue,
                     'type' => $match->type,
+                    'game_type' => $match->game_type ?? 'official',
                     'home_score' => $match->home_score,
                     'away_score' => $match->away_score,
                     'status' => $match->status,
@@ -209,7 +211,9 @@ class MatchController extends Controller
             'scheduled_at' => 'required|date',
             'venue' => 'required|string|max:255',
             'type' => 'required|in:domicile,exterieur',
+            'game_type' => 'nullable|string|in:official,amical',
         ]);
+        $validated['game_type'] = $validated['game_type'] ?? GameMatch::GAME_TYPE_OFFICIAL;
 
         // If no opponent_team_id, opponent string is required
         if (!$validated['opponent_team_id'] && !$validated['opponent']) {
@@ -256,10 +260,22 @@ class MatchController extends Controller
         // Sort events by minute
         $sortedEvents = $match->events->sortBy('minute')->values();
 
+        $activeSeason = Season::where('is_active', true)->first();
+        $teams = Team::when($activeSeason, fn ($q) => $q->where('season_id', $activeSeason->id))
+            ->where('is_active', true)
+            ->orderBy('category')
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($t) => ['id' => $t->id, 'name' => $t->name, 'category' => $t->category]);
+        $opponentTeams = OpponentTeam::orderBy('name')->get()
+            ->map(fn ($ot) => ['id' => $ot->id, 'name' => $ot->name, 'logo' => $ot->logo, 'category' => $ot->category]);
+
         return Inertia::render('admin/matches/show', [
             'match' => $this->matchToArray($match, $teamPlayers, $sortedEvents),
             'teamPlayers' => $teamPlayers,
             'existingLineup' => $existingLineup,
+            'teams' => $teams,
+            'opponentTeams' => $opponentTeams,
         ]);
     }
 
@@ -324,6 +340,7 @@ class MatchController extends Controller
             'scheduled_at' => $match->scheduled_at?->format('Y-m-d H:i'),
             'venue' => $match->venue,
             'type' => $match->type,
+            'game_type' => $match->game_type ?? 'official',
             'home_score' => $match->home_score,
             'away_score' => $match->away_score,
             'status' => $match->status,
@@ -385,6 +402,7 @@ class MatchController extends Controller
                 'scheduled_at' => $match->scheduled_at?->format('Y-m-d\\TH:i'),
                 'venue' => $match->venue,
                 'type' => $match->type,
+                'game_type' => $match->game_type ?? 'official',
                 'status' => $match->status,
             ],
             'teams' => $teams,
@@ -402,12 +420,14 @@ class MatchController extends Controller
             'scheduled_at' => 'required|date',
             'venue' => 'required|string|max:255',
             'type' => 'required|in:domicile,exterieur',
+            'game_type' => 'nullable|string|in:official,amical',
             'status' => 'required|in:scheduled,live,finished,postponed,cancelled',
             'home_score' => 'nullable|integer|min:0',
             'away_score' => 'nullable|integer|min:0',
             'match_report' => 'nullable|string',
             'coach_notes' => 'nullable|string',
         ]);
+        $validated['game_type'] = $validated['game_type'] ?? GameMatch::GAME_TYPE_OFFICIAL;
 
         $match->update($validated);
 

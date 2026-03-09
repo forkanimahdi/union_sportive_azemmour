@@ -24,6 +24,17 @@ export default function TrainingsIndex({
     const sessions = trainings?.data ?? [];
     const concList = concentrations?.data ?? [];
 
+    const getStatusConfig = (status) => {
+        switch (status) {
+            case 'completed':
+                return { label: 'Réalisée', border: 'border-l-emerald-500', bg: 'bg-emerald-50', badge: 'bg-emerald-100 text-emerald-800 border-emerald-200' };
+            case 'cancelled':
+                return { label: 'Annulée', border: 'border-l-red-400', bg: 'bg-red-50', badge: 'bg-red-100 text-red-800 border-red-200' };
+            default:
+                return { label: 'Programmée', border: 'border-l-alpha', bg: 'bg-alpha/20', badge: 'bg-alpha text-white border-alpha' };
+        }
+    };
+
     return (
         <AdminLayout>
             <Head title="Entraînements" />
@@ -100,43 +111,46 @@ export default function TrainingsIndex({
                                         Aucune séance. Créez une séance classique ou une concentration.
                                     </div>
                                 ) : (
-                                    <ul className="divide-y">
-                                        {sessions.map((t) => (
-                                            <li key={t.id}>
-                                                <Link
-                                                    href={`/admin/trainings/${t.id}`}
-                                                    className="flex flex-wrap items-center gap-4 p-4 hover:bg-muted/50 transition-colors"
-                                                >
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                            <span className="font-semibold">
-                                                                {formatDate(t.scheduled_at)} · {formatTime(t.scheduled_at)}
-                                                            </span>
-                                                            <Badge variant={t.status === 'scheduled' ? 'default' : t.status === 'completed' ? 'secondary' : 'outline'}>
-                                                                {t.status === 'scheduled' ? 'Programmée' : t.status === 'completed' ? 'Réalisée' : 'Annulée'}
-                                                            </Badge>
-                                                        </div>
-                                                        <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-                                                            <span className="flex items-center gap-1">
-                                                                <Users className="w-4 h-4" />
-                                                                {t.team?.name} ({t.team?.category})
-                                                            </span>
-                                                            <span className="flex items-center gap-1">
-                                                                <MapPin className="w-4 h-4" />
-                                                                {t.location}
-                                                            </span>
-                                                            {t.session_type && sessionTypes[t.session_type] && (
-                                                                <span className="flex items-center gap-1">
-                                                                    <Dumbbell className="w-4 h-4" />
-                                                                    {sessionTypes[t.session_type]}
+                                    <ul className="space-y-3">
+                                        {sessions.map((t) => {
+                                            const statusConfig = getStatusConfig(t.status);
+                                            return (
+                                                <li key={t.id}>
+                                                    <Link
+                                                        href={`/admin/trainings/${t.id}`}
+                                                        className={`flex flex-wrap items-center gap-4 p-4 rounded-xl border border-l-4 ${statusConfig.border} ${statusConfig.bg} border-gray-200 hover:shadow-md transition-all`}
+                                                    >
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="font-semibold text-gray-900">
+                                                                    {formatDate(t.scheduled_at)} · {formatTime(t.scheduled_at)}
                                                                 </span>
-                                                            )}
+                                                                <Badge className={`${statusConfig.badge} border font-medium`}>
+                                                                    {statusConfig.label}
+                                                                </Badge>
+                                                            </div>
+                                                            <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+                                                                <span className="flex items-center gap-1">
+                                                                    <Users className="w-4 h-4" />
+                                                                    {t.team?.name} ({t.team?.category})
+                                                                </span>
+                                                                <span className="flex items-center gap-1">
+                                                                    <MapPin className="w-4 h-4" />
+                                                                    {t.location}
+                                                                </span>
+                                                                {t.session_type && sessionTypes[t.session_type] && (
+                                                                    <span className="flex items-center gap-1">
+                                                                        <Dumbbell className="w-4 h-4" />
+                                                                        {sessionTypes[t.session_type]}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                                                </Link>
-                                            </li>
-                                        ))}
+                                                        <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                                                    </Link>
+                                                </li>
+                                            );
+                                        })}
                                     </ul>
                                 )}
                             </CardContent>

@@ -81,9 +81,15 @@ class SeasonController extends Controller
         // Get all trainings for calendar
         $allTrainings = $season->teams->flatMap->trainings->sortBy('scheduled_at');
 
-        // Calculate standings/rankings
+        // Calculate standings/rankings (exclude friendly matches)
         $standings = $season->teams->map(function ($team) {
-            $matches = $team->matches()->where('status', 'finished')->get();
+            $matches = $team->matches()
+                ->where('status', 'finished')
+                ->where(function ($q) {
+                    $q->where('game_type', \App\Models\GameMatch::GAME_TYPE_OFFICIAL)
+                        ->orWhereNull('game_type');
+                })
+                ->get();
             $wins = $matches->filter(function($m) {
                 if ($m->type === 'domicile') {
                     return $m->home_score > $m->away_score;

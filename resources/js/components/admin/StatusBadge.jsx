@@ -10,7 +10,7 @@ export default function StatusBadge({ status, type = 'default' }) {
             unavailable: { label: 'Indisponible', color: 'bg-gray-100 text-gray-800', icon: Clock },
         },
         training: {
-            scheduled: { label: 'Programmé', color: 'bg-blue-100 text-blue-800', icon: Clock },
+            scheduled: { label: 'Programmé', color: 'bg-alpha text-alpha', icon: Clock },
             completed: { label: 'Terminé', color: 'bg-green-100 text-green-800', icon: CheckCircle2 },
             cancelled: { label: 'Annulé', color: 'bg-red-100 text-red-800', icon: XCircle },
         },

@@ -9,10 +9,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Plus, MapPin, Pencil, FileText } from 'lucide-react';
+import { Plus, MapPin, ChevronRight } from 'lucide-react';
 import MatchCreateModal from '@/components/admin/MatchCreateModal';
-import MatchEditModal from '@/components/admin/MatchEditModal';
-import MatchDetailsModal from '@/components/admin/MatchDetailsModal';
 
 const CLUB_LOGO = '/assets/images/logo.png';
 
@@ -34,13 +32,11 @@ export default function FixturesIndex({
 }) {
     const [categoryTab, setCategoryTab] = useState('Senior');
     const [createModalOpen, setCreateModalOpen] = useState(false);
-    const [editModalMatch, setEditModalMatch] = useState(null);
-    const [detailsModalMatch, setDetailsModalMatch] = useState(null);
 
     const filteredMatches = useMemo(() => {
         let list = Array.isArray(matches) ? [...matches] : [];
         list = list.filter((m) => (m.category || 'Senior') === categoryTab);
-        list.sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
+        list.sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at));
         return list;
     }, [matches, categoryTab]);
 
@@ -128,26 +124,6 @@ export default function FixturesIndex({
                         activeSeason={activeSeason}
                         onSuccess={() => router.reload()}
                     />
-                    <MatchEditModal
-                        key={editModalMatch?.id}
-                        open={!!editModalMatch}
-                        onOpenChange={(open) => !open && setEditModalMatch(null)}
-                        match={editModalMatch}
-                        teams={modalTeams.length ? modalTeams : teams}
-                        opponentTeams={opponentTeams}
-                        onSuccess={() => router.reload()}
-                    />
-                    <MatchDetailsModal
-                        key={detailsModalMatch?.id}
-                        open={!!detailsModalMatch}
-                        onOpenChange={(open) => !open && setDetailsModalMatch(null)}
-                        match={detailsModalMatch}
-                        onSuccess={() => {
-                            setDetailsModalMatch(null);
-                            router.reload();
-                        }}
-                    />
-
                     {/* Category tabs */}
                     <div className="mb-6 flex gap-1 rounded-lg border border-neutral-200 bg-white p-1">
                         {CATEGORIES.map((cat) => (
@@ -203,7 +179,11 @@ export default function FixturesIndex({
                                 return (
                                     <div
                                         key={match.id}
-                                        className="relative overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm transition-shadow hover:shadow-md"
+                                        role="button"
+                                        tabIndex={0}
+                                        onClick={() => router.visit(`/admin/matches/${match.id}`)}
+                                        onKeyDown={(e) => e.key === 'Enter' && router.visit(`/admin/matches/${match.id}`)}
+                                        className="relative overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm transition-shadow hover:shadow-md cursor-pointer"
                                     >
                                         {isLive && (
                                             <div className="absolute right-4 top-4 flex h-6 items-center gap-1 rounded-full bg-red-500 px-2.5 text-xs font-bold text-white">
@@ -307,26 +287,10 @@ export default function FixturesIndex({
                                                     <MapPin className="h-4 w-4" />
                                                     {getLocationLabel(match.venue, match.type)}
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="border-primary text-primary hover:bg-primary/10"
-                                                        onClick={() => setDetailsModalMatch(match)}
-                                                    >
-                                                        <FileText className="mr-1.5 h-4 w-4" />
-                                                        Détails
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-9 w-9 text-neutral-600 hover:text-primary"
-                                                        aria-label="Modifier"
-                                                        onClick={() => setEditModalMatch(match)}
-                                                    >
-                                                        <Pencil className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
+                                                <span className="inline-flex items-center gap-1 text-sm font-medium text-primary">
+                                                    Voir le match
+                                                    <ChevronRight className="h-4 w-4" />
+                                                </span>
                                             </div>
                                         </div>
                                     </div>

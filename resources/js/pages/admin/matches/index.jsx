@@ -98,7 +98,7 @@ export default function MatchesIndex({ matches, seasons = [], teams = [], oppone
     };
 
     const statusConfig = {
-        scheduled: { label: 'Programmé', color: 'bg-blue-500/10 text-blue-700 border-blue-500/20', icon: Calendar },
+        scheduled: { label: 'Programmé', color: 'bg-alpha/10 text-alpha border-alpha', icon: Calendar },
         live: { label: 'En direct', color: 'bg-red-500/10 text-red-700 border-red-500/20', icon: Radio },
         finished: { label: 'Terminé', color: 'bg-green-500/10 text-green-700 border-green-500/20', icon: Trophy },
         postponed: { label: 'Reporté', color: 'bg-yellow-500/10 text-yellow-700 border-yellow-500/20', icon: Calendar },
@@ -361,8 +361,14 @@ export default function MatchesIndex({ matches, seasons = [], teams = [], oppone
                                                                 </div>
                                                             </div>
 
-                                                            {/* Status Badge */}
-                                                            <div className="flex items-center justify-between mb-4">
+                                                            {/* Status & game type */}
+                                                            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                                                                <div className="flex items-center gap-2">
+                                                                    {match.game_type === 'amical' && (
+                                                                        <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50">
+                                                                            Amical
+                                                                        </Badge>
+                                                                    )}
                                                                 {match.status === 'finished' && (
                                                                     <Badge className="bg-alpha/10 text-alpha border-alpha">
                                                                         Terminé
@@ -391,6 +397,7 @@ export default function MatchesIndex({ matches, seasons = [], teams = [], oppone
                                                                 
                                                                 <div className={`text-xs font-semibold ${isHome ? 'text-alpha' : 'text-beta'}`}>
                                                                     {isHome ? '🏠 Domicile' : '✈️ Extérieur'}
+                                                                </div>
                                                                 </div>
                                                             </div>
 

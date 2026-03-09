@@ -17,6 +17,7 @@ export default function MatchCreate({ teams, opponentTeams, activeSeason }) {
         scheduled_at: '',
         venue: '',
         type: 'domicile',
+        game_type: 'official',
     });
 
     const [useOpponentTeam, setUseOpponentTeam] = useState(true);
@@ -175,7 +176,7 @@ export default function MatchCreate({ teams, opponentTeams, activeSeason }) {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="type">Type de match *</Label>
+                                    <Label htmlFor="type">Domicile / Extérieur *</Label>
                                     <Select value={data.type} onValueChange={(value) => setData('type', value)}>
                                         <SelectTrigger className="bg-white/50 backdrop-blur-sm">
                                             <SelectValue />
@@ -186,6 +187,19 @@ export default function MatchCreate({ teams, opponentTeams, activeSeason }) {
                                         </SelectContent>
                                     </Select>
                                     {errors.type && <p className="text-sm text-destructive">{errors.type}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="game_type">Type de rencontre</Label>
+                                    <Select value={data.game_type} onValueChange={(value) => setData('game_type', value)}>
+                                        <SelectTrigger className="bg-white/50 backdrop-blur-sm">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="official">Officiel (compte pour le classement)</SelectItem>
+                                            <SelectItem value="amical">Amical (hors classement)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.game_type && <p className="text-sm text-destructive">{errors.game_type}</p>}
                                 </div>
                             </div>
 
