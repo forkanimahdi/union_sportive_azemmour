@@ -143,6 +143,9 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         Route::post('product-categories', [ProductCategoryController::class, 'store'])->name('product-categories.store');
         Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
         Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
+        Route::get('orders/{order}/status-email-preview', [OrderController::class, 'previewStatusEmail'])->name('orders.preview-status-email');
+        Route::post('orders/{order}/send-status-notification', [OrderController::class, 'sendStatusNotification'])->name('orders.send-status-notification');
+        Route::delete('orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
     });
 
     // Communications - Articles, Sponsors & Histoires

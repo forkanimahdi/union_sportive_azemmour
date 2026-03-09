@@ -320,14 +320,15 @@ export default function ShopShow({ product }) {
                 </div>
             </div>
 
-            {/* Order modal */}
+            {/* Order modal - flexible and scrollable */}
             <Dialog open={orderModalOpen} onOpenChange={(open) => { setOrderModalOpen(open); if (!open) resetOrderForm(); }}>
-                <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
+                <DialogContent className="flex flex-col sm:max-w-lg max-h-[90vh] p-0 gap-0 overflow-hidden">
+                    <DialogHeader className="shrink-0 px-6 pt-6 pb-2">
                         <DialogTitle className="text-xl font-black uppercase italic">Passer commande</DialogTitle>
                         <p className="text-sm text-gray-500 mt-1">{product.name}</p>
                     </DialogHeader>
-                    <form onSubmit={handleOrderSubmit} className="space-y-4 mt-4">
+                    <form onSubmit={handleOrderSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                        <div className="overflow-y-auto px-6 py-4 space-y-4 flex-1 min-h-0">
                         <div>
                             <Label htmlFor="order_name">Nom (optionnel)</Label>
                             <Input
@@ -541,7 +542,8 @@ export default function ShopShow({ product }) {
                                 className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                             />
                         </div>
-                        <DialogFooter className="gap-2 sm:gap-0 pt-4">
+                        </div>
+                        <DialogFooter className="shrink-0 gap-2 sm:gap-0 pt-4 px-6 pb-6 border-t bg-muted/30">
                             <Button type="button" variant="outline" onClick={() => setOrderModalOpen(false)}>
                                 Annuler
                             </Button>
