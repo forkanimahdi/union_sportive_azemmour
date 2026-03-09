@@ -23,6 +23,9 @@ Route::get('/contact', function () {
     return Inertia::render('Contact/index');
 })->name('contact');
 
+Route::get('/politique-confidentialite', fn () => Inertia::render('Privacy/index'))->name('privacy');
+Route::get('/conditions-generales', fn () => Inertia::render('Terms/index'))->name('terms');
+
 Route::get('/shop', [ShopController::class, 'index'])->name('shop');
 Route::get('/shop/{product}', [ShopController::class, 'show'])->name('shop.show');
 Route::post('/shop/{product}/order', [ShopController::class, 'storeOrder'])->name('shop.order.store');

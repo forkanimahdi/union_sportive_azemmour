@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from '@inertiajs/react';
 import { Facebook, Twitter, Instagram, Linkedin, Send } from 'lucide-react';
 
 export default function Footer() {
@@ -60,8 +61,8 @@ export default function Footer() {
                         <h4 className="text-lg font-bold uppercase mb-6">Informations</h4>
                         <ul className="space-y-3 text-gray-400 text-sm">
                             <li><a href="#" className="hover:text-alpha transition-colors">Boutique</a></li>
-                            <li><a href="#" className="hover:text-alpha transition-colors">Politique de Confidentialité</a></li>
-                            <li><a href="#" className="hover:text-alpha transition-colors">Conditions Générales</a></li>
+                            <li><Link href="/politique-confidentialite" className="hover:text-alpha transition-colors">Politique de Confidentialité</Link></li>
+                            <li><Link href="/conditions-generales" className="hover:text-alpha transition-colors">Conditions Générales</Link></li>
                             <li><a href="#" className="hover:text-alpha transition-colors">Plan du Site</a></li>
                         </ul>
                     </div>
