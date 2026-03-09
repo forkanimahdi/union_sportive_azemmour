@@ -22,10 +22,20 @@ class Order extends Model
         'customer_name',
         'email',
         'phone',
+        'address_street',
+        'address_city',
+        'address_postal_code',
+        'address_country',
         'size',
+        'sizes',
         'quantity',
         'status',
         'notes',
+        'delivery_fee',
+    ];
+
+    protected $casts = [
+        'sizes' => 'array',
     ];
 
     public function product(): BelongsTo

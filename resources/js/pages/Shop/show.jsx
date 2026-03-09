@@ -16,6 +16,11 @@ const VIEW_MODES = [
 ];
 
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+const MIN_QUANTITY = 1;
+const MAX_QUANTITY = 10;
+const FREE_SHIPPING_MIN = 600;
+const DELIVERY_CASABLANCA = 30;
+const DELIVERY_OTHER = 50;
 
 export default function ShopShow({ product }) {
     const { flash } = usePage().props;
@@ -25,7 +30,12 @@ export default function ShopShow({ product }) {
     const [customerName, setCustomerName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
+    const [addressStreet, setAddressStreet] = useState('');
+    const [addressCity, setAddressCity] = useState('');
+    const [addressPostalCode, setAddressPostalCode] = useState('');
+    const [addressCountry, setAddressCountry] = useState('Maroc');
     const [size, setSize] = useState('M');
+    const [sizesPerUnit, setSizesPerUnit] = useState(['M']);
     const [quantity, setQuantity] = useState(1);
     const [notes, setNotes] = useState('');
     const [errors, setErrors] = useState({});
@@ -58,11 +68,42 @@ export default function ShopShow({ product }) {
         { icon: RotateCcw, label: 'Échanges possibles' },
     ];
 
+    const subtotal = price * quantity;
+    const deliveryFee = subtotal >= FREE_SHIPPING_MIN ? 0 : (addressCity.trim().toLowerCase() === 'casablanca' ? DELIVERY_CASABLANCA : DELIVERY_OTHER);
+    const total = subtotal + deliveryFee;
+
+    const setQuantitySafe = (q) => {
+        const n = Math.max(MIN_QUANTITY, Math.min(MAX_QUANTITY, typeof q === 'function' ? q(quantity) : q));
+        setQuantity(n);
+        setSizesPerUnit((prev) => {
+            if (n > prev.length) return [...prev, ...Array(n - prev.length).fill(size)];
+            if (n < prev.length) {
+                if (n === 1) setSize(prev[0] ?? 'M');
+                return prev.slice(0, n);
+            }
+            return prev;
+        });
+    };
+
+    const setSizeForUnit = (index, s) => {
+        setSizesPerUnit((prev) => {
+            const next = [...prev];
+            next[index] = s;
+            return next;
+        });
+        if (quantity === 1) setSize(s);
+    };
+
     const resetOrderForm = () => {
         setCustomerName('');
         setEmail('');
         setPhone('');
+        setAddressStreet('');
+        setAddressCity('');
+        setAddressPostalCode('');
+        setAddressCountry('Maroc');
         setSize('M');
+        setSizesPerUnit(['M']);
         setQuantity(1);
         setNotes('');
         setErrors({});
@@ -72,14 +113,20 @@ export default function ShopShow({ product }) {
         e.preventDefault();
         setSubmitting(true);
         setErrors({});
-        router.post(`/shop/${product.id}/order`, {
+        const payload = {
             customer_name: customerName || null,
             email,
             phone,
-            size,
+            address_street: addressStreet.trim(),
+            address_city: addressCity.trim(),
+            address_postal_code: addressPostalCode.trim(),
+            address_country: addressCountry.trim(),
+            size: quantity === 1 ? size : sizesPerUnit[0],
             quantity,
             notes: notes || null,
-        }, {
+        };
+        if (quantity > 1) payload.sizes = sizesPerUnit.slice(0, quantity);
+        router.post(`/shop/${product.id}/order`, payload, {
             preserveScroll: true,
             onSuccess: () => {
                 setOrderModalOpen(false);
@@ -275,7 +322,7 @@ export default function ShopShow({ product }) {
 
             {/* Order modal */}
             <Dialog open={orderModalOpen} onOpenChange={(open) => { setOrderModalOpen(open); if (!open) resetOrderForm(); }}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="text-xl font-black uppercase italic">Passer commande</DialogTitle>
                         <p className="text-sm text-gray-500 mt-1">{product.name}</p>
@@ -317,37 +364,172 @@ export default function ShopShow({ product }) {
                             />
                             <InputError message={errors.phone} />
                         </div>
-                        <div>
-                            <Label>Taille *</Label>
-                            <div className="flex flex-wrap gap-2 mt-2">
-                                {SIZES.map((s) => (
-                                    <button
-                                        key={s}
-                                        type="button"
-                                        onClick={() => setSize(s)}
-                                        className={`w-12 h-12 rounded-xl font-bold text-sm border-2 transition-all ${
-                                            size === s ? 'bg-alpha text-white border-alpha' : 'border-gray-200 hover:border-alpha/50 text-dark'
-                                        }`}
-                                    >
-                                        {s}
-                                    </button>
-                                ))}
+
+                        <div className="border-t border-gray-100 pt-4 mt-4">
+                            <Label className="text-alpha font-semibold">Adresse de livraison</Label>
+                            <div className="space-y-3 mt-2">
+                                <div>
+                                    <Label htmlFor="order_street" className="text-xs text-gray-500">Rue *</Label>
+                                    <Input
+                                        id="order_street"
+                                        value={addressStreet}
+                                        onChange={(e) => setAddressStreet(e.target.value)}
+                                        placeholder="Numéro et nom de rue"
+                                        className="mt-1"
+                                        required
+                                    />
+                                    <InputError message={errors.address_street} />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <Label htmlFor="order_city" className="text-xs text-gray-500">Ville *</Label>
+                                        <Input
+                                            id="order_city"
+                                            value={addressCity}
+                                            onChange={(e) => setAddressCity(e.target.value)}
+                                            placeholder="Casablanca"
+                                            className="mt-1"
+                                            required
+                                        />
+                                        <InputError message={errors.address_city} />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="order_postal" className="text-xs text-gray-500">Code postal *</Label>
+                                        <Input
+                                            id="order_postal"
+                                            value={addressPostalCode}
+                                            onChange={(e) => setAddressPostalCode(e.target.value)}
+                                            placeholder="20000"
+                                            className="mt-1"
+                                            required
+                                        />
+                                        <InputError message={errors.address_postal_code} />
+                                    </div>
+                                </div>
+                                <div>
+                                    <Label htmlFor="order_country" className="text-xs text-gray-500">Pays *</Label>
+                                    <Input
+                                        id="order_country"
+                                        value={addressCountry}
+                                        onChange={(e) => setAddressCountry(e.target.value)}
+                                        placeholder="Maroc"
+                                        className="mt-1"
+                                        required
+                                    />
+                                    <InputError message={errors.address_country} />
+                                </div>
                             </div>
-                            <InputError message={errors.size} />
                         </div>
+
                         <div>
-                            <Label htmlFor="order_quantity">Quantité</Label>
-                            <Input
-                                id="order_quantity"
-                                type="number"
-                                min={1}
-                                max={10}
-                                value={quantity}
-                                onChange={(e) => setQuantity(parseInt(e.target.value, 10) || 1)}
-                                className="mt-1 w-24"
-                            />
+                            <Label>Quantité</Label>
+                            <div className="flex items-center gap-2 mt-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-10 w-10 rounded-xl shrink-0"
+                                    onClick={() => setQuantitySafe((q) => q - 1)}
+                                    disabled={quantity <= MIN_QUANTITY}
+                                    aria-label="Diminuer"
+                                >
+                                    −
+                                </Button>
+                                <Input
+                                    id="order_quantity"
+                                    type="number"
+                                    min={MIN_QUANTITY}
+                                    max={MAX_QUANTITY}
+                                    value={quantity}
+                                    onChange={(e) => {
+                                        const v = parseInt(e.target.value, 10);
+                                        if (!Number.isNaN(v)) setQuantitySafe(v);
+                                    }}
+                                    className="w-20 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-10 w-10 rounded-xl shrink-0"
+                                    onClick={() => setQuantitySafe((q) => q + 1)}
+                                    disabled={quantity >= MAX_QUANTITY}
+                                    aria-label="Augmenter"
+                                >
+                                    +
+                                </Button>
+                            </div>
                             <InputError message={errors.quantity} />
                         </div>
+
+                        <div>
+                            {quantity === 1 ? (
+                                <>
+                                    <Label>Taille *</Label>
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                        {SIZES.map((s) => (
+                                            <button
+                                                key={s}
+                                                type="button"
+                                                onClick={() => { setSize(s); setSizesPerUnit([s]); }}
+                                                className={`w-12 h-12 rounded-xl font-bold text-sm border-2 transition-all ${
+                                                    size === s ? 'bg-alpha text-white border-alpha' : 'border-gray-200 hover:border-alpha/50 text-dark'
+                                                }`}
+                                            >
+                                                {s}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <Label>Taille par unité *</Label>
+                                    <div className="space-y-3 mt-2">
+                                        {Array.from({ length: quantity }, (_, i) => (
+                                            <div key={i} className="flex items-center gap-3">
+                                                <span className="text-sm font-medium text-gray-600 w-16 shrink-0">Unité {i + 1}</span>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {SIZES.map((s) => (
+                                                        <button
+                                                            key={s}
+                                                            type="button"
+                                                            onClick={() => setSizeForUnit(i, s)}
+                                                            className={`w-10 h-10 rounded-lg font-bold text-xs border-2 transition-all ${
+                                                                (sizesPerUnit[i] ?? size) === s ? 'bg-alpha text-white border-alpha' : 'border-gray-200 hover:border-alpha/50 text-dark'
+                                                            }`}
+                                                        >
+                                                            {s}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                            <InputError message={errors.size} />
+                        </div>
+
+                        <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 space-y-2">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">Sous-total ({quantity} × {price} DH)</span>
+                                <span className="font-semibold">{subtotal} DH</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">Frais de livraison</span>
+                                <span className="font-semibold">
+                                    {deliveryFee === 0 ? 'Gratuit (≥ 600 DH)' : `${deliveryFee} DH`}
+                                </span>
+                            </div>
+                            <p className="text-xs text-gray-500 pt-1">
+                                Casablanca : 30 DH — Hors Casablanca : 50 DH. Livraison gratuite à partir de 600 DH.
+                            </p>
+                            <div className="flex justify-between font-bold text-base pt-2 border-t border-gray-200">
+                                <span>Total</span>
+                                <span className="text-alpha">{total} DH</span>
+                            </div>
+                        </div>
+
                         <div>
                             <Label htmlFor="order_notes">Notes (optionnel)</Label>
                             <textarea
