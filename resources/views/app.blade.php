@@ -30,7 +30,7 @@
             }
         </style>
 
-        <title inertia>{{ config('app.name', 'Laravel') }}</title>
+        <title inertia>Club tihad azemmour women الاتحاد الأزموري لكرة القدم النسوية</title>
 
         <link rel="icon" href="/assets/images/logo.png" sizes="any">
         <link rel="apple-touch-icon" href="/assets/images/logo.png">

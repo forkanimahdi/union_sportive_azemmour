@@ -40,7 +40,7 @@ export default function Navbar({ variant = 'dark' }) {
                     <div className="hidden lg:flex items-center space-x-6 xl:space-x-8 text-sm font-medium tracking-wide uppercase">
                         <Link href="/" className="hover:text-alpha transition-colors px-2 py-1">Accueil</Link>
                         <Link href="/about" className="hover:text-alpha transition-colors px-2 py-1">À Propos</Link>
-                        <Link href="/development" className="hover:text-alpha transition-colors px-2 py-1">Développement</Link>
+                        <Link href="/development" className="hover:text-alpha transition-colors px-2 py-1">S4D</Link>
                         <div className="relative group">
                             <button
                                 className="hover:text-alpha transition-colors px-2 py-1 flex items-center gap-1"
