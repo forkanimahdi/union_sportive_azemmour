@@ -40,8 +40,8 @@ class MatchController extends Controller
         }
 
         $matches = $query->orderBy('scheduled_at', 'desc')
-            ->paginate(15)
-            ->through(function ($match) {
+            ->get()
+            ->map(function ($match) {
                 return [
                     'id' => $match->id,
                     'team' => $match->team ? [
@@ -66,7 +66,8 @@ class MatchController extends Controller
                     'status' => $match->status,
                     'competition' => $match->competition ? $match->competition->name : null,
                 ];
-            });
+            })
+            ->values();
 
         $seasons = Season::orderBy('start_date', 'desc')
             ->get()
@@ -83,7 +84,7 @@ class MatchController extends Controller
             ->map(fn ($ot) => ['id' => $ot->id, 'name' => $ot->name, 'logo' => $ot->logo, 'category' => $ot->category]);
 
         return Inertia::render('admin/matches/index', [
-            'matches' => $matches,
+            'matches' => $matches->all(),
             'seasons' => $seasons,
             'teams' => $teams,
             'opponentTeams' => $opponentTeams,

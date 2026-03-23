@@ -19,9 +19,10 @@ export default function MatchesIndex({ matches, seasons = [], teams = [], oppone
     const [teamFilter, setTeamFilter] = useState('');
     const [dateFilter, setDateFilter] = useState('');
     const [dayFilter, setDayFilter] = useState('');
+    const sourceMatches = Array.isArray(matches) ? matches : (matches?.data || []);
 
     const groupedMatches = useMemo(() => {
-        let allMatches = matches.data || [];
+        let allMatches = sourceMatches || [];
         
         if (search) {
             const searchLower = search.toLowerCase();
@@ -79,7 +80,7 @@ export default function MatchesIndex({ matches, seasons = [], teams = [], oppone
         });
         
         return grouped;
-    }, [matches.data, search, seasonFilter, categoryFilter, teamFilter, dateFilter, dayFilter]);
+    }, [sourceMatches, search, seasonFilter, categoryFilter, teamFilter, dateFilter, dayFilter]);
 
     const formatMatchDate = (dateString) => {
         const date = new Date(dateString);
