@@ -9,7 +9,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Plus, MapPin, ChevronRight } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Plus, MapPin, ChevronRight, ClipboardCheck } from 'lucide-react';
 import MatchCreateModal from '@/components/admin/MatchCreateModal';
 
 const CLUB_LOGO = '/assets/images/logo.png';
@@ -32,6 +35,11 @@ export default function FixturesIndex({
 }) {
     const [categoryTab, setCategoryTab] = useState('Senior');
     const [createModalOpen, setCreateModalOpen] = useState(false);
+    const [scoreModalOpen, setScoreModalOpen] = useState(false);
+    const [scoreTarget, setScoreTarget] = useState(null);
+    const [homeScore, setHomeScore] = useState('');
+    const [awayScore, setAwayScore] = useState('');
+    const [resultStatus, setResultStatus] = useState('finished');
 
     const filteredMatches = useMemo(() => {
         let list = Array.isArray(matches) ? [...matches] : [];
@@ -76,6 +84,32 @@ export default function FixturesIndex({
 
     const handleSeasonChange = (value) => {
         router.get('/admin/fixtures', value ? { season_id: value } : {});
+    };
+
+    const openScoreModal = (match) => {
+        setScoreTarget(match);
+        setHomeScore(match.home_score ?? '');
+        setAwayScore(match.away_score ?? '');
+        setResultStatus(match.status === 'scheduled' ? 'finished' : match.status);
+        setScoreModalOpen(true);
+    };
+
+    const saveResult = () => {
+        if (!scoreTarget) return;
+        const payload = { home_score: Number(homeScore || 0), away_score: Number(awayScore || 0) };
+        router.post(`/admin/matches/${scoreTarget.id}/update-score`, payload, {
+            preserveScroll: true,
+            onSuccess: () => {
+                router.post(`/admin/matches/${scoreTarget.id}/update-status`, { status: resultStatus }, {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        setScoreModalOpen(false);
+                        setScoreTarget(null);
+                        router.reload();
+                    },
+                });
+            },
+        });
     };
 
     return (
@@ -287,10 +321,24 @@ export default function FixturesIndex({
                                                     <MapPin className="h-4 w-4" />
                                                     {getLocationLabel(match.venue, match.type)}
                                                 </div>
-                                                <span className="inline-flex items-center gap-1 text-sm font-medium text-primary">
-                                                    Voir le match
-                                                    <ChevronRight className="h-4 w-4" />
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="border-primary/30 text-primary hover:bg-primary/10"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            openScoreModal(match);
+                                                        }}
+                                                    >
+                                                        <ClipboardCheck className="h-4 w-4 mr-1.5" />
+                                                        Résultat
+                                                    </Button>
+                                                    <span className="inline-flex items-center gap-1 text-sm font-medium text-primary">
+                                                        Voir le match
+                                                        <ChevronRight className="h-4 w-4" />
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -313,6 +361,50 @@ export default function FixturesIndex({
                     )}
                 </div>
             </div>
+
+            <Dialog open={scoreModalOpen} onOpenChange={setScoreModalOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Renseigner le résultat</DialogTitle>
+                    </DialogHeader>
+                    {scoreTarget && (
+                        <div className="space-y-4">
+                            <p className="text-sm text-muted-foreground">
+                                {scoreTarget.team?.name || 'Notre équipe'} vs {scoreTarget.opponent_team?.name || scoreTarget.opponent || 'Adversaire'}
+                            </p>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label>Score domicile</Label>
+                                    <Input type="number" min="0" value={homeScore} onChange={(e) => setHomeScore(e.target.value)} />
+                                </div>
+                                <div>
+                                    <Label>Score extérieur</Label>
+                                    <Input type="number" min="0" value={awayScore} onChange={(e) => setAwayScore(e.target.value)} />
+                                </div>
+                            </div>
+                            <div>
+                                <Label>Statut</Label>
+                                <Select value={resultStatus} onValueChange={setResultStatus}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="finished">Terminé</SelectItem>
+                                        <SelectItem value="live">En direct</SelectItem>
+                                        <SelectItem value="postponed">Reporté</SelectItem>
+                                        <SelectItem value="cancelled">Annulé</SelectItem>
+                                        <SelectItem value="scheduled">Programmé</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setScoreModalOpen(false)}>Annuler</Button>
+                        <Button className="bg-primary hover:bg-primary/90" onClick={saveResult}>Enregistrer</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AdminLayout>
     );
 }

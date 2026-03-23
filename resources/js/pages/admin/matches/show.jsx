@@ -5,7 +5,7 @@ import MatchEditModal from '@/components/admin/MatchEditModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription , DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -47,6 +47,11 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [], tea
     const [lineupDialogOpen, setLineupDialogOpen] = useState(false);
     const [eventDialogOpen, setEventDialogOpen] = useState(false);
     const [editModalOpen, setEditModalOpen] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [resultModalOpen, setResultModalOpen] = useState(false);
+    const [resultHome, setResultHome] = useState(match.home_score ?? '');
+    const [resultAway, setResultAway] = useState(match.away_score ?? '');
+    const [resultStatus, setResultStatus] = useState(match.status || 'finished');
 
     const { data: scoreData, setData: setScoreData, put: updateMatch } = useForm({
         home_score: match.home_score || null,
@@ -70,6 +75,32 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [], tea
             onSuccess: () => {
                 setIsEditingScores(false);
             },
+        });
+    };
+
+    const handleSaveResultModal = () => {
+        router.post(`/admin/matches/${match.id}/update-score`, {
+            home_score: Number(resultHome || 0),
+            away_score: Number(resultAway || 0),
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                router.post(`/admin/matches/${match.id}/update-status`, {
+                    status: resultStatus,
+                }, {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        setResultModalOpen(false);
+                        router.reload();
+                    },
+                });
+            },
+        });
+    };
+
+    const handleDeleteMatch = () => {
+        router.delete(`/admin/matches/${match.id}`, {
+            onSuccess: () => router.visit('/admin/matches'),
         });
     };
 
@@ -165,6 +196,14 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [], tea
                         <Button variant="outline" size="sm" onClick={() => setEditModalOpen(true)}>
                             <Edit className="w-4 h-4 mr-2" />
                             Modifier
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setResultModalOpen(true)} className="border-primary/40 text-primary hover:bg-primary/10">
+                            <Save className="w-4 h-4 mr-2" />
+                            Résultat
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setDeleteModalOpen(true)} className="border-red-300 text-red-600 hover:bg-red-50">
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Supprimer
                         </Button>
                     </div>
                 </div>
@@ -802,6 +841,60 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [], tea
                 opponentTeams={opponentTeams}
                 onSuccess={() => router.reload()}
             />
+
+            <Dialog open={resultModalOpen} onOpenChange={setResultModalOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Mettre a jour le resultat</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Label>Score domicile</Label>
+                                <Input type="number" min="0" value={resultHome} onChange={(e) => setResultHome(e.target.value)} />
+                            </div>
+                            <div>
+                                <Label>Score exterieur</Label>
+                                <Input type="number" min="0" value={resultAway} onChange={(e) => setResultAway(e.target.value)} />
+                            </div>
+                        </div>
+                        <div>
+                            <Label>Statut</Label>
+                            <Select value={resultStatus} onValueChange={setResultStatus}>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="finished">Termine</SelectItem>
+                                    <SelectItem value="live">En direct</SelectItem>
+                                    <SelectItem value="scheduled">Programme</SelectItem>
+                                    <SelectItem value="postponed">Reporte</SelectItem>
+                                    <SelectItem value="cancelled">Annule</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setResultModalOpen(false)}>Annuler</Button>
+                        <Button className="bg-primary hover:bg-primary/90" onClick={handleSaveResultModal}>Enregistrer</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+                <DialogContent className="sm:max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle>Supprimer le match</DialogTitle>
+                    </DialogHeader>
+                    <p className="text-sm text-muted-foreground">
+                        Cette action est irreversible. Voulez-vous vraiment supprimer ce match ?
+                    </p>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>Annuler</Button>
+                        <Button variant="destructive" onClick={handleDeleteMatch}>Supprimer</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AdminLayout>
     );
 }

@@ -11,10 +11,10 @@ import MatchCreateModal from '@/components/admin/MatchCreateModal';
 
 const CLUB_LOGO = '/assets/images/logo.png';
 
-export default function MatchesIndex({ matches, seasons = [], teams = [], opponentTeams = [], activeSeason }) {
+export default function MatchesIndex({ matches, seasons = [], teams = [], opponentTeams = [], activeSeason, selectedSeasonId = null }) {
     const [search, setSearch] = useState('');
     const [createModalOpen, setCreateModalOpen] = useState(false);
-    const [seasonFilter, setSeasonFilter] = useState('');
+    const [seasonFilter, setSeasonFilter] = useState(selectedSeasonId ? String(selectedSeasonId) : '');
     const [categoryFilter, setCategoryFilter] = useState('');
     const [teamFilter, setTeamFilter] = useState('');
     const [dateFilter, setDateFilter] = useState('');
@@ -174,7 +174,14 @@ export default function MatchesIndex({ matches, seasons = [], teams = [], oppone
                                         className="pl-10 h-11 bg-white border-2 border-gray-200 focus:border-alpha rounded-lg"
                                     />
                                 </div>
-                                <Select value={seasonFilter || 'all'} onValueChange={(value) => setSeasonFilter(value === 'all' ? '' : value)}>
+                                <Select
+                                    value={seasonFilter || 'all'}
+                                    onValueChange={(value) => {
+                                        const next = value === 'all' ? '' : value;
+                                        setSeasonFilter(next);
+                                        router.get('/admin/matches', next ? { season_id: next } : {}, { preserveScroll: true });
+                                    }}
+                                >
                                     <SelectTrigger className="h-11 bg-white border-2 border-gray-200 rounded-lg">
                                         <SelectValue placeholder="Saison" />
                                     </SelectTrigger>
@@ -328,7 +335,11 @@ export default function MatchesIndex({ matches, seasons = [], teams = [], oppone
                                                                 <div className={`px-4 py-2 rounded-lg ${played ? 'bg-alpha/10' : 'bg-gray-100'}`}>
                                                                     <div className={`text-2xl font-black ${played ? 'text-alpha' : 'text-gray-500'}`}>
                                                                         {played 
-                                                                            ? `${leftScore !== null ? leftScore : '-'} - ${rightScore !== null ? rightScore : '-'}`
+                                                                            ? (
+                                                                                match.type === 'exterieur'
+                                                                                    ? `${rightScore !== null ? rightScore : '-'} - ${leftScore !== null ? leftScore : '-'}`
+                                                                                    : `${leftScore !== null ? leftScore : '-'} - ${rightScore !== null ? rightScore : '-'}`
+                                                                              )
                                                                             : '0 - 0'
                                                                         }
                                                                     </div>

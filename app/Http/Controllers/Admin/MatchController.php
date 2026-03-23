@@ -17,12 +17,15 @@ class MatchController extends Controller
 {
     public function index(Request $request)
     {
+        $activeSeason = Season::where('is_active', true)->first();
+        $selectedSeasonId = $request->season_id ?: $activeSeason?->id;
+
         $query = GameMatch::with(['team', 'opponentTeam', 'competition']);
 
-        // Filter by season (through team)
-        if ($request->season_id) {
-            $query->whereHas('team', function($q) use ($request) {
-                $q->where('season_id', $request->season_id);
+        // Filter by season (through team) - default to active season
+        if ($selectedSeasonId) {
+            $query->whereHas('team', function($q) use ($selectedSeasonId) {
+                $q->where('season_id', $selectedSeasonId);
             });
         }
 
@@ -45,6 +48,7 @@ class MatchController extends Controller
                         'id' => $match->team->id,
                         'name' => $match->team->name,
                         'category' => $match->team->category,
+                        'season_id' => $match->team->season_id,
                     ] : null,
                     'opponent' => $match->opponent,
                     'opponent_team' => $match->opponentTeam ? [
@@ -64,12 +68,10 @@ class MatchController extends Controller
                 ];
             });
 
-        $seasons = Season::where('is_active', true)
-            ->orderBy('start_date', 'desc')
+        $seasons = Season::orderBy('start_date', 'desc')
             ->get()
             ->map(fn($s) => ['id' => $s->id, 'name' => $s->name]);
 
-        $activeSeason = Season::where('is_active', true)->first();
         $teams = Team::when($activeSeason, fn ($q) => $q->where('season_id', $activeSeason->id))
             ->where('is_active', true)
             ->orderBy('category')
@@ -86,6 +88,7 @@ class MatchController extends Controller
             'teams' => $teams,
             'opponentTeams' => $opponentTeams,
             'activeSeason' => $activeSeason ? ['id' => $activeSeason->id, 'name' => $activeSeason->name] : null,
+            'selectedSeasonId' => $selectedSeasonId,
         ]);
     }
 
