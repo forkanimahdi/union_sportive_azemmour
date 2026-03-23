@@ -14,7 +14,7 @@ import Champions from './partials/champions';
 import Merchandise from './partials/merchandise';
 import Footer from './partials/footer';
 
-export default function Index({ matches = [], players = [], articles = [], sponsors = [], products = [], standingsByCategory = {}, activeSeason = null }) {
+export default function Index({ matches = [], players = [], articles = [], sponsors = [], products = [], standingsByCategory = {}, activeSeason = null, youtubeChannelId = null }) {
     return (
         <div className="font-sans antialiased text-dark bg-white">
             <Navbar />
@@ -24,7 +24,7 @@ export default function Index({ matches = [], players = [], articles = [], spons
             <RecentNews articles={articles} />
             {/* <Blogs /> */}
             <LeagueTable standingsByCategory={standingsByCategory} activeSeason={activeSeason} />
-            <HighlightVideo />
+            <HighlightVideo channelId={youtubeChannelId || ''} />
             {/* <TicketCTA /> */}
             {/* <Champions /> */}
             <SeniorSquad players={players} activeSeason={activeSeason} />

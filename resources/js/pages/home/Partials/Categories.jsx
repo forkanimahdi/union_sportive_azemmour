@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import p1 from '../../../../../public/assets/images/others/p1.webp';
-import p2 from '../../../../../public/assets/images/others/p2.webp';
-import p3 from '../../../../../public/assets/images/others/p3.webp';
+import p1 from '../../../../../public/assets/images/others/senior.jpeg';
+import p2 from '../../../../../public/assets/images/others/u17.jpeg';
+import p3 from '../../../../../public/assets/images/others/u15.jpeg';
 
 export default function Categories() {
     const categories = [

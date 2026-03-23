@@ -4,6 +4,7 @@ use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PartnersController;
 use App\Http\Controllers\ShopController;
+use App\Http\Controllers\YoutubeFeedController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -29,6 +30,9 @@ Route::get('/conditions-generales', fn () => Inertia::render('Terms/index'))->na
 Route::get('/shop', [ShopController::class, 'index'])->name('shop');
 Route::get('/shop/{product}', [ShopController::class, 'show'])->name('shop.show');
 Route::post('/shop/{product}/order', [ShopController::class, 'storeOrder'])->name('shop.order.store');
+
+// Public YouTube RSS proxy (no API key)
+Route::get('/api/youtube/channel-videos', [YoutubeFeedController::class, 'channelVideos'])->name('api.youtube.channel-videos');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {

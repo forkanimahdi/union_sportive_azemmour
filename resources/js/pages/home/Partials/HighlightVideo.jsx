@@ -1,41 +1,51 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Play, ChevronLeft, ChevronRight, X } from 'lucide-react';
 
-export default function HighlightVideo() {
-    const videos = [
-        {
-            id: 1,
-            title: "تصريح ما بعد المباراة أمام فريق سنتر سبورتينغ الدروة",
-            duration: "1:26",
-            date: "09 fevrier, 2025",
-            thumbnail: "https://i.ytimg.com/vi/dpHRuwYr270/hqdefault.jpg?sqp=-oaymwFBCNACELwBSFryq4qpAzMIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB8AEB-AHOBoAC4AOKAgwIABABGE8gXShlMA8=&rs=AOn4CLB-vwyNO1H_lV8AeIRQLJRl69Sp5Q",
-            videoUrl: "https://www.youtube.com/embed/dpHRuwYr270" // Replace with actual video URL
-        },
-        {
-            id: 2,
-            title: "Entraînement: Préparation pour le prochain match",
-            duration: "5:23",
-            date: "04 Janvier, 2025",
-            thumbnail: "https://i.ytimg.com/vi/mkpN5JRvnuQ/hqdefault.jpg?sqp=-oaymwFBCNACELwBSFryq4qpAzMIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB8AEB-AH-CYAC0AWKAgwIABABGD0gZSgnMA8=&rs=AOn4CLDnpvX8fScAU2BffSL796UviutJBQ",
-            videoUrl: "https://www.youtube.com/embed/mkpN5JRvnuQ"
-        },
-        {
-            id: 3,
-            title: "Interview avec le coach après la victoire",
-            duration: "12:15",
-            date: "03 Janvier, 2025",
-            thumbnail: "https://i.ytimg.com/vi/gDxr8YZq55Q/hqdefault.jpg?sqp=-oaymwFBCNACELwBSFryq4qpAzMIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB8AEB-AHOBoAC4AOKAgwIABABGD8gZShUMA8=&rs=AOn4CLBPZNdFF4cKlKzmAldqCIBymRxJvg",
-            videoUrl: "https://www.youtube.com/embed/gDxr8YZq55Q"
-        },
-        {
-            id: 4,
-            title: "Académie U17: Match de la semaine",
-            duration: "8:30",
-            date: "02 Janvier, 2025",
-            thumbnail: "https://i.ytimg.com/vi/Yye-HT16yoo/hqdefault.jpg?sqp=-oaymwFBCNACELwBSFryq4qpAzMIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB8AEB-AHOBoAC4AOKAgwIABABGDQgZShYMA8=&rs=AOn4CLCSMn6-SYYKHxCZAkxdCsVLQQfJkA",
-            videoUrl: "https://www.youtube.com/embed/Yye-HT16yoo"
-        }
-    ];
+export default function HighlightVideo({ channelId = '' }) {
+    const [remoteVideos, setRemoteVideos] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [loadError, setLoadError] = useState(null);
+
+    const videos = useMemo(() => {
+        if (!remoteVideos.length) return [];
+        return remoteVideos.map((v, i) => ({
+            id: v.videoId || i + 1,
+            title: v.title || 'Vidéo',
+            date: v.publishedAt ? new Date(v.publishedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) : '',
+            thumbnail: v.thumbnail,
+            videoUrl: v.embedUrl,
+        }));
+    }, [remoteVideos]);
+
+    useEffect(() => {
+        const id = (channelId || '').trim();
+        if (!id) return;
+
+        let cancelled = false;
+        setLoading(true);
+        setLoadError(null);
+
+        fetch(`/api/youtube/channel-videos?channelId=${encodeURIComponent(id)}&limit=9`)
+            .then(async (res) => {
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data?.message || 'Erreur de chargement');
+                return data;
+            })
+            .then((data) => {
+                if (cancelled) return;
+                setRemoteVideos(Array.isArray(data?.videos) ? data.videos : []);
+            })
+            .catch((err) => {
+                if (cancelled) return;
+                setLoadError(err?.message || 'Erreur');
+            })
+            .finally(() => {
+                if (cancelled) return;
+                setLoading(false);
+            });
+
+        return () => { cancelled = true; };
+    }, [channelId]);
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [selectedVideo, setSelectedVideo] = useState(null);
@@ -84,6 +94,13 @@ export default function HighlightVideo() {
                         </div>
                     </div>
 
+                    {loading ? (
+                        <p className="text-center text-gray-500 py-12">Chargement des vidéos…</p>
+                    ) : loadError ? (
+                        <p className="text-center text-gray-500 py-12">Impossible de charger les vidéos.</p>
+                    ) : videos.length === 0 ? (
+                        <p className="text-center text-gray-500 py-12">Aucune vidéo trouvée pour cette chaîne.</p>
+                    ) : (
                     <div className="relative overflow-hidden">
                         <div 
                             className="flex transition-transform duration-500 ease-in-out gap-4 sm:gap-6 lg:gap-8"
@@ -98,9 +115,6 @@ export default function HighlightVideo() {
                                                 <Play className="w-4 h-4 sm:w-6 sm:h-6 text-white fill-white ml-1" />
                                             </div>
                                         </div>
-                                        <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 bg-black/80 text-white text-xs px-2 py-1 rounded">
-                                            {video.duration}
-                                        </div>
                                     </div>
                                     <div className="mt-3 sm:mt-4">
                                         <p className="text-xs text-gray-500 mb-1">{video.date}</p>
@@ -112,6 +126,7 @@ export default function HighlightVideo() {
                             ))}
                         </div>
                     </div>
+                    )}
                 </div>
             </div>
 

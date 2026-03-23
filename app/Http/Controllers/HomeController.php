@@ -170,6 +170,7 @@ class HomeController extends Controller
             'products' => $products->values()->all(),
             'standingsByCategory' => $standingsByCategory,
             'activeSeason' => $activeSeason ? ['id' => $activeSeason->id, 'name' => $activeSeason->name] : null,
+            'youtubeChannelId' => env('YOUTUBE_CHANNEL_ID'),
         ]);
     }
 }
