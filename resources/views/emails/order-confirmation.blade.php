@@ -55,24 +55,6 @@
         </tr>
     </table>
 
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border: 1px solid #e5e5e5; border-radius: 8px; margin-bottom: 24px;">
-        <tr>
-            <td style="padding: 16px; background-color: #fafafa; border-bottom: 1px solid #e5e5e5;">
-                <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #571123; font-weight: 700;">Modalités de paiement</span>
-            </td>
-        </tr>
-        <tr>
-            <td style="padding: 16px;">
-                <p style="margin:0 0 10px 0;"><strong>👉 Par virement bancaire</strong></p>
-                <p style="margin:0 0 6px 0;"><strong>Libellé du compte :</strong> ASSOCIATION CLUB TIHAD AZEMMOUR FEMININ</p>
-                <p style="margin:0 0 6px 0;"><strong>RIB :</strong> 050 780 010 01098965 020 01 75</p>
-                <p style="margin:0 0 6px 0;"><strong>IBAN :</strong> MA64 050 780 010 01098965 020 01 75</p>
-                <p style="margin:0 0 6px 0;"><strong>Banque :</strong> CFG BANK - Agence Palmier</p>
-                <p style="margin:0;"><strong>Code BIC / SWIFT :</strong> CAFGMAMCXXX</p>
-            </td>
-        </tr>
-    </table>
-
     <p style="margin:0; color: #666; font-size: 14px;">
         Pour toute question, n’hésitez pas à nous contacter.
     </p>
