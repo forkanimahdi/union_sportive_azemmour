@@ -1,28 +1,28 @@
 <?php
 
+use App\Http\Controllers\Admin\ArticleController;
+use App\Http\Controllers\Admin\ClassmentController;
+use App\Http\Controllers\Admin\ConcentrationController;
+use App\Http\Controllers\Admin\ConvocationController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DisciplinaryActionController;
+use App\Http\Controllers\Admin\EquipmentController;
+use App\Http\Controllers\Admin\ImageRightController;
+use App\Http\Controllers\Admin\InjuryController;
+use App\Http\Controllers\Admin\MatchController;
+use App\Http\Controllers\Admin\MediaController;
+use App\Http\Controllers\Admin\OpponentTeamController;
+use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\PlayerController;
+use App\Http\Controllers\Admin\ProductCategoryController;
+use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\SeasonController;
+use App\Http\Controllers\Admin\SponsorController;
+use App\Http\Controllers\Admin\StaffController;
+use App\Http\Controllers\Admin\TeamController;
+use App\Http\Controllers\Admin\TrainingController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\SeasonController;
-use App\Http\Controllers\Admin\TeamController;
-use App\Http\Controllers\Admin\PlayerController;
-use App\Http\Controllers\Admin\TrainingController;
-use App\Http\Controllers\Admin\ConcentrationController;
-use App\Http\Controllers\Admin\MatchController;
-use App\Http\Controllers\Admin\ConvocationController;
-use App\Http\Controllers\Admin\InjuryController;
-use App\Http\Controllers\Admin\DisciplinaryActionController;
-use App\Http\Controllers\Admin\MediaController;
-use App\Http\Controllers\Admin\ImageRightController;
-use App\Http\Controllers\Admin\StaffController;
-use App\Http\Controllers\Admin\EquipmentController;
-use App\Http\Controllers\Admin\OpponentTeamController;
-use App\Http\Controllers\Admin\ClassmentController;
-use App\Http\Controllers\Admin\ProductController;
-use App\Http\Controllers\Admin\ProductCategoryController;
-use App\Http\Controllers\Admin\ArticleController;
-use App\Http\Controllers\Admin\OrderController;
-use App\Http\Controllers\Admin\SponsorController;
 
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard - accessible to all authenticated users
@@ -35,7 +35,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         Route::post('/classment/standings', [ClassmentController::class, 'store'])->name('classment.standings.store');
         Route::post('/classment/seed-from-matches', [ClassmentController::class, 'seedFromMatches'])->name('classment.seed-from-matches');
     });
-    
+
     // Seasons - Admin & Technical Director
     Route::middleware('role:admin,technical_director')->group(function () {
         Route::resource('seasons', SeasonController::class);
@@ -55,24 +55,24 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         Route::post('teams/{team}/assign-staff', [TeamController::class, 'assignStaff'])->name('teams.assign-staff');
         Route::delete('teams/{team}/staff/{staff}', [TeamController::class, 'removeStaff'])->name('teams.remove-staff');
     });
-    
+
     // Opponent Teams & Leaderboard - Admin & Technical Director
     Route::middleware('role:admin,technical_director')->group(function () {
         Route::resource('opponent-teams', OpponentTeamController::class);
         Route::post('opponent-teams/{opponentTeam}/update-rank', [OpponentTeamController::class, 'updateRank'])->name('opponent-teams.update-rank');
     });
-    
+
     // Staff - Admin & Technical Director
     Route::middleware('role:admin,technical_director')->group(function () {
         Route::resource('staff', StaffController::class);
     });
-    
+
     // Players - Admin, Technical Director & Coach
     Route::middleware('role:admin,technical_director,coach')->group(function () {
         Route::resource('players', PlayerController::class);
         Route::get('players/{player}/export', [PlayerController::class, 'export'])->name('players.export');
     });
-    
+
     // Trainings - Admin, Technical Director & Coach
     Route::middleware('role:admin,technical_director,coach')->group(function () {
         Route::resource('trainings', TrainingController::class);
@@ -88,7 +88,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         Route::post('concentrations/{concentration}/days/{day}/sessions', [ConcentrationController::class, 'addSessionToDay'])->name('concentrations.days.sessions');
         Route::post('concentrations/{concentration}/days/{day}/meals', [ConcentrationController::class, 'addMealToDay'])->name('concentrations.days.meals');
     });
-    
+
     // Matches - Admin, Technical Director & Coach
     Route::middleware('role:admin,technical_director,coach')->group(function () {
         Route::get('fixtures', [MatchController::class, 'fixtures'])->name('fixtures.index');
@@ -101,35 +101,35 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         Route::post('matches/{match}/update-score', [MatchController::class, 'updateScore'])->name('matches.update-score');
         Route::post('matches/{match}/update-status', [MatchController::class, 'updateStatus'])->name('matches.update-status');
     });
-    
+
     // Convocations - Admin, Technical Director & Coach
     Route::middleware('role:admin,technical_director,coach')->group(function () {
         Route::resource('convoctions', ConvocationController::class);
         Route::post('convoctions/{convocation}/send', [ConvocationController::class, 'send'])->name('convoctions.send');
     });
-    
+
     // Injuries - Admin, Technical Director & Physiotherapist
     Route::middleware('role:admin,technical_director,physiotherapist')->group(function () {
         Route::resource('injuries', InjuryController::class);
         Route::post('injuries/{injury}/validate', [InjuryController::class, 'validate'])->name('injuries.validate');
     });
-    
+
     // Discipline - Admin, Technical Director & Coach
     Route::middleware('role:admin,technical_director,coach')->group(function () {
         Route::resource('discipline', DisciplinaryActionController::class);
     });
-    
+
     // Media - Admin, Technical Director & Communication
     Route::middleware('role:admin,technical_director,communication')->group(function () {
         Route::resource('media', MediaController::class);
         Route::post('media/{media}/approve', [MediaController::class, 'approve'])->name('media.approve');
     });
-    
+
     // Image Rights - Admin, Technical Director & Communication
     Route::middleware('role:admin,technical_director,communication')->group(function () {
         Route::resource('image-rights', ImageRightController::class);
     });
-    
+
     // Equipment - Admin & Technical Director
     Route::middleware('role:admin,technical_director')->group(function () {
         Route::resource('equipment', EquipmentController::class);
@@ -142,6 +142,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         Route::get('product-categories', [ProductCategoryController::class, 'index'])->name('product-categories.index');
         Route::post('product-categories', [ProductCategoryController::class, 'store'])->name('product-categories.store');
         Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('orders/export', [OrderController::class, 'export'])->name('orders.export');
         Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
         Route::get('orders/{order}/status-email-preview', [OrderController::class, 'previewStatusEmail'])->name('orders.preview-status-email');
         Route::post('orders/{order}/send-status-notification', [OrderController::class, 'sendStatusNotification'])->name('orders.send-status-notification');

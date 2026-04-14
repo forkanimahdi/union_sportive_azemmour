@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Eye, Bell, Trash2, Search, User, MapPin } from 'lucide-react';
+import { Eye, Bell, Trash2, Search, User, MapPin, FileSpreadsheet } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 const STATUS_OPTIONS = [
     { value: 'pending', label: 'En attente' },
@@ -18,7 +20,7 @@ const STATUS_OPTIONS = [
 
 const NOTIFY_STATUS_OPTIONS = STATUS_OPTIONS.filter((o) => o.value !== 'pending');
 
-export default function AdminOrdersIndex({ orders = [], statusLabels = {}, filters = {} }) {
+export default function AdminOrdersIndex({ orders = [], statusLabels = {}, filters = {}, exportColumns = [] }) {
     const { flash } = usePage().props;
     const [searchInput, setSearchInput] = useState(filters.search ?? '');
     const [statusFilter, setStatusFilter] = useState(filters.status ?? 'all');
@@ -33,6 +35,45 @@ export default function AdminOrdersIndex({ orders = [], statusLabels = {}, filte
     const [sendingNotify, setSendingNotify] = useState(false);
     const [deleteOrder, setDeleteOrder] = useState(null);
     const [deleting, setDeleting] = useState(false);
+
+    const [exportOpen, setExportOpen] = useState(false);
+    const [exportSearch, setExportSearch] = useState('');
+    const [exportDateFrom, setExportDateFrom] = useState('');
+    const [exportDateTo, setExportDateTo] = useState('');
+    const [exportStatuses, setExportStatuses] = useState(() => STATUS_OPTIONS.map((o) => o.value));
+    const [exportSelectedColumns, setExportSelectedColumns] = useState([]);
+
+    const openExportModal = () => {
+        setExportSearch(searchInput);
+        setExportDateFrom('');
+        setExportDateTo('');
+        if (statusFilter === 'all') {
+            setExportStatuses(STATUS_OPTIONS.map((o) => o.value));
+        } else {
+            setExportStatuses([statusFilter]);
+        }
+        setExportSelectedColumns(exportColumns.length ? exportColumns.map((c) => c.key) : []);
+        setExportOpen(true);
+    };
+
+    const toggleExportStatus = (value) => {
+        setExportStatuses((prev) => (prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value]));
+    };
+
+    const toggleExportColumn = (key) => {
+        setExportSelectedColumns((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+    };
+
+    const downloadExport = () => {
+        if (exportSelectedColumns.length === 0 || exportStatuses.length === 0) return;
+        const params = new URLSearchParams();
+        if (exportSearch.trim()) params.set('search', exportSearch.trim());
+        exportStatuses.forEach((s) => params.append('statuses[]', s));
+        if (exportDateFrom) params.set('date_from', exportDateFrom);
+        if (exportDateTo) params.set('date_to', exportDateTo);
+        exportSelectedColumns.forEach((c) => params.append('columns[]', c));
+        window.location.assign(`/admin/orders/export?${params.toString()}`);
+    };
 
     const applyFilters = useCallback(
         (overrides = {}) => {
@@ -124,7 +165,8 @@ export default function AdminOrdersIndex({ orders = [], statusLabels = {}, filte
 
                 <Card>
                     <CardHeader>
-                        <div className="flex flex-wrap gap-4 items-center">
+                        <div className="flex flex-wrap gap-4 items-center justify-between">
+                            <div className="flex flex-wrap gap-4 items-center">
                             <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
                                 <Search className="w-4 h-4 text-muted-foreground shrink-0" />
                                 <Input
@@ -151,6 +193,11 @@ export default function AdminOrdersIndex({ orders = [], statusLabels = {}, filte
                                     ))}
                                 </SelectContent>
                             </Select>
+                            </div>
+                            <Button type="button" variant="outline" size="sm" className="gap-2 shrink-0" onClick={openExportModal}>
+                                <FileSpreadsheet className="w-4 h-4" />
+                                Exporter Excel
+                            </Button>
                         </div>
                     </CardHeader>
                     <CardContent>
@@ -360,6 +407,115 @@ export default function AdminOrdersIndex({ orders = [], statusLabels = {}, filte
                             </DialogFooter>
                         </>
                     )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Export Excel */}
+            <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+                <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+                    <DialogHeader>
+                        <DialogTitle>Exporter les commandes (Excel)</DialogTitle>
+                        <p className="text-sm text-muted-foreground">
+                            Choisissez les filtres et les colonnes à inclure dans le fichier Excel (.xlsx).
+                        </p>
+                    </DialogHeader>
+                    <div className="overflow-y-auto space-y-6 pr-1">
+                        <div className="space-y-3">
+                            <p className="text-sm font-semibold text-foreground">Filtres</p>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <div className="space-y-1.5 sm:col-span-2">
+                                    <Label htmlFor="export-search">Recherche (comme la liste)</Label>
+                                    <Input
+                                        id="export-search"
+                                        value={exportSearch}
+                                        onChange={(e) => setExportSearch(e.target.value)}
+                                        placeholder="Client, email, téléphone, produit…"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="export-from">Date à partir du</Label>
+                                    <Input
+                                        id="export-from"
+                                        type="date"
+                                        value={exportDateFrom}
+                                        onChange={(e) => setExportDateFrom(e.target.value)}
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="export-to">Date jusqu&apos;au</Label>
+                                    <Input
+                                        id="export-to"
+                                        type="date"
+                                        value={exportDateTo}
+                                        onChange={(e) => setExportDateTo(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-xs font-medium text-muted-foreground mb-2">Statuts à inclure</p>
+                                <div className="flex flex-wrap gap-3">
+                                    {STATUS_OPTIONS.map((opt) => (
+                                        <label key={opt.value} className="flex items-center gap-2 text-sm cursor-pointer">
+                                            <Checkbox
+                                                checked={exportStatuses.includes(opt.value)}
+                                                onCheckedChange={() => toggleExportStatus(opt.value)}
+                                            />
+                                            {opt.label}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="space-y-3 border-t pt-4">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <p className="text-sm font-semibold text-foreground">Colonnes</p>
+                                <div className="flex gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 text-xs"
+                                        onClick={() => setExportSelectedColumns(exportColumns.map((c) => c.key))}
+                                    >
+                                        Tout
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 text-xs"
+                                        onClick={() => setExportSelectedColumns([])}
+                                    >
+                                        Rien
+                                    </Button>
+                                </div>
+                            </div>
+                            <div className="grid gap-2 sm:grid-cols-2 max-h-[220px] overflow-y-auto pr-1">
+                                {exportColumns.map((col) => (
+                                    <label key={col.key} className="flex items-start gap-2 text-sm cursor-pointer rounded-md border border-border/60 p-2 hover:bg-muted/40">
+                                        <Checkbox
+                                            className="mt-0.5"
+                                            checked={exportSelectedColumns.includes(col.key)}
+                                            onCheckedChange={() => toggleExportColumn(col.key)}
+                                        />
+                                        <span>{col.label}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button type="button" variant="outline" onClick={() => setExportOpen(false)}>
+                            Fermer
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={downloadExport}
+                            disabled={exportSelectedColumns.length === 0 || exportStatuses.length === 0}
+                        >
+                            Télécharger .xlsx
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 

@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\OrdersExport;
 use App\Http\Controllers\Controller;
 use App\Mail\OrderStatusNotificationMail;
 use App\Models\Order;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class OrderController extends Controller
 {
@@ -36,14 +39,67 @@ class OrderController extends Controller
 
     public function index(Request $request)
     {
-        $query = Order::with('product:id,name')->orderByDesc('created_at');
+        $query = $this->filteredOrdersQuery($request, false);
 
-        if ($request->filled('status') && $request->status !== 'all') {
+        $orders = $query->get()->map(fn ($o) => $this->orderToArray($o));
+
+        return Inertia::render('admin/orders/index', [
+            'orders' => $orders->values()->all(),
+            'statusLabels' => Order::statusLabels(),
+            'exportColumns' => collect(OrdersExport::COLUMN_LABELS)
+                ->map(fn (string $label, string $key) => ['key' => $key, 'label' => $label])
+                ->values()
+                ->all(),
+            'filters' => [
+                'search' => $request->query('search', ''),
+                'status' => $request->query('status', 'all'),
+            ],
+        ]);
+    }
+
+    public function export(Request $request)
+    {
+        $validated = $request->validate([
+            'search' => 'nullable|string|max:255',
+            'status' => 'nullable|string|in:all,pending,confirmed,paid,sold,refund',
+            'statuses' => 'nullable|array',
+            'statuses.*' => 'string|in:pending,confirmed,paid,sold,refund',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
+            'columns' => 'nullable|array',
+            'columns.*' => 'string|in:'.implode(',', array_keys(OrdersExport::COLUMN_LABELS)),
+        ]);
+
+        $query = $this->filteredOrdersQuery($request, true);
+
+        $orders = $query->get();
+        $columns = $validated['columns'] ?? [];
+        $export = new OrdersExport($orders, $columns, Order::statusLabels());
+        $filename = 'commandes-'.now()->format('Y-m-d-His').'.xlsx';
+
+        return Excel::download($export, $filename);
+    }
+
+    /**
+     * @param  bool  $exportMode  When true, uses `statuses[]` if present; otherwise falls back to `status` like the list.
+     */
+    private function filteredOrdersQuery(Request $request, bool $exportMode): Builder
+    {
+        $query = Order::with('product:id,name,new_price,old_price')->orderByDesc('created_at');
+
+        if ($exportMode && $request->filled('statuses') && is_array($request->statuses)) {
+            $statuses = array_values(array_unique($request->statuses));
+            if ($statuses !== []) {
+                $query->whereIn('status', $statuses);
+            }
+        } elseif (! $exportMode && $request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        } elseif ($exportMode && $request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
 
         if ($request->filled('search')) {
-            $term = '%' . $request->search . '%';
+            $term = '%'.$request->search.'%';
             $query->where(function ($q) use ($term) {
                 $q->where('customer_name', 'like', $term)
                     ->orWhere('email', 'like', $term)
@@ -52,16 +108,14 @@ class OrderController extends Controller
             });
         }
 
-        $orders = $query->get()->map(fn ($o) => $this->orderToArray($o));
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
 
-        return Inertia::render('admin/orders/index', [
-            'orders' => $orders->values()->all(),
-            'statusLabels' => Order::statusLabels(),
-            'filters' => [
-                'search' => $request->query('search', ''),
-                'status' => $request->query('status', 'all'),
-            ],
-        ]);
+        return $query;
     }
 
     public function updateStatus(Request $request, Order $order)
@@ -99,6 +153,7 @@ class OrderController extends Controller
             Mail::to($order->email)->send(new OrderStatusNotificationMail($order, $validated['status']));
         } catch (\Throwable $e) {
             report($e);
+
             return back()->with('error', 'Impossible d’envoyer l’email.');
         }
 
@@ -108,6 +163,7 @@ class OrderController extends Controller
     public function destroy(Order $order)
     {
         $order->delete();
+
         return back()->with('success', 'Commande supprimée.');
     }
 }
