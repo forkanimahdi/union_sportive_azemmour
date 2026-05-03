@@ -243,13 +243,14 @@ class MatchController extends Controller
         ]);
 
         // Get team players for lineup and events
-        $teamPlayers = $match->team ? $match->team->players()->get()->map(function($p) {
+        $teamPlayers = $match->team ? $match->team->players()->get()->map(function ($p) {
             return [
                 'id' => $p->id,
                 'first_name' => $p->first_name,
                 'last_name' => $p->last_name,
                 'position' => $p->position,
                 'jersey_number' => $p->jersey_number,
+                'photo' => $p->photo ? '/storage/'.$p->photo : null,
             ];
         }) : collect();
 
@@ -305,6 +306,7 @@ class MatchController extends Controller
                 'last_name' => $p->last_name,
                 'position' => $p->position,
                 'jersey_number' => $p->jersey_number,
+                'photo' => $p->photo ? '/storage/'.$p->photo : null,
             ];
         })->values() : collect();
 

@@ -16,7 +16,13 @@ class GameMatch extends Model
     protected $table = 'matches';
 
     public const GAME_TYPE_OFFICIAL = 'official';
+
     public const GAME_TYPE_AMICAL = 'amical';
+
+    public const FORMATION_DEFAULT = '433';
+
+    /** @var list<string> */
+    public const FORMATION_CODES = ['433', '442', '352', '451', '4231'];
 
     protected $fillable = [
         'competition_id',
@@ -33,6 +39,7 @@ class GameMatch extends Model
         'status',
         'match_report',
         'coach_notes',
+        'formation',
     ];
 
     protected function casts(): array

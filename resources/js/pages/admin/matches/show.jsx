@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../../layouts/AdminLayout';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import MatchEditModal from '@/components/admin/MatchEditModal';
+import MatchLineupPitch from '@/components/admin/MatchLineupPitch';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -451,6 +452,12 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [], tea
                                     <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2 mb-2">
                                         <span className="h-1.5 w-1.5 rounded-full bg-primary" /> XI titulaire • {startingXI.length}/11
                                     </h4>
+                                    <MatchLineupPitch
+                                        startingXI={startingXI}
+                                        teamPlayers={teamPlayers}
+                                        substitutes={substitutes}
+                                        className="mb-4"
+                                    />
                                     <div className="grid gap-2 sm:grid-cols-2">
                                         {startingXI.map((player, idx) => {
                                             const info = teamPlayers.find((p) => p.id === player.player_id);
@@ -596,6 +603,12 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [], tea
                                 <div className="space-y-6">
                                     <div>
                                         <h3 className="font-semibold mb-3">XI Titulaire</h3>
+                                        <MatchLineupPitch
+                                            startingXI={startingXI}
+                                            teamPlayers={teamPlayers}
+                                            substitutes={substitutes}
+                                            className="mb-4"
+                                        />
                                         <div className="grid grid-cols-1 gap-2">
                                             {startingXI.map((player, idx) => {
                                                 const playerInfo = teamPlayers.find(p => p.id === player.player_id);
