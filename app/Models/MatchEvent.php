@@ -14,6 +14,7 @@ class MatchEvent extends Model
     protected $fillable = [
         'match_id',
         'player_id',
+        'assist_player_id',
         'type',
         'minute',
         'description',
@@ -33,5 +34,10 @@ class MatchEvent extends Model
     public function substitutedPlayer(): BelongsTo
     {
         return $this->belongsTo(Player::class, 'substituted_player_id');
+    }
+
+    public function assistPlayer(): BelongsTo
+    {
+        return $this->belongsTo(Player::class, 'assist_player_id');
     }
 }

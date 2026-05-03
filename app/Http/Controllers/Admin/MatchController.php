@@ -12,6 +12,7 @@ use App\Models\MatchEvent;
 use App\Models\MatchLineup;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 
@@ -237,6 +238,7 @@ class MatchController extends Controller
             'team.players',
             'opponentTeam',
             'events.player',
+            'events.assistPlayer',
             'lineups.player',
             'convoctions',
             'competition',
@@ -295,6 +297,7 @@ class MatchController extends Controller
             'team.players',
             'opponentTeam',
             'events.player',
+            'events.assistPlayer',
             'events.substitutedPlayer',
             'lineups.player',
         ]);
@@ -354,6 +357,7 @@ class MatchController extends Controller
             'status' => $match->status,
             'match_report' => $match->match_report,
             'coach_notes' => $match->coach_notes,
+            'formation' => $match->formation ?? GameMatch::FORMATION_DEFAULT,
             'competition' => $match->competition ? $match->competition->name : null,
             'events' => $sortedEvents->map(function ($e) {
                 return [
@@ -370,6 +374,11 @@ class MatchController extends Controller
                         'id' => $e->substitutedPlayer->id,
                         'first_name' => $e->substitutedPlayer->first_name,
                         'last_name' => $e->substitutedPlayer->last_name,
+                    ] : null,
+                    'assist_player' => $e->assistPlayer ? [
+                        'id' => $e->assistPlayer->id,
+                        'first_name' => $e->assistPlayer->first_name,
+                        'last_name' => $e->assistPlayer->last_name,
                     ] : null,
                 ];
             }),
@@ -457,7 +466,11 @@ class MatchController extends Controller
             'lineup.*.position' => 'required|in:titulaire,remplacante',
             'lineup.*.jersey_number' => 'nullable|integer',
             'lineup.*.starting_position' => 'nullable|integer|min:1|max:11',
+            'formation' => ['nullable', 'string', Rule::in(GameMatch::FORMATION_CODES)],
         ]);
+
+        $formation = $validated['formation'] ?? $match->formation ?? GameMatch::FORMATION_DEFAULT;
+        $match->update(['formation' => $formation]);
 
         // Delete existing lineup
         $match->lineups()->delete();
@@ -534,18 +547,27 @@ class MatchController extends Controller
 
     public function addEvent(Request $request, GameMatch $match)
     {
+        if (! $request->filled('assist_player_id')) {
+            $request->merge(['assist_player_id' => null]);
+        }
+
         $validated = $request->validate([
             'type' => 'required|in:goal,yellow_card,red_card,substitution,injury,penalty,missed_penalty,own_goal',
             'player_id' => 'nullable|exists:players,id',
+            'assist_player_id' => 'nullable|exists:players,id|different:player_id',
             'minute' => 'required|integer|min:1|max:120',
             'description' => 'nullable|string',
             'substituted_player_id' => 'nullable|exists:players,id',
         ]);
 
-        MatchEvent::create([
+        $payload = array_merge($validated, [
             'match_id' => $match->id,
-            ...$validated,
         ]);
+        if (! in_array($validated['type'], ['goal', 'penalty'], true)) {
+            $payload['assist_player_id'] = null;
+        }
+
+        MatchEvent::create($payload);
 
         // If goal event, update match scores automatically
         if (in_array($validated['type'], ['goal', 'own_goal', 'penalty'])) {

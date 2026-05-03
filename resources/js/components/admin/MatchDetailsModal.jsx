@@ -295,11 +295,16 @@ function ManageView({
 
     const lineupForm = useForm({
         lineup: existingLineup.length > 0 ? existingLineup : [],
+        formation: displayMatch?.formation || '433',
     });
 
     useEffect(() => {
-        lineupForm.setData('lineup', Array.isArray(existingLineup) && existingLineup.length > 0 ? [...existingLineup] : []);
-    }, [existingLineup]);
+        lineupForm.setData({
+            lineup: Array.isArray(existingLineup) && existingLineup.length > 0 ? [...existingLineup] : [],
+            formation: displayMatch?.formation || '433',
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- sync from server fetch
+    }, [existingLineup, displayMatch?.formation]);
 
     const eventForm = useForm({
         type: 'goal',
@@ -315,16 +320,20 @@ function ManageView({
             ...l,
             position: l.starting_position >= 1 && l.starting_position <= 11 ? 'titulaire' : 'remplacante',
         }));
-        router.post(`/admin/matches/${matchId}/lineup`, { lineup }, {
-            preserveScroll: true,
-            onSuccess: () => {
-                if (lineup.length > 0) {
-                    window.open(`/admin/matches/${matchId}/lineup-composition-pdf`, '_blank', 'noopener,noreferrer');
-                }
-                refetchMatchData();
-                setLineupDialogOpen(false);
-            },
-        });
+        router.post(
+            `/admin/matches/${matchId}/lineup`,
+            { lineup, formation: lineupForm.data.formation || '433' },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    if (lineup.length > 0) {
+                        window.open(`/admin/matches/${matchId}/lineup-composition-pdf`, '_blank', 'noopener,noreferrer');
+                    }
+                    refetchMatchData();
+                    setLineupDialogOpen(false);
+                },
+            }
+        );
     };
 
     const handleAddEvent = (e) => {

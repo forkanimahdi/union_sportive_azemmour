@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import AdminLayout from '../../../layouts/AdminLayout';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import MatchEditModal from '@/components/admin/MatchEditModal';
@@ -74,11 +74,17 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [], tea
 
     const { data: lineupData, setData: setLineupData, post: saveLineup } = useForm({
         lineup: existingLineup.length > 0 ? existingLineup : [],
+        formation: match.formation || '433',
     });
+
+    useEffect(() => {
+        setLineupData('formation', match.formation || '433');
+    }, [match.formation, setLineupData]);
 
     const { data: eventData, setData: setEventData, post: addEvent } = useForm({
         type: 'goal',
         player_id: '',
+        assist_player_id: '',
         minute: '',
         description: '',
     });
@@ -132,6 +138,7 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [], tea
                 setEventData({
                     type: 'goal',
                     player_id: '',
+                    assist_player_id: '',
                     minute: '',
                     description: '',
                 });
@@ -141,11 +148,33 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [], tea
 
     const eventTypes = {
         goal: { label: 'But', icon: Target, color: 'text-green-600' },
+        penalty: { label: 'Penalty réussi', icon: Target, color: 'text-emerald-600' },
+        own_goal: { label: 'CSC', icon: Target, color: 'text-orange-600' },
+        missed_penalty: { label: 'Penalty raté', icon: Target, color: 'text-neutral-500' },
         yellow_card: { label: 'Carton Jaune', icon: CreditCard, color: 'text-yellow-600' },
         red_card: { label: 'Carton Rouge', icon: CreditCard, color: 'text-red-600' },
         injury: { label: 'Blessure', icon: AlertTriangle, color: 'text-orange-600' },
         substitution: { label: 'Remplacement', icon: Users, color: 'text-blue-600' },
     };
+
+    const lineupStatsByPlayerId = useMemo(() => {
+        const map = {};
+        const evs = match.events;
+        if (!evs?.length) return map;
+        for (const e of evs) {
+            if (['goal', 'penalty'].includes(e.type) && e.player?.id) {
+                const pid = e.player.id;
+                if (!map[pid]) map[pid] = { goals: 0, assists: 0 };
+                map[pid].goals += 1;
+            }
+            if (['goal', 'penalty'].includes(e.type) && e.assist_player?.id) {
+                const aid = e.assist_player.id;
+                if (!map[aid]) map[aid] = { goals: 0, assists: 0 };
+                map[aid].assists += 1;
+            }
+        }
+        return map;
+    }, [match.events]);
 
     const startingXI = lineupData.lineup.filter(p => p.position === 'titulaire' && p.starting_position).sort((a, b) => a.starting_position - b.starting_position);
     const substitutes = lineupData.lineup.filter(p => p.position === 'remplacante');
@@ -181,6 +210,19 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [], tea
 
     const handleConfirmSquad = () => {
         saveLineup(`/admin/matches/${match.id}/lineup`, { onSuccess: () => {} });
+    };
+
+    const swapStartingPositions = (slotA, slotB) => {
+        if (slotA === slotB) return;
+        setLineupData(
+            'lineup',
+            lineupData.lineup.map((l) => {
+                if (l.position !== 'titulaire' || !l.starting_position) return l;
+                if (l.starting_position === slotA) return { ...l, starting_position: slotB };
+                if (l.starting_position === slotB) return { ...l, starting_position: slotA };
+                return l;
+            })
+        );
     };
 
     return (
@@ -453,9 +495,13 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [], tea
                                         <span className="h-1.5 w-1.5 rounded-full bg-primary" /> XI titulaire • {startingXI.length}/11
                                     </h4>
                                     <MatchLineupPitch
+                                        formation={lineupData.formation || '433'}
+                                        onFormationChange={(v) => setLineupData('formation', v)}
+                                        onSwapStartingPositions={swapStartingPositions}
                                         startingXI={startingXI}
                                         teamPlayers={teamPlayers}
                                         substitutes={substitutes}
+                                        lineupStatsByPlayerId={lineupStatsByPlayerId}
                                         className="mb-4"
                                     />
                                     <div className="grid gap-2 sm:grid-cols-2">
@@ -604,9 +650,13 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [], tea
                                     <div>
                                         <h3 className="font-semibold mb-3">XI Titulaire</h3>
                                         <MatchLineupPitch
+                                            formation={lineupData.formation || '433'}
+                                            onFormationChange={(v) => setLineupData('formation', v)}
+                                            onSwapStartingPositions={swapStartingPositions}
                                             startingXI={startingXI}
                                             teamPlayers={teamPlayers}
                                             substitutes={substitutes}
+                                            lineupStatsByPlayerId={lineupStatsByPlayerId}
                                             className="mb-4"
                                         />
                                         <div className="grid grid-cols-1 gap-2">
@@ -677,7 +727,15 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [], tea
                                                             {event.type === 'substitution' && event.substituted_player ? (
                                                                 <span className="font-semibold">{event.substituted_player.first_name} {event.substituted_player.last_name} → {event.player ? `${event.player.first_name} ${event.player.last_name}` : '-'}</span>
                                                             ) : (
-                                                                <span className="font-semibold">{event.player?.first_name} {event.player?.last_name}</span>
+                                                                <span className="font-semibold">
+                                                                    {event.player?.first_name} {event.player?.last_name}
+                                                                    {['goal', 'penalty'].includes(event.type) && event.assist_player && (
+                                                                        <span className="font-normal text-muted-foreground">
+                                                                            {' '}
+                                                                            (passe D. : {event.assist_player.first_name} {event.assist_player.last_name})
+                                                                        </span>
+                                                                    )}
+                                                                </span>
                                                             )}
                                                             <span className="text-sm text-muted-foreground ml-2">({event.minute}&apos;)</span>
                                                         </div>
@@ -813,7 +871,13 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [], tea
                         <div className="space-y-4">
                             <div>
                                 <Label>Type</Label>
-                                <Select value={eventData.type} onValueChange={(value) => setEventData('type', value)}>
+                                <Select
+                                    value={eventData.type}
+                                    onValueChange={(value) => {
+                                        setEventData('type', value);
+                                        setEventData('assist_player_id', '');
+                                    }}
+                                >
                                     <SelectTrigger>
                                         <SelectValue />
                                     </SelectTrigger>
@@ -828,7 +892,15 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [], tea
                             </div>
                             <div>
                                 <Label>Joueuse</Label>
-                                <Select value={eventData.player_id} onValueChange={(value) => setEventData('player_id', value)}>
+                                <Select
+                                    value={eventData.player_id}
+                                    onValueChange={(value) => {
+                                        setEventData('player_id', value);
+                                        if (value && value === eventData.assist_player_id) {
+                                            setEventData('assist_player_id', '');
+                                        }
+                                    }}
+                                >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Sélectionner une joueuse" />
                                     </SelectTrigger>
@@ -841,6 +913,31 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [], tea
                                     </SelectContent>
                                 </Select>
                             </div>
+                            {['goal', 'penalty'].includes(eventData.type) && (
+                                <div>
+                                    <Label>Passe décisive (optionnel)</Label>
+                                    <Select
+                                        value={eventData.assist_player_id ? eventData.assist_player_id : '__none__'}
+                                        onValueChange={(value) =>
+                                            setEventData('assist_player_id', value === '__none__' ? '' : value)
+                                        }
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Aucune" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="__none__">Aucune</SelectItem>
+                                            {teamPlayers
+                                                .filter((p) => String(p.id) !== String(eventData.player_id))
+                                                .map((player) => (
+                                                    <SelectItem key={player.id} value={player.id.toString()}>
+                                                        {player.first_name} {player.last_name}
+                                                    </SelectItem>
+                                                ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
                             <div>
                                 <Label>Minute</Label>
                                 <Input

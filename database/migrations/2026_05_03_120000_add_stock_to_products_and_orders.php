@@ -13,7 +13,7 @@ return new class extends Migration
             $table->json('stock_by_size')->nullable()->after('is_active');
         });
 
-        $defaultStock = json_encode(array_fill_keys(['XS', 'S', 'M', 'L', 'XL', 'XXL'], 100));
+        $defaultStock = json_encode(array_fill_keys(['XS', 'S', 'M', 'L', 'XL', 'XXL'], 10));
         DB::table('products')->update(['stock_by_size' => $defaultStock]);
 
         Schema::table('orders', function (Blueprint $table) {
