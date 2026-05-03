@@ -95,6 +95,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         Route::get('fixtures', [MatchController::class, 'fixtures'])->name('fixtures.index');
         Route::resource('matches', MatchController::class);
         Route::get('matches/{match}/data', [MatchController::class, 'matchData'])->name('matches.data');
+        Route::get('matches/{match}/lineup-composition-pdf', [MatchController::class, 'lineupCompositionPdf'])->name('matches.lineup-composition-pdf');
         Route::post('matches/{match}/lineup', [MatchController::class, 'updateLineup'])->name('matches.lineup');
         Route::post('matches/{match}/events', [MatchController::class, 'addEvent'])->name('matches.events');
         Route::delete('matches/{match}/events/{event}', [MatchController::class, 'destroyEvent'])->name('matches.events.destroy');

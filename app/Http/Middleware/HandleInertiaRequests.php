@@ -49,6 +49,7 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'orderSuccess' => $request->session()->get('orderSuccess'),
                 'open_order_paid_pdf' => $request->session()->get('open_order_paid_pdf'),
+                'open_match_lineup_pdf' => $request->session()->get('open_match_lineup_pdf'),
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
             ],

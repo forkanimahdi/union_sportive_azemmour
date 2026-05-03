@@ -318,6 +318,9 @@ function ManageView({
         router.post(`/admin/matches/${matchId}/lineup`, { lineup }, {
             preserveScroll: true,
             onSuccess: () => {
+                if (lineup.length > 0) {
+                    window.open(`/admin/matches/${matchId}/lineup-composition-pdf`, '_blank', 'noopener,noreferrer');
+                }
                 refetchMatchData();
                 setLineupDialogOpen(false);
             },

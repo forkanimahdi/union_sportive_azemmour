@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../../layouts/AdminLayout';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import MatchEditModal from '@/components/admin/MatchEditModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +26,7 @@ import {
     ChevronRight,
     Plus,
     RotateCcw,
+    FileDown,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -42,6 +43,17 @@ function positionPillClass(position) {
 }
 
 export default function MatchShow({ match, teamPlayers, existingLineup = [], teams = [], opponentTeams = [] }) {
+    const { flash } = usePage().props;
+
+    useEffect(() => {
+        const url = flash?.open_match_lineup_pdf;
+        if (url) {
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+    }, [flash?.open_match_lineup_pdf]);
+
+    const lineupCompositionPdfUrl = `/admin/matches/${match.id}/lineup-composition-pdf`;
+
     const [activeTab, setActiveTab] = useState('overview');
     const [isEditingScores, setIsEditingScores] = useState(false);
     const [lineupDialogOpen, setLineupDialogOpen] = useState(false);
@@ -499,10 +511,24 @@ export default function MatchShow({ match, teamPlayers, existingLineup = [], tea
                                     </div>
                                 </div>
 
-                                <Button onClick={handleConfirmSquad} className="w-full bg-primary hover:bg-primary/90" size="lg">
-                                    <Trophy className="w-4 h-4 mr-2" />
-                                    Confirmer la composition
-                                </Button>
+                                <div className="flex flex-col gap-2">
+                                    <Button onClick={handleConfirmSquad} className="w-full bg-primary hover:bg-primary/90" size="lg">
+                                        <Trophy className="w-4 h-4 mr-2" />
+                                        Confirmer la composition
+                                    </Button>
+                                    {totalSelected > 0 && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="w-full"
+                                            size="lg"
+                                            onClick={() => window.open(lineupCompositionPdfUrl, '_blank', 'noopener,noreferrer')}
+                                        >
+                                            <FileDown className="w-4 h-4 mr-2" />
+                                            Télécharger la liste (PDF)
+                                        </Button>
+                                    )}
+                                </div>
                             </CardContent>
                         </Card>
                     </div>

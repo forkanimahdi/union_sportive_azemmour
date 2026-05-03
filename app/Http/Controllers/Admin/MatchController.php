@@ -10,8 +10,10 @@ use App\Models\Season;
 use App\Models\Player;
 use App\Models\MatchEvent;
 use App\Models\MatchLineup;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Str;
 
 class MatchController extends Controller
 {
@@ -469,7 +471,63 @@ class MatchController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('success', 'Composition mise à jour avec succès');
+        $redirect = redirect()->back()->with('success', 'Composition mise à jour avec succès');
+
+        if (count($validated['lineup']) > 0) {
+            $redirect->with(
+                'open_match_lineup_pdf',
+                route('admin.matches.lineup-composition-pdf', ['match' => $match->id], false)
+            );
+        }
+
+        return $redirect;
+    }
+
+    /**
+     * PDF : liste des joueuses retenues (nom + statut titulaire / remplaçante).
+     */
+    public function lineupCompositionPdf(GameMatch $match)
+    {
+        $match->load(['team', 'opponentTeam', 'competition', 'lineups.player']);
+
+        $sorted = $match->lineups->sort(function (MatchLineup $a, MatchLineup $b) {
+            if ($a->position !== $b->position) {
+                return $a->position === 'titulaire' ? -1 : 1;
+            }
+            if ($a->position === 'titulaire') {
+                return ($a->starting_position ?? 99) <=> ($b->starting_position ?? 99);
+            }
+
+            $an = Str::lower(($a->player->last_name ?? '').' '.($a->player->first_name ?? ''));
+            $bn = Str::lower(($b->player->last_name ?? '').' '.($b->player->first_name ?? ''));
+
+            return $an <=> $bn;
+        })->values();
+
+        $players = $sorted->map(function (MatchLineup $lineup) {
+            $p = $lineup->player;
+            $name = trim(($p->first_name ?? '').' '.($p->last_name ?? '')) ?: '—';
+
+            if ($lineup->position === 'titulaire') {
+                $status = 'Titulaire';
+                if ($lineup->starting_position !== null) {
+                    $status .= ' (place '.$lineup->starting_position.')';
+                }
+            } else {
+                $status = 'Remplaçante';
+            }
+
+            return ['name' => $name, 'status' => $status];
+        });
+
+        $pdf = Pdf::loadView('pdf.match-lineup-composition', [
+            'match' => $match,
+            'players' => $players,
+        ])->setPaper('a4', 'portrait');
+
+        $short = substr(str_replace('-', '', $match->id), 0, 8);
+
+        return $pdf->download('composition-match-'.$short.'.pdf');
     }
 
     public function addEvent(Request $request, GameMatch $match)
