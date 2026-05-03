@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\OrderStatusNotificationMail;
 use App\Models\Order;
 use App\Models\Product;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -132,7 +133,9 @@ class OrderController extends Controller
 
         $newStatus = $validated['status'];
 
-        DB::transaction(function () use ($order, $newStatus) {
+        $openPaidPdfOrderId = null;
+
+        DB::transaction(function () use ($order, $newStatus, &$openPaidPdfOrderId) {
             $locked = Order::query()->whereKey($order->getKey())->lockForUpdate()->firstOrFail();
             $prev = $locked->status;
 
@@ -153,9 +156,41 @@ class OrderController extends Controller
 
             $locked->status = $newStatus;
             $locked->save();
+
+            if ($newStatus === Order::STATUS_PAID && $prev !== Order::STATUS_PAID) {
+                $openPaidPdfOrderId = $locked->id;
+            }
         });
 
+        if ($openPaidPdfOrderId !== null) {
+            return back()
+                ->with('open_order_paid_pdf', route('admin.orders.paid-tickets-pdf', ['order' => $openPaidPdfOrderId], false))
+                ->with('success', 'Commande passée en « Payée ». Le PDF (1 page A4, 2 parties haut/bas) s’ouvre dans un nouvel onglet — autorisez les pop-ups si besoin.');
+        }
+
         return back();
+    }
+
+    /**
+     * Une page A4 : deux bandes (haut / bas), même contenu — découpe horizontale au milieu.
+     */
+    public function paidTicketsPdf(Order $order)
+    {
+        abort_unless(in_array($order->status, [Order::STATUS_PAID, Order::STATUS_SOLD], true), 404);
+
+        $order->loadMissing('product');
+        $financial = $order->financialSummary();
+        $halves = [
+            ['label' => 'Partie haute — Exemplaire 1/2', 'hint' => 'Ex. atelier, livreur ou colis — découper au trait pointillé ci-dessous'],
+            ['label' => 'Partie basse — Exemplaire 2/2', 'hint' => 'Ex. archives, caisse ou second colis — même contenu que la partie haute'],
+        ];
+
+        $pdf = Pdf::loadView('pdf.order-paid-tickets', compact('order', 'financial', 'halves'))
+            ->setPaper('a4', 'portrait');
+
+        $short = substr(str_replace('-', '', $order->id), 0, 8);
+
+        return $pdf->download('bordereau-commande-'.$short.'.pdf');
     }
 
     public function previewStatusEmail(Request $request, Order $order)

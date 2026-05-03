@@ -146,6 +146,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         Route::post('product-categories', [ProductCategoryController::class, 'store'])->name('product-categories.store');
         Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
         Route::get('orders/export', [OrderController::class, 'export'])->name('orders.export');
+        Route::get('orders/{order}/paid-tickets-pdf', [OrderController::class, 'paidTicketsPdf'])->name('orders.paid-tickets-pdf');
         Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
         Route::get('orders/{order}/status-email-preview', [OrderController::class, 'previewStatusEmail'])->name('orders.preview-status-email');
         Route::post('orders/{order}/send-status-notification', [OrderController::class, 'sendStatusNotification'])->name('orders.send-status-notification');

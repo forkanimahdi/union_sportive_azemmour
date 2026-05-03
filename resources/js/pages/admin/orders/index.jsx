@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Eye, Bell, Trash2, Search, User, MapPin, FileSpreadsheet } from 'lucide-react';
+import { Eye, Bell, Trash2, Search, User, MapPin, FileSpreadsheet, FileDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 
@@ -30,6 +30,13 @@ export default function AdminOrdersIndex({ orders = [], statusLabels = {}, filte
         setSearchInput(filters.search ?? '');
         setStatusFilter(filters.status ?? 'all');
     }, [filters.search, filters.status]);
+
+    useEffect(() => {
+        const url = flash?.open_order_paid_pdf;
+        if (url) {
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+    }, [flash?.open_order_paid_pdf]);
     const [detailOrder, setDetailOrder] = useState(null);
     const [notifyOrder, setNotifyOrder] = useState(null);
     const [notifyStatus, setNotifyStatus] = useState('confirmed');
@@ -64,6 +71,8 @@ export default function AdminOrdersIndex({ orders = [], statusLabels = {}, filte
     const toggleExportColumn = (key) => {
         setExportSelectedColumns((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
     };
+
+    const paidTicketsPdfUrl = (orderId) => `/admin/orders/${orderId}/paid-tickets-pdf`;
 
     const downloadExport = () => {
         if (exportSelectedColumns.length === 0 || exportStatuses.length === 0) return;
@@ -248,6 +257,18 @@ export default function AdminOrdersIndex({ orders = [], statusLabels = {}, filte
                                                         >
                                                             <Eye className="w-4 h-4" />
                                                         </Button>
+                                                        {(order.status === 'paid' || order.status === 'sold') && (
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8"
+                                                                onClick={() => window.open(paidTicketsPdfUrl(order.id), '_blank', 'noopener,noreferrer')}
+                                                                title="Télécharger bordereau 2 parties (PDF)"
+                                                            >
+                                                                <FileDown className="w-4 h-4" />
+                                                            </Button>
+                                                        )}
                                                         <Select
                                                             value={order.status}
                                                             onValueChange={(value) => updateStatus(order.id, value)}
@@ -370,6 +391,20 @@ export default function AdminOrdersIndex({ orders = [], statusLabels = {}, filte
                                         <span>Total</span>
                                         <span>{detailOrder.financial.total} DH</span>
                                     </div>
+                                    {(detailOrder.status === 'paid' || detailOrder.status === 'sold') && (
+                                        <div className="pt-3">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="w-full"
+                                                onClick={() => window.open(paidTicketsPdfUrl(detailOrder.id), '_blank', 'noopener,noreferrer')}
+                                            >
+                                                <FileDown className="w-4 h-4 mr-2" />
+                                                Bordereau 2 parties (PDF)
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                             {(detailOrder.delivery_fee != null) && !detailOrder.financial && (
