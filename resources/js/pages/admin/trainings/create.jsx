@@ -7,9 +7,20 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dumbbell } from 'lucide-react';
 
-export default function TrainingCreate({ teams = [], staff = [], sessionTypes = {} }) {
+const WEEKDAYS_ISO = [
+    { iso: 1, label: 'Lun' },
+    { iso: 2, label: 'Mar' },
+    { iso: 3, label: 'Mer' },
+    { iso: 4, label: 'Jeu' },
+    { iso: 5, label: 'Ven' },
+    { iso: 6, label: 'Sam' },
+    { iso: 7, label: 'Dim' },
+];
+
+export default function TrainingCreate({ teams = [], staff = [], sessionTypes = {}, currentMonthLabel = '' }) {
     const { data, setData, post, processing, errors } = useForm({
         team_id: '',
         coach_id: '',
@@ -19,7 +30,19 @@ export default function TrainingCreate({ teams = [], staff = [], sessionTypes = 
         duration_minutes: '',
         objectives: '',
         coach_notes: '',
+        repeat_for_current_month: false,
+        repeat_weekdays: [],
     });
+
+    const toggleWeekday = (iso) => {
+        const next = new Set(data.repeat_weekdays);
+        if (next.has(iso)) {
+            next.delete(iso);
+        } else {
+            next.add(iso);
+        }
+        setData('repeat_weekdays', [...next].sort((a, b) => a - b));
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -84,6 +107,11 @@ export default function TrainingCreate({ teams = [], staff = [], sessionTypes = 
                                         value={data.scheduled_at}
                                         onChange={(e) => setData('scheduled_at', e.target.value)}
                                     />
+                                    {data.repeat_for_current_month && (
+                                        <p className="text-xs text-muted-foreground">
+                                            Avec la répétition mensuelle, seule l’heure (et les minutes) est réutilisée ; les séances sont placées sur les jours cochés dans <span className="font-medium text-foreground">{currentMonthLabel}</span>.
+                                        </p>
+                                    )}
                                     {errors.scheduled_at && <p className="text-sm text-destructive">{errors.scheduled_at}</p>}
                                 </div>
                                 <div className="space-y-2">
@@ -95,6 +123,38 @@ export default function TrainingCreate({ teams = [], staff = [], sessionTypes = 
                                     />
                                     {errors.location && <p className="text-sm text-destructive">{errors.location}</p>}
                                 </div>
+                            </div>
+
+                            <div className="rounded-lg border border-border p-4 space-y-4 bg-muted/30">
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        id="repeat_month"
+                                        checked={data.repeat_for_current_month}
+                                        onCheckedChange={(v) => setData('repeat_for_current_month', v === true)}
+                                    />
+                                    <Label htmlFor="repeat_month" className="text-sm font-medium leading-none cursor-pointer">
+                                        Répéter pour le mois en cours ({currentMonthLabel || '…'})
+                                    </Label>
+                                </div>
+                                {data.repeat_for_current_month && (
+                                    <div className="space-y-2">
+                                        <p className="text-sm text-muted-foreground">Créer une séance identique pour chaque :</p>
+                                        <div className="flex flex-wrap gap-4">
+                                            {WEEKDAYS_ISO.map(({ iso, label }) => (
+                                                <label key={iso} className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                                                    <Checkbox
+                                                        checked={data.repeat_weekdays.includes(iso)}
+                                                        onCheckedChange={() => toggleWeekday(iso)}
+                                                    />
+                                                    {label}
+                                                </label>
+                                            ))}
+                                        </div>
+                                        {errors.repeat_weekdays && (
+                                            <p className="text-sm text-destructive">{errors.repeat_weekdays}</p>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

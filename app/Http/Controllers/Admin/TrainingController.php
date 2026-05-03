@@ -8,7 +8,10 @@ use App\Models\Season;
 use App\Models\Staff;
 use App\Models\Team;
 use App\Models\Training;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class TrainingController extends Controller
@@ -34,7 +37,11 @@ class TrainingController extends Controller
             $query->where('status', $request->status);
         }
 
-        $trainings = $query->orderBy('scheduled_at', 'desc')
+        $now = now();
+        $trainings = $query
+            ->orderByRaw('CASE WHEN scheduled_at >= ? THEN 0 ELSE 1 END', [$now])
+            ->orderByRaw('CASE WHEN scheduled_at >= ? THEN scheduled_at END ASC', [$now])
+            ->orderByRaw('CASE WHEN scheduled_at < ? THEN scheduled_at END DESC', [$now])
             ->paginate(15, ['*'], 'sessions_page')
             ->withQueryString()
             ->through(fn ($t) => $this->formatSession($t));
@@ -84,6 +91,7 @@ class TrainingController extends Controller
             'teams' => $teams,
             'staff' => $staff,
             'sessionTypes' => Training::sessionTypes(),
+            'currentMonthLabel' => now()->locale('fr')->translatedFormat('F Y'),
         ]);
     }
 
@@ -99,9 +107,55 @@ class TrainingController extends Controller
             'objectives' => 'nullable|string',
             'coach_notes' => 'nullable|string',
             'status' => 'nullable|in:scheduled,completed,cancelled',
+            'repeat_for_current_month' => 'boolean',
+            'repeat_weekdays' => [
+                Rule::when($request->boolean('repeat_for_current_month'), ['required', 'array', 'min:1'], ['nullable', 'array']),
+            ],
+            'repeat_weekdays.*' => 'integer|between:1,7',
         ]);
         $validated['status'] = $validated['status'] ?? 'scheduled';
+
+        $repeatForMonth = (bool) ($validated['repeat_for_current_month'] ?? false);
+        $repeatWeekdays = array_values(array_unique(array_map('intval', $validated['repeat_weekdays'] ?? [])));
+
+        unset($validated['repeat_for_current_month'], $validated['repeat_weekdays']);
+
+        if (($validated['coach_id'] ?? '') === '') {
+            $validated['coach_id'] = null;
+        }
+        if (($validated['session_type'] ?? '') === '') {
+            $validated['session_type'] = null;
+        }
+
+        if ($repeatForMonth && count($repeatWeekdays) > 0) {
+            $time = Carbon::parse($validated['scheduled_at'])->format('H:i:s');
+            $monthStart = now()->copy()->startOfMonth()->startOfDay();
+            $monthEnd = now()->copy()->endOfMonth()->endOfDay();
+
+            $count = DB::transaction(function () use ($validated, $repeatWeekdays, $time, $monthStart, $monthEnd) {
+                $created = 0;
+                for ($day = $monthStart->copy(); $day->lte($monthEnd); $day->addDay()) {
+                    if (! in_array((int) $day->dayOfWeekIso, $repeatWeekdays, true)) {
+                        continue;
+                    }
+                    Training::create(array_merge($validated, [
+                        'scheduled_at' => $day->copy()->setTimeFromTimeString($time),
+                    ]));
+                    $created++;
+                }
+
+                return $created;
+            });
+
+            $message = $count === 1
+                ? '1 séance créée pour le mois en cours.'
+                : "{$count} séances créées pour le mois en cours.";
+
+            return redirect()->route('admin.trainings.index')->with('success', $message);
+        }
+
         Training::create($validated);
+
         return redirect()->route('admin.trainings.index')->with('success', 'Séance créée.');
     }
 

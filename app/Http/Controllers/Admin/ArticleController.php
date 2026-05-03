@@ -84,6 +84,8 @@ class ArticleController extends Controller
                 Storage::disk('public')->delete($article->image);
             }
             $validated['image'] = $request->file('image')->store('articles', 'public');
+        } else {
+            unset($validated['image']);
         }
 
         $article->update($validated);
