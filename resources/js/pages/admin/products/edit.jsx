@@ -9,7 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import InputError from '@/components/input-error';
 
+const PRODUCT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+
 export default function AdminProductsEdit({ product, categories }) {
+    const stock = product.stock_by_size || {};
     const { data, setData, post, processing, errors } = useForm({
         name: product.name || '',
         description: product.description || '',
@@ -20,8 +23,12 @@ export default function AdminProductsEdit({ product, categories }) {
         new_price: product.new_price != null ? String(product.new_price) : '',
         product_category_id: product.product_category_id || '',
         is_active: product.is_active ?? true,
+        stock_by_size: Object.fromEntries(PRODUCT_SIZES.map((s) => [s, String(stock[s] ?? 0)])),
         _method: 'PUT',
     });
+
+    const lowTh = product.stock_summary?.low_stock_threshold ?? 5;
+    const lowLines = (product.stock_summary?.low_stock ?? []).filter((x) => x.qty > 0 && x.qty <= lowTh);
 
     const [previewImage, setPreviewImage] = useState(null);
     const [previewNoLogo, setPreviewNoLogo] = useState(null);
@@ -102,6 +109,37 @@ export default function AdminProductsEdit({ product, categories }) {
                                     <input type="checkbox" checked={data.is_active} onChange={(e) => setData('is_active', e.target.checked)} />
                                     Produit visible en boutique
                                 </Label>
+                            </div>
+
+                            {lowLines.length > 0 && (
+                                <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                                    <p className="font-semibold">Stock faible (≤ {lowTh} unités)</p>
+                                    <ul className="mt-1 list-disc list-inside">
+                                        {lowLines.map((row) => (
+                                            <li key={row.size}>Taille {row.size} : {row.qty} restante{row.qty > 1 ? 's' : ''}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+
+                            <div className="space-y-3 border-t pt-4">
+                                <Label className="text-base">Stock par taille</Label>
+                                <p className="text-xs text-muted-foreground">Chaque commande validée déduit le stock des tailles choisies. Seuil d’alerte faible stock : {lowTh} (modifiable via <code className="text-xs">BOUTIQUE_LOW_STOCK_THRESHOLD</code> dans <code className="text-xs">.env</code>).</p>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                    {PRODUCT_SIZES.map((s) => (
+                                        <div key={s} className="space-y-1">
+                                            <Label className="text-xs">{s}</Label>
+                                            <Input
+                                                type="number"
+                                                min={0}
+                                                max={999999}
+                                                value={data.stock_by_size?.[s] ?? '0'}
+                                                onChange={(e) => setData('stock_by_size', { ...data.stock_by_size, [s]: e.target.value })}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                                <InputError message={errors['stock_by_size.XS'] || errors.stock_by_size} />
                             </div>
 
                             <div className="space-y-4 border-t pt-4">

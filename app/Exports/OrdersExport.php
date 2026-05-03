@@ -16,7 +16,8 @@ class OrdersExport implements FromCollection, WithHeadings, WithMapping
         'product_name' => 'Produit',
         'unit_price' => 'Prix unitaire (DH)',
         'quantity' => 'Quantité',
-        'subtotal' => 'Sous-total (DH)',
+        'volume_discount' => 'Remise volume (DH)',
+        'subtotal' => 'Sous-total articles (DH)',
         'delivery_fee' => 'Frais livraison (DH)',
         'total' => 'Total (DH)',
         'customer_name' => 'Nom client',
@@ -59,11 +60,14 @@ class OrdersExport implements FromCollection, WithHeadings, WithMapping
      */
     public function map($order): array
     {
-        $unit = $this->unitPrice($order);
-        $qty = (int) $order->quantity;
-        $subtotal = $unit * $qty;
-        $delivery = (float) ($order->delivery_fee ?? 0);
-        $total = $subtotal + $delivery;
+        $order->loadMissing('product');
+        $f = $order->financialSummary();
+        $unit = $f['unit_price'];
+        $qty = $f['quantity'];
+        $subtotal = $f['product_subtotal'];
+        $volumeDiscount = $f['volume_discount'];
+        $delivery = $f['delivery_fee'];
+        $total = $f['total'];
 
         $row = [];
         foreach ($this->columns as $col) {
@@ -73,6 +77,7 @@ class OrdersExport implements FromCollection, WithHeadings, WithMapping
                 'product_name' => $order->product?->name,
                 'unit_price' => round($unit, 2),
                 'quantity' => $qty,
+                'volume_discount' => round($volumeDiscount, 2),
                 'subtotal' => round($subtotal, 2),
                 'delivery_fee' => round($delivery, 2),
                 'total' => round($total, 2),

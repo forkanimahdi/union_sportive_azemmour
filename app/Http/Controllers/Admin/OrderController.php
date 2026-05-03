@@ -6,8 +6,10 @@ use App\Exports\OrdersExport;
 use App\Http\Controllers\Controller;
 use App\Mail\OrderStatusNotificationMail;
 use App\Models\Order;
+use App\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
@@ -16,6 +18,8 @@ class OrderController extends Controller
 {
     private function orderToArray(Order $o): array
     {
+        $o->loadMissing('product');
+
         return [
             'id' => $o->id,
             'product_id' => $o->product_id,
@@ -33,6 +37,8 @@ class OrderController extends Controller
             'status' => $o->status,
             'notes' => $o->notes,
             'delivery_fee' => $o->delivery_fee !== null ? (float) $o->delivery_fee : null,
+            'volume_discount' => $o->volume_discount !== null ? (float) $o->volume_discount : 0.0,
+            'financial' => $o->financialSummary(),
             'created_at' => $o->created_at->toISOString(),
         ];
     }
@@ -61,9 +67,9 @@ class OrderController extends Controller
     {
         $validated = $request->validate([
             'search' => 'nullable|string|max:255',
-            'status' => 'nullable|string|in:all,pending,confirmed,paid,sold,refund',
+            'status' => 'nullable|string|in:all,pending,confirmed,paid,sold,refund,cancelled',
             'statuses' => 'nullable|array',
-            'statuses.*' => 'string|in:pending,confirmed,paid,sold,refund',
+            'statuses.*' => 'string|in:pending,confirmed,paid,sold,refund,cancelled',
             'date_from' => 'nullable|date',
             'date_to' => 'nullable|date|after_or_equal:date_from',
             'columns' => 'nullable|array',
@@ -121,10 +127,33 @@ class OrderController extends Controller
     public function updateStatus(Request $request, Order $order)
     {
         $validated = $request->validate([
-            'status' => 'required|string|in:pending,confirmed,paid,sold,refund',
+            'status' => 'required|string|in:pending,confirmed,paid,sold,refund,cancelled',
         ]);
 
-        $order->update(['status' => $validated['status']]);
+        $newStatus = $validated['status'];
+
+        DB::transaction(function () use ($order, $newStatus) {
+            $locked = Order::query()->whereKey($order->getKey())->lockForUpdate()->firstOrFail();
+            $prev = $locked->status;
+
+            $shouldReleaseStock = $locked->inventory_deducted
+                && $locked->product_id
+                && (
+                    ($newStatus === Order::STATUS_REFUND && $prev !== Order::STATUS_REFUND)
+                    || ($newStatus === Order::STATUS_CANCELLED && $prev !== Order::STATUS_CANCELLED)
+                );
+
+            if ($shouldReleaseStock) {
+                $product = Product::query()->whereKey($locked->product_id)->lockForUpdate()->first();
+                if ($product) {
+                    $product->incrementStockForSizes($locked->sizeCountsForInventory());
+                }
+                $locked->inventory_deducted = false;
+            }
+
+            $locked->status = $newStatus;
+            $locked->save();
+        });
 
         return back();
     }
@@ -132,7 +161,7 @@ class OrderController extends Controller
     public function previewStatusEmail(Request $request, Order $order)
     {
         $status = $request->query('status', $order->status);
-        $allowed = [Order::STATUS_CONFIRMED, Order::STATUS_PAID, Order::STATUS_SOLD, Order::STATUS_REFUND];
+        $allowed = [Order::STATUS_CONFIRMED, Order::STATUS_PAID, Order::STATUS_SOLD, Order::STATUS_REFUND, Order::STATUS_CANCELLED];
         if (! in_array($status, $allowed, true)) {
             abort(404);
         }
@@ -146,7 +175,7 @@ class OrderController extends Controller
     public function sendStatusNotification(Request $request, Order $order)
     {
         $validated = $request->validate([
-            'status' => 'required|string|in:confirmed,paid,sold,refund',
+            'status' => 'required|string|in:confirmed,paid,sold,refund,cancelled',
         ]);
 
         try {
@@ -162,7 +191,18 @@ class OrderController extends Controller
 
     public function destroy(Order $order)
     {
-        $order->delete();
+        DB::transaction(function () use ($order) {
+            $locked = Order::query()->whereKey($order->getKey())->lockForUpdate()->firstOrFail();
+
+            if ($locked->inventory_deducted && $locked->product_id) {
+                $product = Product::query()->whereKey($locked->product_id)->lockForUpdate()->first();
+                if ($product) {
+                    $product->incrementStockForSizes($locked->sizeCountsForInventory());
+                }
+            }
+
+            $locked->delete();
+        });
 
         return back()->with('success', 'Commande supprimée.');
     }

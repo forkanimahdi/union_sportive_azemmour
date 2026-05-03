@@ -7,8 +7,10 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class ShopController extends Controller
@@ -37,6 +39,9 @@ class ShopController extends Controller
             'old_price' => $p->old_price,
             'new_price' => $p->new_price,
             'category' => $p->category ? ['id' => $p->category->id, 'name' => $p->category->name] : null,
+            'stock_by_size' => $p->normalizedStockBySize(),
+            'fully_out_of_stock' => $p->isFullyOutOfStock(),
+            'low_stock_threshold' => (int) config('boutique.low_stock_threshold', 5),
         ]);
 
         $categories = ProductCategory::orderBy('name')->get(['id', 'name']);
@@ -64,6 +69,13 @@ class ShopController extends Controller
                 'old_price' => $product->old_price,
                 'new_price' => $product->new_price,
                 'category' => $product->category ? ['id' => $product->category->id, 'name' => $product->category->name] : null,
+                'stock_by_size' => $product->normalizedStockBySize(),
+                'fully_out_of_stock' => $product->isFullyOutOfStock(),
+                'low_stock_threshold' => (int) config('boutique.low_stock_threshold', 5),
+                'volume_discount_rule' => [
+                    'min_quantity' => (int) config('boutique.volume_discount_min_quantity', 5),
+                    'amount' => (float) config('boutique.volume_discount_amount', 250),
+                ],
             ],
         ]);
     }
@@ -74,7 +86,7 @@ class ShopController extends Controller
             abort(404);
         }
 
-        $validSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+        $validSizes = Product::SIZES;
         $rules = [
             'customer_name'     => 'nullable|string|max:255',
             'email'             => 'required|email',
@@ -97,20 +109,44 @@ class ShopController extends Controller
         $validated['quantity'] = $quantity;
         $validated['status'] = Order::STATUS_PENDING;
 
-        if (!empty($validated['sizes']) && count($validated['sizes']) === $quantity) {
+        if (! empty($validated['sizes']) && count($validated['sizes']) === $quantity) {
             $validated['sizes'] = array_values($validated['sizes']);
         } else {
             $validated['sizes'] = array_fill(0, $quantity, $validated['size']);
         }
 
-        $subtotal = (float) ($product->new_price ?? $product->old_price ?? 0) * $quantity;
-        $city = $validated['address_city'] ?? '';
-        $validated['delivery_fee'] = $this->computeDeliveryFee($subtotal, $city);
+        $sizeCounts = array_count_values($validated['sizes']);
 
-        $order = Order::create($validated);
+        $unitPrice = (float) ($product->new_price ?? $product->old_price ?? 0);
+        $grossSubtotal = $unitPrice * $quantity;
+        $volumeDiscount = Order::applicableVolumeDiscount($quantity);
+        $subtotalAfterDiscount = max(0, $grossSubtotal - $volumeDiscount);
+        $city = $validated['address_city'] ?? '';
+        $validated['volume_discount'] = $volumeDiscount;
+        $validated['delivery_fee'] = $this->computeDeliveryFee($subtotalAfterDiscount, $city);
+
+        $order = null;
+
+        DB::transaction(function () use ($product, $validated, $sizeCounts, &$order) {
+            /** @var Product $locked */
+            $locked = Product::query()->whereKey($product->getKey())->lockForUpdate()->firstOrFail();
+
+            if (! $locked->hasStockForSizeCounts($sizeCounts)) {
+                throw ValidationException::withMessages([
+                    'size' => 'Stock insuffisant pour une ou plusieurs tailles demandées.',
+                ]);
+            }
+
+            $locked->decrementStockForSizes($sizeCounts);
+
+            $validated['inventory_deducted'] = true;
+            $order = Order::create($validated);
+        });
 
         try {
-            Mail::to($order->email)->send(new OrderConfirmationMail($order));
+            if ($order) {
+                Mail::to($order->email)->send(new OrderConfirmationMail($order));
+            }
         } catch (\Throwable $e) {
             report($e);
         }

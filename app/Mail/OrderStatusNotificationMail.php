@@ -27,6 +27,7 @@ class OrderStatusNotificationMail extends Mailable
             Order::STATUS_PAID      => 'Paiement reçu – Union Sportive Azemmour',
             Order::STATUS_SOLD      => 'Votre commande a été expédiée – Union Sportive Azemmour',
             Order::STATUS_REFUND    => 'Remboursement de votre commande – Union Sportive Azemmour',
+            Order::STATUS_CANCELLED => 'Annulation de votre commande – Union Sportive Azemmour',
         ];
         $subject = $subjects[$this->status] ?? 'Mise à jour de votre commande – Union Sportive Azemmour';
 
@@ -43,6 +44,7 @@ class OrderStatusNotificationMail extends Mailable
             Order::STATUS_PAID      => 'emails.order-status-paid',
             Order::STATUS_SOLD      => 'emails.order-status-sold',
             Order::STATUS_REFUND    => 'emails.order-status-refund',
+            Order::STATUS_CANCELLED => 'emails.order-status-cancelled',
         ];
         $view = $views[$this->status] ?? 'emails.order-status-confirmed';
 

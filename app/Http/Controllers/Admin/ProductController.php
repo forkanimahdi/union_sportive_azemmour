@@ -34,6 +34,7 @@ class ProductController extends Controller
             'new_price' => $p->new_price,
             'category' => $p->category ? ['id' => $p->category->id, 'name' => $p->category->name] : null,
             'is_active' => $p->is_active,
+            'stock_summary' => $p->stockSummaryForAdmin(),
         ]);
 
         $categories = ProductCategory::orderBy('name')->get(['id', 'name']);
@@ -51,7 +52,7 @@ class ProductController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
@@ -61,7 +62,9 @@ class ProductController extends Controller
             'new_price' => 'nullable|numeric|min:0',
             'product_category_id' => 'nullable|exists:product_categories,id',
             'is_active' => 'boolean',
-        ]);
+        ], $this->stockBySizeValidationRules()));
+
+        $validated['stock_by_size'] = Product::normalizeStockInput($validated['stock_by_size'] ?? null);
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('products', 'public');
@@ -96,6 +99,8 @@ class ProductController extends Controller
                 'product_category_id' => $product->product_category_id,
                 'is_active' => $product->is_active,
                 'category' => $product->category ? ['id' => $product->category->id, 'name' => $product->category->name] : null,
+                'stock_by_size' => $product->normalizedStockBySize(),
+                'stock_summary' => $product->stockSummaryForAdmin(),
             ],
             'categories' => $categories,
         ]);
@@ -103,7 +108,7 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
@@ -113,7 +118,9 @@ class ProductController extends Controller
             'new_price' => 'nullable|numeric|min:0',
             'product_category_id' => 'nullable|exists:product_categories,id',
             'is_active' => 'boolean',
-        ]);
+        ], $this->stockBySizeValidationRules()));
+
+        $validated['stock_by_size'] = Product::normalizeStockInput($validated['stock_by_size'] ?? null);
 
         if ($request->hasFile('image')) {
             if ($product->image) {
@@ -149,5 +156,18 @@ class ProductController extends Controller
         }
         $product->delete();
         return redirect()->route('admin.products.index')->with('success', 'Produit supprimé.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function stockBySizeValidationRules(): array
+    {
+        $rules = ['stock_by_size' => 'required|array'];
+        foreach (Product::SIZES as $size) {
+            $rules['stock_by_size.'.$size] = 'required|integer|min:0|max:999999';
+        }
+
+        return $rules;
     }
 }

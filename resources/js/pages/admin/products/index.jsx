@@ -7,9 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Edit, Trash2, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Package } from 'lucide-react';
 import DeleteModal from '@/components/DeleteModal';
 import InputError from '@/components/input-error';
+
+const PRODUCT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 export default function AdminProductsIndex({ products, categories }) {
     const [search, setSearch] = useState('');
@@ -28,6 +30,7 @@ export default function AdminProductsIndex({ products, categories }) {
         new_price: '',
         product_category_id: '',
         is_active: true,
+        stock_by_size: Object.fromEntries(PRODUCT_SIZES.map((s) => [s, '100'])),
     });
 
     const [previewImage, setPreviewImage] = useState(null);
@@ -88,10 +91,18 @@ export default function AdminProductsIndex({ products, categories }) {
                         <h1 className="text-2xl font-bold">Produits Boutique</h1>
                         <p className="text-sm text-muted-foreground">Gérer les produits affichés sur la page Boutique.</p>
                     </div>
-                    <Button onClick={openCreateModal}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Nouveau produit
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                        <Link href="/admin/boutique-stock">
+                            <Button type="button" variant="secondary">
+                                <Package className="w-4 h-4 mr-2" />
+                                Stocks boutique
+                            </Button>
+                        </Link>
+                        <Button onClick={openCreateModal}>
+                            <Plus className="w-4 h-4 mr-2" />
+                            Nouveau produit
+                        </Button>
+                    </div>
                 </div>
 
                 <Card>
@@ -135,6 +146,14 @@ export default function AdminProductsIndex({ products, categories }) {
                                     </div>
                                     <div className="p-3">
                                         <h3 className="font-semibold truncate">{p.name}</h3>
+                                        <div className="flex flex-wrap gap-1.5 mt-1">
+                                            {p.stock_summary?.out_of_stock && (
+                                                <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-200">Rupture</span>
+                                            )}
+                                            {!p.stock_summary?.out_of_stock && (p.stock_summary?.low_stock?.length ?? 0) > 0 && (
+                                                <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-200">Stock faible</span>
+                                            )}
+                                        </div>
                                         <p className="text-sm text-muted-foreground">{p.category?.name ?? '–'}</p>
                                         <div className="flex gap-2 mt-2">
                                             {p.old_price != null && <span className="text-xs line-through">{Number(p.old_price)} MAD</span>}
@@ -236,6 +255,28 @@ export default function AdminProductsIndex({ products, categories }) {
                                 </SelectContent>
                             </Select>
                             <InputError message={createForm.errors.product_category_id} />
+                        </div>
+                        <div className="space-y-2 border-t pt-4">
+                            <Label className="text-sm">Stock par taille</Label>
+                            <p className="text-xs text-muted-foreground">Quantité disponible pour chaque taille (boutique).</p>
+                            <div className="grid grid-cols-2 gap-2">
+                                {PRODUCT_SIZES.map((s) => (
+                                    <div key={s} className="space-y-1">
+                                        <Label className="text-xs">{s}</Label>
+                                        <Input
+                                            type="number"
+                                            min={0}
+                                            max={999999}
+                                            value={createForm.data.stock_by_size?.[s] ?? '0'}
+                                            onChange={(e) => createForm.setData('stock_by_size', {
+                                                ...createForm.data.stock_by_size,
+                                                [s]: e.target.value,
+                                            })}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            <InputError message={createForm.errors['stock_by_size.XS'] || createForm.errors.stock_by_size} />
                         </div>
                         <div className="space-y-3 border-t pt-4">
                             <Label className="text-sm">Images (optionnel)</Label>

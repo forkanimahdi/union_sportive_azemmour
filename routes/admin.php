@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PlayerController;
 use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\ProductStockController;
 use App\Http\Controllers\Admin\SeasonController;
 use App\Http\Controllers\Admin\SponsorController;
 use App\Http\Controllers\Admin\StaffController;
@@ -138,6 +139,8 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
 
     // Boutique (Products & Orders) - Admin
     Route::middleware('role:admin')->group(function () {
+        Route::get('boutique-stock', [ProductStockController::class, 'index'])->name('boutique-stock.index');
+        Route::post('boutique-stock', [ProductStockController::class, 'updateAll'])->name('boutique-stock.update-all');
         Route::resource('products', ProductController::class);
         Route::get('product-categories', [ProductCategoryController::class, 'index'])->name('product-categories.index');
         Route::post('product-categories', [ProductCategoryController::class, 'store'])->name('product-categories.store');

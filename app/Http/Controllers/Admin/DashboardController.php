@@ -9,6 +9,7 @@ use App\Models\Training;
 use App\Models\GameMatch;
 use App\Models\Injury;
 use App\Models\DisciplinaryAction;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -152,6 +153,13 @@ class DashboardController extends Controller
             ->count();
         if ($expiredImageRights > 0) {
             $alerts[] = "{$expiredImageRights} autorisation(s) droit à l'image expirée(s)";
+        }
+
+        $boutiqueStockWarnings = Product::query()->where('is_active', true)->get()->filter(function (Product $p) {
+            return $p->isFullyOutOfStock() || $p->lowStockEntries() !== [];
+        })->count();
+        if ($boutiqueStockWarnings > 0) {
+            $alerts[] = "{$boutiqueStockWarnings} produit(s) boutique : rupture totale ou stock faible (≤ ".(int) config('boutique.low_stock_threshold', 5).')';
         }
 
         // Get all categories

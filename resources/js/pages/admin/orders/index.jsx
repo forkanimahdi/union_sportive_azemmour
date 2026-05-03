@@ -16,6 +16,7 @@ const STATUS_OPTIONS = [
     { value: 'paid', label: 'Payée' },
     { value: 'sold', label: 'Vendue / Expédiée' },
     { value: 'refund', label: 'Remboursée' },
+    { value: 'cancelled', label: 'Annulée' },
 ];
 
 const NOTIFY_STATUS_OPTIONS = STATUS_OPTIONS.filter((o) => o.value !== 'pending');
@@ -139,6 +140,7 @@ export default function AdminOrdersIndex({ orders = [], statusLabels = {}, filte
             paid: 'bg-green-100 text-green-800',
             sold: 'bg-emerald-100 text-emerald-800',
             refund: 'bg-gray-100 text-gray-700',
+            cancelled: 'bg-orange-100 text-orange-900',
         };
         return map[status] || 'bg-gray-100 text-gray-700';
     };
@@ -343,7 +345,34 @@ export default function AdminOrdersIndex({ orders = [], statusLabels = {}, filte
                                     </p>
                                 </div>
                             )}
-                            {(detailOrder.delivery_fee != null) && (
+                            {detailOrder.financial && (
+                                <div className="border-t pt-4 space-y-1 text-sm">
+                                    <p className="text-muted-foreground font-medium mb-2">Montants</p>
+                                    <div className="flex justify-between pl-2">
+                                        <span className="text-muted-foreground">Sous-total articles</span>
+                                        <span>{detailOrder.financial.gross_subtotal} DH</span>
+                                    </div>
+                                    {detailOrder.financial.volume_discount > 0 && (
+                                        <div className="flex justify-between pl-2 text-emerald-800">
+                                            <span>Remise volume (≥ {detailOrder.financial.volume_discount_min_quantity})</span>
+                                            <span>−{detailOrder.financial.volume_discount} DH</span>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between pl-2 font-medium">
+                                        <span className="text-muted-foreground">Après remise</span>
+                                        <span>{detailOrder.financial.product_subtotal} DH</span>
+                                    </div>
+                                    <div className="flex justify-between pl-2">
+                                        <span className="text-muted-foreground">Livraison</span>
+                                        <span>{detailOrder.financial.delivery_fee > 0 ? `${detailOrder.financial.delivery_fee} DH` : 'Gratuit'}</span>
+                                    </div>
+                                    <div className="flex justify-between pl-2 pt-2 border-t font-semibold">
+                                        <span>Total</span>
+                                        <span>{detailOrder.financial.total} DH</span>
+                                    </div>
+                                </div>
+                            )}
+                            {(detailOrder.delivery_fee != null) && !detailOrder.financial && (
                                 <div className="text-sm">
                                     <span className="text-muted-foreground">Frais de livraison : </span>
                                     {detailOrder.delivery_fee > 0 ? `${detailOrder.delivery_fee} DH` : 'Gratuit'}

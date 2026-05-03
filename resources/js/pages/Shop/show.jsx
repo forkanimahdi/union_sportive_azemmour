@@ -18,6 +18,19 @@ const VIEW_MODES = [
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const MIN_QUANTITY = 1;
 const MAX_QUANTITY = 10;
+
+function maxOrderableQty(stockMap, sizesLine, maxCap) {
+    const counts = {};
+    for (const s of sizesLine) {
+        counts[s] = (counts[s] || 0) + 1;
+    }
+    let cap = maxCap;
+    for (const [s, need] of Object.entries(counts)) {
+        const avail = stockMap[s] ?? 0;
+        cap = Math.min(cap, Math.floor(avail / need));
+    }
+    return Math.max(0, Math.min(maxCap, cap));
+}
 const FREE_SHIPPING_MIN = 600;
 const DELIVERY_CASABLANCA = 30;
 const DELIVERY_OTHER = 50;
@@ -45,6 +58,25 @@ export default function ShopShow({ product }) {
         if (flash?.orderSuccess) setConfirmationOpen(true);
     }, [flash?.orderSuccess]);
 
+    const stockMap = product.stock_by_size || {};
+    const lowTh = product.low_stock_threshold ?? 5;
+    const fullyOut = !!product.fully_out_of_stock;
+    const stockOf = (s) => stockMap[s] ?? 0;
+
+    useEffect(() => {
+        if (fullyOut) return;
+        const next = SIZES.find((s) => stockOf(s) > 0);
+        if (next && stockOf(size) === 0) {
+            setSize(next);
+            setSizesPerUnit((prev) => Array.from({ length: Math.max(prev.length, 1) }, () => next));
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- align defaults once per product page
+    }, [product.id, fullyOut]);
+
+    const sizesLine = quantity === 1 ? [size] : sizesPerUnit.slice(0, quantity);
+    const maxOk = maxOrderableQty(stockMap, sizesLine, MAX_QUANTITY);
+    const canSubmitOrder = !fullyOut && maxOk >= quantity && quantity >= MIN_QUANTITY;
+
     const hasWithoutLogo = !!product.image_without_logo;
     const hasCustomized = !!product.image_customized_tshirt;
 
@@ -68,12 +100,22 @@ export default function ShopShow({ product }) {
         { icon: RotateCcw, label: 'Échanges possibles' },
     ];
 
-    const subtotal = price * quantity;
-    const deliveryFee = subtotal >= FREE_SHIPPING_MIN ? 0 : (addressCity.trim().toLowerCase() === 'casablanca' ? DELIVERY_CASABLANCA : DELIVERY_OTHER);
-    const total = subtotal + deliveryFee;
+    const volRule = product.volume_discount_rule || { min_quantity: 5, amount: 250 };
+    const grossSubtotal = price * quantity;
+    const volumeDiscount = quantity >= volRule.min_quantity ? volRule.amount : 0;
+    const subtotalAfterDiscount = Math.max(0, grossSubtotal - volumeDiscount);
+    const deliveryFee = subtotalAfterDiscount >= FREE_SHIPPING_MIN ? 0 : (addressCity.trim().toLowerCase() === 'casablanca' ? DELIVERY_CASABLANCA : DELIVERY_OTHER);
+    const total = subtotalAfterDiscount + deliveryFee;
 
     const setQuantitySafe = (q) => {
-        const n = Math.max(MIN_QUANTITY, Math.min(MAX_QUANTITY, typeof q === 'function' ? q(quantity) : q));
+        let n = Math.max(MIN_QUANTITY, Math.min(MAX_QUANTITY, typeof q === 'function' ? q(quantity) : q));
+        const projected =
+            n > quantity
+                ? [...sizesPerUnit, ...Array(n - quantity).fill(size)]
+                : sizesPerUnit.slice(0, n);
+        const lineForCap = n === 1 ? [size] : projected;
+        const cap = maxOrderableQty(stockMap, lineForCap, MAX_QUANTITY);
+        n = Math.min(n, Math.max(MIN_QUANTITY, cap));
         setQuantity(n);
         setSizesPerUnit((prev) => {
             if (n > prev.length) return [...prev, ...Array(n - prev.length).fill(size)];
@@ -255,14 +297,26 @@ export default function ShopShow({ product }) {
                                 )}
                             </div>
 
+                            {volRule.min_quantity > 1 && volRule.amount > 0 && (
+                                <p className="text-xs text-muted-foreground border border-dashed border-gray-200 rounded-lg px-3 py-2 bg-gray-50/80">
+                                    <span className="font-semibold text-dark">Remise volume :</span>{' '}
+                                    −{volRule.amount} DH sur le sous-total articles à partir de {volRule.min_quantity} unités (la livraison gratuite à partir de {FREE_SHIPPING_MIN} DH s’applique après remise).
+                                </p>
+                            )}
+                            {fullyOut && (
+                                <p className="text-sm font-bold text-red-600 uppercase tracking-wide">
+                                    Rupture de stock — toutes les tailles sont épuisées.
+                                </p>
+                            )}
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <Button
                                     type="button"
+                                    disabled={fullyOut}
                                     onClick={() => { setErrors({}); setOrderModalOpen(true); }}
-                                    className="inline-flex items-center justify-center gap-3 bg-alpha hover:bg-red-700 text-white font-bold px-8 py-4 uppercase tracking-wider rounded-xl shadow-lg"
+                                    className="inline-flex items-center justify-center gap-3 bg-alpha hover:bg-red-700 text-white font-bold px-8 py-4 uppercase tracking-wider rounded-xl shadow-lg disabled:opacity-50 disabled:pointer-events-none"
                                 >
                                     <ShoppingCart className="w-5 h-5" />
-                                    Commander
+                                    {fullyOut ? 'Indisponible' : 'Commander'}
                                 </Button>
                                 <Link href="/shop">
                                     <Button
@@ -326,6 +380,11 @@ export default function ShopShow({ product }) {
                     <DialogHeader className="shrink-0 px-6 pt-6 pb-2">
                         <DialogTitle className="text-xl font-black uppercase italic">Passer commande</DialogTitle>
                         <p className="text-sm text-gray-500 mt-1">{product.name}</p>
+                        {!fullyOut && maxOk < quantity && (
+                            <p className="text-xs text-amber-700 font-medium mt-2">
+                                Stock insuffisant pour cette combinaison : maximum {maxOk} unité{maxOk > 1 ? 's' : ''} avec les tailles choisies.
+                            </p>
+                        )}
                     </DialogHeader>
                     <form onSubmit={handleOrderSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
                         <div className="overflow-y-auto px-6 py-4 space-y-4 flex-1 min-h-0">
@@ -454,13 +513,16 @@ export default function ShopShow({ product }) {
                                     size="icon"
                                     className="h-10 w-10 rounded-xl shrink-0"
                                     onClick={() => setQuantitySafe((q) => q + 1)}
-                                    disabled={quantity >= MAX_QUANTITY}
+                                    disabled={quantity >= MAX_QUANTITY || quantity >= maxOk}
                                     aria-label="Augmenter"
                                 >
                                     +
                                 </Button>
                             </div>
                             <InputError message={errors.quantity} />
+                            {!fullyOut && maxOk > 0 && maxOk < MAX_QUANTITY && (
+                                <p className="text-xs text-muted-foreground">Stock disponible pour cette sélection : jusqu’à {maxOk} unité{maxOk > 1 ? 's' : ''}.</p>
+                            )}
                         </div>
 
                         <div>
@@ -468,18 +530,28 @@ export default function ShopShow({ product }) {
                                 <>
                                     <Label>Taille *</Label>
                                     <div className="flex flex-wrap gap-2 mt-2">
-                                        {SIZES.map((s) => (
-                                            <button
-                                                key={s}
-                                                type="button"
-                                                onClick={() => { setSize(s); setSizesPerUnit([s]); }}
-                                                className={`w-12 h-12 rounded-xl font-bold text-sm border-2 transition-all ${
-                                                    size === s ? 'bg-alpha text-white border-alpha' : 'border-gray-200 hover:border-alpha/50 text-dark'
-                                                }`}
-                                            >
-                                                {s}
-                                            </button>
-                                        ))}
+                                        {SIZES.map((s) => {
+                                            const q = stockOf(s);
+                                            const low = q > 0 && q <= lowTh;
+                                            const dead = q === 0;
+                                            return (
+                                                <button
+                                                    key={s}
+                                                    type="button"
+                                                    disabled={dead}
+                                                    title={dead ? 'Rupture de stock' : low ? `Stock faible (${q})` : `${q} en stock`}
+                                                    onClick={() => { if (!dead) { setSize(s); setSizesPerUnit([s]); } }}
+                                                    className={`w-12 h-12 rounded-xl font-bold text-sm border-2 transition-all relative ${
+                                                        size === s ? 'bg-alpha text-white border-alpha' : dead ? 'opacity-40 border-gray-200 cursor-not-allowed line-through' : low ? 'border-amber-400 ring-1 ring-amber-300' : 'border-gray-200 hover:border-alpha/50 text-dark'
+                                                    }`}
+                                                >
+                                                    {s}
+                                                    {!dead && low && (
+                                                        <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] font-bold text-amber-700 whitespace-nowrap">{q}</span>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </>
                             ) : (
@@ -490,18 +562,25 @@ export default function ShopShow({ product }) {
                                             <div key={i} className="flex items-center gap-3">
                                                 <span className="text-sm font-medium text-gray-600 w-16 shrink-0">Unité {i + 1}</span>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {SIZES.map((s) => (
-                                                        <button
-                                                            key={s}
-                                                            type="button"
-                                                            onClick={() => setSizeForUnit(i, s)}
-                                                            className={`w-10 h-10 rounded-lg font-bold text-xs border-2 transition-all ${
-                                                                (sizesPerUnit[i] ?? size) === s ? 'bg-alpha text-white border-alpha' : 'border-gray-200 hover:border-alpha/50 text-dark'
-                                                            }`}
-                                                        >
-                                                            {s}
-                                                        </button>
-                                                    ))}
+                                                    {SIZES.map((s) => {
+                                                        const q = stockOf(s);
+                                                        const low = q > 0 && q <= lowTh;
+                                                        const dead = q === 0;
+                                                        return (
+                                                            <button
+                                                                key={s}
+                                                                type="button"
+                                                                disabled={dead}
+                                                                title={dead ? 'Rupture de stock' : low ? `Stock faible (${q})` : `${q} en stock`}
+                                                                onClick={() => { if (!dead) setSizeForUnit(i, s); }}
+                                                                className={`w-10 h-10 rounded-lg font-bold text-xs border-2 transition-all ${
+                                                                    (sizesPerUnit[i] ?? size) === s ? 'bg-alpha text-white border-alpha' : dead ? 'opacity-40 border-gray-200 cursor-not-allowed line-through' : low ? 'border-amber-400 ring-1 ring-amber-300' : 'border-gray-200 hover:border-alpha/50 text-dark'
+                                                                }`}
+                                                            >
+                                                                {s}
+                                                            </button>
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
                                         ))}
@@ -513,17 +592,27 @@ export default function ShopShow({ product }) {
 
                         <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 space-y-2">
                             <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Sous-total ({quantity} × {price} DH)</span>
-                                <span className="font-semibold">{subtotal} DH</span>
+                                <span className="text-gray-600">Sous-total articles ({quantity} × {price} DH)</span>
+                                <span className="font-semibold">{grossSubtotal} DH</span>
+                            </div>
+                            {volumeDiscount > 0 && (
+                                <div className="flex justify-between text-sm text-emerald-800">
+                                    <span>Remise (≥ {volRule.min_quantity} art.)</span>
+                                    <span className="font-semibold">−{volumeDiscount} DH</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">Sous-total après remise</span>
+                                <span className="font-semibold">{subtotalAfterDiscount} DH</span>
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-600">Frais de livraison</span>
                                 <span className="font-semibold">
-                                    {deliveryFee === 0 ? 'Gratuit (≥ 600 DH)' : `${deliveryFee} DH`}
+                                    {deliveryFee === 0 ? `Gratuit (≥ ${FREE_SHIPPING_MIN} DH)` : `${deliveryFee} DH`}
                                 </span>
                             </div>
                             <p className="text-xs text-gray-500 pt-1">
-                                Casablanca : 30 DH — Hors Casablanca : 50 DH. Livraison gratuite à partir de 600 DH.
+                                Casablanca : 30 DH — Hors Casablanca : 50 DH. Livraison gratuite à partir de {FREE_SHIPPING_MIN} DH (sur le montant après remise).
                             </p>
                             <div className="flex justify-between font-bold text-base pt-2 border-t border-gray-200">
                                 <span>Total</span>
@@ -547,8 +636,8 @@ export default function ShopShow({ product }) {
                             <Button type="button" variant="outline" onClick={() => setOrderModalOpen(false)}>
                                 Annuler
                             </Button>
-                            <Button type="submit" disabled={submitting} className="bg-alpha hover:bg-red-700">
-                                {submitting ? 'Envoi...' : 'Confirmer la commande'}
+                            <Button type="submit" disabled={submitting || !canSubmitOrder} className="bg-alpha hover:bg-red-700">
+                                {submitting ? 'Envoi...' : !canSubmitOrder ? 'Stock insuffisant' : 'Confirmer la commande'}
                             </Button>
                         </DialogFooter>
                     </form>

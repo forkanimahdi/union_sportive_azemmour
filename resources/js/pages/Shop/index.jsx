@@ -67,7 +67,14 @@ export default function Shop({ products = [], categories = [] }) {
 
                     {/* Products Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                        {filteredProducts.map((product) => (
+                        {filteredProducts.map((product) => {
+                            const stockMap = product.stock_by_size || {};
+                            const th = product.low_stock_threshold ?? 5;
+                            const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+                            const hasLowStock = !product.fully_out_of_stock && sizes.some(
+                                (s) => (stockMap[s] ?? 0) > 0 && (stockMap[s] ?? 0) <= th,
+                            );
+                            return (
                             <Link
                                 key={product.id}
                                 href={`/shop/${product.id}`}
@@ -85,6 +92,16 @@ export default function Shop({ products = [], categories = [] }) {
                                             <ShoppingBag className="w-16 h-16" />
                                         </div>
                                     )}
+                                    {product.fully_out_of_stock && (
+                                        <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+                                            <span className="text-white font-black uppercase text-sm tracking-wide px-3 text-center">Rupture de stock</span>
+                                        </div>
+                                    )}
+                                    {hasLowStock && (
+                                        <div className="absolute top-2 right-2 bg-amber-500 text-white text-[10px] font-bold uppercase px-2 py-1 rounded shadow">
+                                            Stock limité
+                                        </div>
+                                    )}
                                 </div>
                                 <h3 className="font-bold uppercase text-lg mb-1">{product.name}</h3>
                                 {product.category?.name && (
@@ -100,7 +117,8 @@ export default function Shop({ products = [], categories = [] }) {
                                     Voir le produit
                                 </span>
                             </Link>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     {filteredProducts.length === 0 && (

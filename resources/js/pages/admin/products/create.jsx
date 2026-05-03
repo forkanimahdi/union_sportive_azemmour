@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import InputError from '@/components/input-error';
 
+const PRODUCT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+
 export default function AdminProductsCreate({ categories }) {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
@@ -20,6 +22,7 @@ export default function AdminProductsCreate({ categories }) {
         new_price: '',
         product_category_id: '',
         is_active: true,
+        stock_by_size: Object.fromEntries(PRODUCT_SIZES.map((s) => [s, '100'])),
     });
 
     const [previewImage, setPreviewImage] = useState(null);
@@ -93,6 +96,25 @@ export default function AdminProductsCreate({ categories }) {
                                     </SelectContent>
                                 </Select>
                                 <InputError message={errors.product_category_id} />
+                            </div>
+
+                            <div className="space-y-3 border-t pt-4">
+                                <Label className="text-base">Stock par taille</Label>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                    {PRODUCT_SIZES.map((s) => (
+                                        <div key={s} className="space-y-1">
+                                            <Label className="text-xs">{s}</Label>
+                                            <Input
+                                                type="number"
+                                                min={0}
+                                                max={999999}
+                                                value={data.stock_by_size?.[s] ?? '0'}
+                                                onChange={(e) => setData('stock_by_size', { ...data.stock_by_size, [s]: e.target.value })}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                                <InputError message={errors['stock_by_size.XS'] || errors.stock_by_size} />
                             </div>
 
                             <div className="space-y-4 border-t pt-4">
