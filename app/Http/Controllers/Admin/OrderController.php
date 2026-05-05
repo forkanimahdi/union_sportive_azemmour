@@ -134,10 +134,12 @@ class OrderController extends Controller
         $newStatus = $validated['status'];
 
         $openPaidPdfOrderId = null;
+        $previousStatus = null;
 
-        DB::transaction(function () use ($order, $newStatus, &$openPaidPdfOrderId) {
+        DB::transaction(function () use ($order, $newStatus, &$openPaidPdfOrderId, &$previousStatus) {
             $locked = Order::query()->whereKey($order->getKey())->lockForUpdate()->firstOrFail();
             $prev = $locked->status;
+            $previousStatus = $prev;
 
             $shouldReleaseStock = $locked->inventory_deducted
                 && $locked->product_id
@@ -162,10 +164,40 @@ class OrderController extends Controller
             }
         });
 
+        $order->refresh();
+
+        $notifiableStatuses = [
+            Order::STATUS_CONFIRMED,
+            Order::STATUS_PAID,
+            Order::STATUS_SOLD,
+            Order::STATUS_REFUND,
+            Order::STATUS_CANCELLED,
+        ];
+
+        $shouldEmailCustomer = $previousStatus !== $newStatus
+            && in_array($newStatus, $notifiableStatuses, true)
+            && filled($order->email);
+
+        $emailError = null;
+        if ($shouldEmailCustomer) {
+            try {
+                Mail::to($order->email)->send(new OrderStatusNotificationMail($order, $newStatus));
+            } catch (\Throwable $e) {
+                report($e);
+                $emailError = 'Impossible d’envoyer l’email au client.';
+            }
+        }
+
         if ($openPaidPdfOrderId !== null) {
-            return back()
+            $response = back()
                 ->with('open_order_paid_pdf', route('admin.orders.paid-tickets-pdf', ['order' => $openPaidPdfOrderId], false))
                 ->with('success', 'Commande passée en « Payée ». Le PDF (1 page A4, 2 parties haut/bas) s’ouvre dans un nouvel onglet — autorisez les pop-ups si besoin.');
+
+            return $emailError ? $response->with('error', $emailError) : $response;
+        }
+
+        if ($emailError) {
+            return back()->with('error', $emailError);
         }
 
         return back();
