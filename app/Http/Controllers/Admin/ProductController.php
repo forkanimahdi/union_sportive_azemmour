@@ -120,6 +120,9 @@ class ProductController extends Controller
             'is_active' => 'boolean',
         ], $this->stockBySizeValidationRules()));
 
+        // Keep existing image paths when no new file is uploaded.
+        unset($validated['image'], $validated['image_without_logo'], $validated['image_customized_tshirt']);
+
         $validated['stock_by_size'] = Product::normalizeStockInput($validated['stock_by_size'] ?? null);
 
         if ($request->hasFile('image')) {
